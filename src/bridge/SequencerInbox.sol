@@ -47,6 +47,9 @@ import {GasRefundEnabled} from "../libraries/GasRefundEnabled.sol";
 import "../libraries/ArbitrumChecker.sol";
 import {IERC20Bridge} from "./IERC20Bridge.sol";
 
+import {EigenDARollupUtils} from "eigenda/contracts/libraries/EigenDARollupUtils.sol";
+import {IEigenDAServiceManager} from "eigenda/contracts/interfaces/IEigenDAServiceManager.sol";
+
 /**
  * @title  Accepts batches from the sequencer and adds them to the rollup inbox.
  * @notice Contains the inbox accumulator which is the ordering of all data and transactions to be processed by the rollup.
@@ -58,6 +61,8 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     uint256 public totalDelayedMessagesRead;
 
     IBridge public bridge;
+
+    IEigenDAServiceManager public eigenDAServiceManager;
 
     /// @inheritdoc ISequencerInbox
     uint256 public constant HEADER_LENGTH = 40;
@@ -85,6 +90,8 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
 
     // GAS_PER_BLOB from EIP-4844
     uint256 internal constant GAS_PER_BLOB = 1 << 17;
+
+    uint256 internal constant GAS_PER_SYMBOL_EIGENDA = 1;
 
     IOwnable public rollup;
 
@@ -131,6 +138,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     constructor(
         uint256 _maxDataSize,
         IReader4844 reader4844_,
+        IEigenDAServiceManager eigenDAServiceManager_,
         bool _isUsingFeeToken
     ) {
         maxDataSize = _maxDataSize;
@@ -140,6 +148,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
             if (reader4844_ == IReader4844(address(0))) revert InitParamZero("Reader4844");
         }
         reader4844 = reader4844_;
+        eigenDAServiceManager = eigenDAServiceManager_;
         isUsingFeeToken = _isUsingFeeToken;
     }
 
@@ -204,13 +213,21 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         _setMaxTimeVariation(maxTimeVariation_);
     }
 
-    /// @notice Allows the rollup owner to sync the rollup address
+    /// @inheritdoc ISequencerInbox
     function updateRollupAddress() external {
         if (msg.sender != IOwnable(rollup).owner())
             revert NotOwner(msg.sender, IOwnable(rollup).owner());
         IOwnable newRollup = bridge.rollup();
         if (rollup == newRollup) revert RollupNotChanged();
         rollup = newRollup;
+    }
+
+    /// @inheritdoc ISequencerInbox
+    function updateEigenDAServiceManager(address newEigenDAServiceManager) external {
+        if (msg.sender != IOwnable(rollup).owner())
+            revert NotOwner(msg.sender, IOwnable(rollup).owner());
+        //if (newEigenDAServiceManager == newEigenDAServiceManager) revert EigenDAServiceManagerNotChanged();
+        eigenDAServiceManager = IEigenDAServiceManager(newEigenDAServiceManager);
     }
 
     function getTimeBounds() internal view virtual returns (IBridge.TimeBounds memory) {
@@ -468,6 +485,65 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         }
     }
 
+    function addSequencerL2BatchFromEigenDA(
+        uint256 sequenceNumber,
+        uint256 afterDelayedMessagesRead,
+        IGasRefunder gasRefunder,
+        uint256 prevMessageCount,
+        uint256 newMessageCount,
+        IEigenDAServiceManager.BlobHeader calldata blobHeader, 
+        EigenDARollupUtils.BlobVerificationProof calldata blobVerificationProof
+    ) external {
+        if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
+
+        // verify that the blob was actually included before continuing
+        EigenDARollupUtils.verifyBlob(blobHeader, eigenDAServiceManager, blobVerificationProof);
+
+        // NOTE: to retrieve need the following 
+        // see: https://github.com/Layr-Labs/eigenda/blob/master/api/docs/retriever.md#blobrequest
+        // batch header hash -> can get by computing hash(blobVerificationproof.batchMetadata.batchheader)
+        // blob index -> included in blobVerificationproof.blobIndex
+        // reference block number -> included in blobVerificationproof.batchMetadata.BatchHeaderreferenceBlockNumber
+        // quorum id -> included in blobHeader.QuorumBlobParam[0].quorumNumber
+        // todo: what do to for dual quorum?
+        (
+            bytes32 dataHash,
+            IBridge.TimeBounds memory timeBounds,
+            uint256 eigenDABatchCost //set as 0 rn
+        ) = formEigenDADataHash(blobHeader, afterDelayedMessagesRead);
+
+        (
+            uint256 seqMessageIndex,
+            bytes32 beforeAcc,
+            bytes32 delayedAcc,
+            bytes32 afterAcc
+        ) = addSequencerL2BatchImpl(
+                dataHash,
+                afterDelayedMessagesRead,
+                0,
+                prevMessageCount,
+                newMessageCount
+            );
+
+        uint256 _sequenceNumber = sequenceNumber; // stack workaround
+
+        // ~uint256(0) is type(uint256).max, but ever so slightly cheaper
+        if (seqMessageIndex != _sequenceNumber && _sequenceNumber != ~uint256(0)) {
+            revert BadSequencerNumber(seqMessageIndex, _sequenceNumber);
+        }
+        
+        emit SequencerBatchDelivered(
+            _sequenceNumber,
+            beforeAcc,
+            afterAcc,
+            delayedAcc,
+            totalDelayedMessagesRead,
+            timeBounds,
+            IBridge.BatchDataLocation.EigenDA
+        );
+
+    }
+
     function addSequencerL2Batch(
         uint256 sequenceNumber,
         bytes calldata data,
@@ -633,6 +709,23 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
             timeBounds,
             block.basefee > 0 ? blobCost / block.basefee : 0
         );
+    }
+
+    function formEigenDADataHash(IEigenDAServiceManager.BlobHeader memory blobHeader, uint256 afterDelayedMessagesRead) internal view returns (bytes32, IBridge.TimeBounds memory, uint256) {
+        // we can't get the full data preimage onchain, so we hash the commitment to the blobdata and the datalength
+
+        uint256 eigenDABlobCost = GAS_PER_SYMBOL_EIGENDA * blobHeader.dataLength; // set as some cost equal to some multiple of the length of the length of the blobs
+
+        (bytes memory header, IBridge.TimeBounds memory timeBounds) = packHeader(
+            afterDelayedMessagesRead
+        );
+
+        return (
+            keccak256(bytes.concat(header, EIGENDA_MESSAGE_HEADER_FLAG, abi.encodePacked(blobHeader.commitment.X, blobHeader.commitment.Y, blobHeader.dataLength))),
+            timeBounds,
+            block.basefee > 0 ? eigenDABlobCost / block.basefee : 0
+        );
+
     }
 
     /// @dev   Submit a batch spending report message so that the batch poster can be reimbursed on the rollup

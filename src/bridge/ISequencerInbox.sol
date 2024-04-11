@@ -43,6 +43,8 @@ interface ISequencerInbox is IDelayedMessageProvider {
 
     function bridge() external view returns (IBridge);
 
+    //function eigenDAManager() external view returns (address);
+
     /// @dev The size of the batch header
     // solhint-disable-next-line func-name-mixedcase
     function HEADER_LENGTH() external view returns (uint256);
@@ -228,6 +230,9 @@ interface ISequencerInbox is IDelayedMessageProvider {
 
     /// @notice Allows the rollup owner to sync the rollup address
     function updateRollupAddress() external;
+
+    /// @notice Allows the rollup owner to update the eigenDAServiceManager address
+    function updateEigenDAServiceManager(address newEigenDAServiceManager) external;
 
     // ---------- initializer ----------
 
