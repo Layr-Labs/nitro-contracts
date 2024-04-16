@@ -594,8 +594,8 @@ contract SequencerInboxTest is Test {
     //   -d '{"request_id": "NmQ2ODZiOWY4YzcwOGQ0YjhhNDJiN2FiOGRjYmI2MDAzOTk2NDk4NTU5Nzk0OWZkNjQ3ZGE4N2I2NDViZGUxNS0zMTM3MzEzMjM4MzQzNTMyMzgzNjMzMzkzODM5MzYzOTM3MzMzNDJmMzAyZjMzMzMyZjMxMmYzMzMzMmZlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1"}' \
     //   disperser-holesky.eigenda.xyz:443 disperser.Disperser/GetBlobStatus
     BN254.G1Point commitment = BN254.G1Point({
-        X: 11_973_800_683_352_706_081_745_043_032_492_841_023_821_816_921_595_457_420_358_142_752_350_183_450_007,
-        Y: 2_805_225_659_489_681_354_691_976_220_137_232_537_594_717_765_057_043_399_317_547_797_368_322_962_514
+        X: 11973800683352706081745043032492841023821816921595457420358142752350183450007,
+        Y: 2805225659489681354691976220137232537594717765057043399317547797368322962514
     });
 
     IEigenDAServiceManager.BlobHeader blobHeader;
@@ -604,13 +604,13 @@ contract SequencerInboxTest is Test {
         blobHeadersRoot: 0x2f3d0afe00f1a3eccb2a77a053c9fa850d4809913ece2f6a5dcdc9ecb5347c8b,
         quorumNumbers: hex"0001",
         signedStakeForQuorums: hex"4d4f", // quorum_signed_percentages
-        referenceBlockNumber: 1_325_741
+        referenceBlockNumber: 1325741
     });
 
     IEigenDAServiceManager.BatchMetadata batchMetadata = IEigenDAServiceManager.BatchMetadata({
         batchHeader: batchHeader,
         signatoryRecordHash: 0x9c2295a45e69a5369008e65fa2afc40eccb8e8be2f453998207e9b0a8d3bc72b,
-        confirmationBlockNumber: 1_325_845
+        confirmationBlockNumber: 1325845
     });
 
     EigenDARollupUtils.BlobVerificationProof blobVerificationProof = EigenDARollupUtils
@@ -667,20 +667,20 @@ contract SequencerInboxTest is Test {
 
         seqInbox.addSequencerL2BatchFromEigenDA(
             sequenceNumber,
+            blobVerificationProof,
+            blobHeader,
             delayedMessagesRead,
             IGasRefunder(address(0)),
             subMessageCount,
-            subMessageCount + 1,
-            blobHeader,
-            blobVerificationProof
+            subMessageCount + 1
         );
     }
 
     // TODO: put these in jsons later
     // create illegal commitment
     BN254.G1Point illegalCommitment = BN254.G1Point({
-        X: 11_151_623_676_041_303_181_597_631_684_634_074_376_466_382_703_418_354_161_831_688_442_589_830_350_329,
-        Y: 4_222_041_728_992_406_478_862_708_226_745_479_381_252_734_858_741_080_790_666_424_175_645_694_456_140
+        X: 11151623676041303181597631684634074376466382703418354161831688442589830350329,
+        Y: 4222041728992406478862708226745479381252734858741080790666424175645694456140
     });
 
     IEigenDAServiceManager.BlobHeader illegalBlobHeader;
@@ -739,12 +739,12 @@ contract SequencerInboxTest is Test {
         vm.expectRevert();
         seqInbox.addSequencerL2BatchFromEigenDA(
             sequenceNumber,
+            illegalBlobVerificationProof,
+            illegalBlobHeader,
             delayedMessagesRead,
             IGasRefunder(address(0)),
             subMessageCount,
-            subMessageCount + 1,
-            illegalBlobHeader,
-            illegalBlobVerificationProof
+            subMessageCount + 1
         );
     }
 

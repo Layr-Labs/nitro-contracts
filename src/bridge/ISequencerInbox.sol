@@ -192,12 +192,12 @@ interface ISequencerInbox is IDelayedMessageProvider {
 
     function addSequencerL2BatchFromEigenDA(
         uint256 sequenceNumber,
+        EigenDARollupUtils.BlobVerificationProof calldata blobVerificationProof,
+        IEigenDAServiceManager.BlobHeader calldata blobHeader,
         uint256 afterDelayedMessagesRead,
         IGasRefunder gasRefunder,
         uint256 prevMessageCount,
-        uint256 newMessageCount,
-        IEigenDAServiceManager.BlobHeader calldata blobHeader,
-        EigenDARollupUtils.BlobVerificationProof calldata blobVerificationProof
+        uint256 newMessageCount
     ) external;
 
     // ---------- onlyRollupOrOwner functions ----------
