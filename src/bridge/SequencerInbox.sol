@@ -213,24 +213,6 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         _setMaxTimeVariation(maxTimeVariation_);
     }
 
-    /// @inheritdoc ISequencerInbox
-    function updateRollupAddress() external {
-        if (msg.sender != IOwnable(rollup).owner()) {
-            revert NotOwner(msg.sender, IOwnable(rollup).owner());
-        }
-        IOwnable newRollup = bridge.rollup();
-        if (rollup == newRollup) revert RollupNotChanged();
-        rollup = newRollup;
-    }
-
-    /// @inheritdoc ISequencerInbox
-    function updateEigenDAServiceManager(address newEigenDAServiceManager) external {
-        if (msg.sender != IOwnable(rollup).owner()) {
-            revert NotOwner(msg.sender, IOwnable(rollup).owner());
-        }
-        eigenDAServiceManager = IEigenDAServiceManager(newEigenDAServiceManager);
-    }
-
     function getTimeBounds() internal view virtual returns (IBridge.TimeBounds memory) {
         IBridge.TimeBounds memory bounds;
         (uint64 delayBlocks_, uint64 futureBlocks_, uint64 delaySeconds_, uint64 futureSeconds_) =
@@ -797,6 +779,26 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     function setBatchPosterManager(address newBatchPosterManager) external onlyRollupOwner {
         batchPosterManager = newBatchPosterManager;
         emit OwnerFunctionCalled(5);
+    }
+
+        /// @inheritdoc ISequencerInbox
+    function updateRollupAddress() external {
+        if (msg.sender != IOwnable(rollup).owner()) {
+            revert NotOwner(msg.sender, IOwnable(rollup).owner());
+        }
+        IOwnable newRollup = bridge.rollup();
+        if (rollup == newRollup) revert RollupNotChanged();
+        rollup = newRollup;
+        emit OwnerFunctionCalled(6);
+    }
+
+    /// @inheritdoc ISequencerInbox
+    function updateEigenDAServiceManager(address newEigenDAServiceManager) external {
+        if (msg.sender != IOwnable(rollup).owner()) {
+            revert NotOwner(msg.sender, IOwnable(rollup).owner());
+        }
+        eigenDAServiceManager = IEigenDAServiceManager(newEigenDAServiceManager);
+        emit OwnerFunctionCalled(7);
     }
 
     function isValidKeysetHash(bytes32 ksHash) external view returns (bool) {
