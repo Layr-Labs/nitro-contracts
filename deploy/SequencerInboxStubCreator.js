@@ -15,6 +15,19 @@ module.exports = async hre => {
     delaySeconds: 10000,
     futureSeconds: 10000,
   }
+
+  const eigenDAServiceManager = await ethers.getContract('EigenDAServiceManagerStub')
+
+//   constructor(
+//     IBridge bridge_,
+//     address sequencer_,
+//     ISequencerInbox.MaxTimeVariation memory maxTimeVariation_,
+//     uint256 maxDataSize_,
+//     IReader4844 reader4844_,
+//     IEigenDAServiceManager eigenDAServiceManager_,
+//     bool isUsingFeeToken_
+// )
+
   await deploy('SequencerInboxStub', {
     from: deployer,
     args: [
@@ -23,10 +36,11 @@ module.exports = async hre => {
       maxTime,
       117964,
       reader4844.address,
+      eigenDAServiceManager.address,
       false,
     ],
   })
 }
 
 module.exports.tags = ['SequencerInboxStub', 'test']
-module.exports.dependencies = ['BridgeStub']
+module.exports.dependencies = ['BridgeStub', 'EigenDAServiceManagerStub']
