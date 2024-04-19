@@ -80,6 +80,9 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     /// @inheritdoc ISequencerInbox
     bytes1 public constant ZERO_HEAVY_MESSAGE_HEADER_FLAG = 0x20;
 
+    /// @inheritdoc ISequencerInbox
+    bytes1 public constant EIGENDA_MESSAGE_HEADER_FLAG = 0xed;
+
     // GAS_PER_BLOB from EIP-4844
     uint256 internal constant GAS_PER_BLOB = 1 << 17;
 
@@ -561,7 +564,8 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
             headerByte == BROTLI_MESSAGE_HEADER_FLAG ||
             headerByte == DAS_MESSAGE_HEADER_FLAG ||
             (headerByte == (DAS_MESSAGE_HEADER_FLAG | TREE_DAS_MESSAGE_HEADER_FLAG)) ||
-            headerByte == ZERO_HEAVY_MESSAGE_HEADER_FLAG;
+            headerByte == ZERO_HEAVY_MESSAGE_HEADER_FLAG ||
+            headerByte == EIGENDA_MESSAGE_HEADER_FLAG;
     }
 
     /// @dev    Form a hash of the data taken from the calldata
@@ -592,7 +596,8 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
             // das batches expect to have the type byte set, followed by the keyset (so they should have at least 33 bytes)
             // if invalid data is supplied here the state transition function will process it as an empty block
             // however we can provide a nice additional check here for the batch poster
-            if (data[0] & DAS_MESSAGE_HEADER_FLAG != 0 && data.length >= 33) {
+            // ignore if the first byte is 0xed, as that is the eigenDA message flag
+            if (data[0] != EIGENDA_MESSAGE_HEADER_FLAG && (data[0] & DAS_MESSAGE_HEADER_FLAG != 0) && data.length >= 33) {
                 // we skip the first byte, then read the next 32 bytes for the keyset
                 bytes32 dasKeysetHash = bytes32(data[1:33]);
                 if (!dasKeySetInfo[dasKeysetHash].isValidKeyset) revert NoSuchKeyset(dasKeysetHash);
