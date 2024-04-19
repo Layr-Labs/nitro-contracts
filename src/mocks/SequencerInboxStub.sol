@@ -8,6 +8,8 @@ import "../bridge/SequencerInbox.sol";
 import "../bridge/IEthBridge.sol";
 import {INITIALIZATION_MSG_TYPE} from "../libraries/MessageTypes.sol";
 
+import {IEigenDAServiceManager} from "@eigenda/eigenda-utils/interfaces/IEigenDAServiceManager.sol";
+
 contract SequencerInboxStub is SequencerInbox {
     constructor(
         IBridge bridge_,
@@ -15,8 +17,9 @@ contract SequencerInboxStub is SequencerInbox {
         ISequencerInbox.MaxTimeVariation memory maxTimeVariation_,
         uint256 maxDataSize_,
         IReader4844 reader4844_,
+        IEigenDAServiceManager eigenDAServiceManager_,
         bool isUsingFeeToken_
-    ) SequencerInbox(maxDataSize_, reader4844_, isUsingFeeToken_) {
+    ) SequencerInbox(maxDataSize_, reader4844_, eigenDAServiceManager_, isUsingFeeToken_) {
         bridge = bridge_;
         rollup = IOwnable(msg.sender);
         delayBlocks = uint64(maxTimeVariation_.delayBlocks);
@@ -29,19 +32,13 @@ contract SequencerInboxStub is SequencerInbox {
     function addInitMessage(uint256 chainId) external {
         bytes memory initMsg = abi.encodePacked(chainId);
         uint256 num = IEthBridge(address(bridge)).enqueueDelayedMessage(
-            INITIALIZATION_MSG_TYPE,
-            address(0),
-            keccak256(initMsg)
+            INITIALIZATION_MSG_TYPE, address(0), keccak256(initMsg)
         );
         require(num == 0, "ALREADY_DELAYED_INIT");
         emit InboxMessageDelivered(num, initMsg);
         (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) = formEmptyDataHash(1);
-        (
-            uint256 sequencerMessageCount,
-            bytes32 beforeAcc,
-            bytes32 delayedAcc,
-            bytes32 afterAcc
-        ) = addSequencerL2BatchImpl(dataHash, 1, 0, 0, 1);
+        (uint256 sequencerMessageCount, bytes32 beforeAcc, bytes32 delayedAcc, bytes32 afterAcc) =
+            addSequencerL2BatchImpl(dataHash, 1, 0, 0, 1);
         require(sequencerMessageCount == 0, "ALREADY_SEQ_INIT");
         emit SequencerBatchDelivered(
             sequencerMessageCount,

@@ -185,6 +185,9 @@ error MissingDataHashes();
 /// @dev Thrown when rollup is not updated with updateRollupAddress
 error RollupNotChanged();
 
+/// @dev Thrown when the eigenDAServiceManager address is not changed
+error EigenDAServiceManagerNotChanged();
+
 /// @dev Unsupported header flag was provided
 error InvalidHeaderFlag(bytes1);
 
