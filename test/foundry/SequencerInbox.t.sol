@@ -214,7 +214,7 @@ contract SequencerInboxTest is Test {
         );
     }
 
-    bytes eigenDABiggerData =
+    bytes eigenDAData =
         hex"ed4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a";
 
     function testAddSequencerL2BatchFromOrigin_EigenDaHeader() public {
@@ -222,7 +222,7 @@ contract SequencerInboxTest is Test {
         address delayedInboxSender = address(140);
         uint8 delayedInboxKind = 3;
         bytes32 messageDataHash = RAND.Bytes32();
-        bytes memory data = eigenDABiggerData; // ed is BROTLI_MESSAGE_HEADER_FLAG
+        bytes memory data = eigenDAData; // ed is EIGENDA_MESSAGE_HEADER_FLAG
 
         vm.prank(dummyInbox);
         bridge.enqueueDelayedMessage(delayedInboxKind, delayedInboxSender, messageDataHash);
