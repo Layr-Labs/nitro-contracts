@@ -12,6 +12,8 @@ import "./IOneStepProver.sol";
 import "../bridge/Messages.sol";
 import "../bridge/IBridge.sol";
 
+import {BN254} from "eigenlayer-middleware/libraries/BN254.sol";
+
 contract OneStepProverHostIo is IOneStepProver {
     using GlobalStateLib for GlobalState;
     using MerkleProofLib for MerkleProof;
@@ -231,6 +233,36 @@ contract OneStepProverHostIo is IOneStepProver {
 
                 extracted = kzgProof[64:96];
             }
+        } else if (inst.argumentData == 3) {
+            // The machine is asking for a EigenDA versioned hash preimage
+
+            require(proofType == 1, "UNKNOWN_PREIMAGE_PROOF");
+
+            bytes calldata kzgProof = proof[proofOffset:];
+
+            // NOTE we are expecting the following layout for our proof data, similar
+            // to that expected for the point evaluation precompile
+            // [:32] - versionhash (eigenlayer)
+            // [32:64] - evaluation point
+            // [64:96] - expected output
+            // [96:160] - kzg commitment (g1 point)
+            // [160:224] - proof (g1 point)
+
+
+            // ecpect first 32 bytes of proof to be the expected version hash
+            require(bytes32(kzgProof[:32]) == leafContents, "KZG_PROOF_WRONG_HASH");
+
+            // expec
+
+
+
+
+
+
+
+
+
+
         } else {
             revert("UNKNOWN_PREIMAGE_TYPE");
         }
@@ -446,5 +478,57 @@ contract OneStepProverHostIo is IOneStepProver {
         }
 
         impl(execCtx, mach, mod, inst, proof);
+    }
+
+    // these r standin values
+    BN254.G2Point internal G2_TAU; 
+    
+    // = BN254.G2Point{
+    //     X: [BN254.FR_MODULUS, BN254.FR_MODULUS],
+    //     Y: [BN254.FR_MODULUS, BN254.FR_MODULUS]
+    // };
+
+    //TODO: move this toa eigenDA utils thing
+    function verifyEigenDACommitment(
+        BN254.G1Point memory _commitment,
+        BN254.G1Point memory _proof,
+        uint256 _evaluationPoint,
+        uint256 _expectedOutput
+    ) public view returns (bool) {
+        // need to have each element less than modulus for underlying F_r field
+        require(_commitment.X < BN254.FR_MODULUS, "COMMIT_X_LARGER_THAN_FIELD");
+        require(_commitment.Y < BN254.FR_MODULUS, "COMMIT_Y_LARGER_THAN_FIELD");
+
+        require(_proof.X < BN254.FR_MODULUS, "PROOF_X_LARGER_THAN_FIELD");
+        require(_proof.Y < BN254.FR_MODULUS, "PROOF_Y_LARGER_THAN_FIELD");
+
+        // see: https://github.com/bxue-l2/eigenda/blob/a88ad0662a18f2139f9d288d5e667d00a89e26b9/encoding/utils/openCommitment/open_commitment.go#L63
+
+        // var valueG1 bn254.G1Affine
+	    // var valueBig big.Int
+	    // valueG1.ScalarMultiplication(&G1Gen, valueFr.BigInt(&valueBig))
+        BN254.G1Point memory valueG1 = BN254.scalar_mul(BN254.generatorG1(), _evaluationPoint);
+
+	    // var commitMinusValue bn254.G1Affine
+	    // commitMinusValue.Sub(&commitment, &valueG1)
+        BN254.G1Point memory commitMinusValue = BN254.plus(_commitment, BN254.negate(valueG1));
+
+	    // Negate proof
+        BN254.G1Point memory negProof = BN254.negate(_proof);
+
+        // multiply the proof by the evaluation point
+        BN254.G1Point memory evalPointMulProof = BN254.scalar_mul(_proof, _evaluationPoint);
+
+        // Compute index * proof
+        BN254.G1Point memory indexMulProof = BN254.scalar_mul(_proof, _evaluationPoint);
+
+        // Returns true if and only if
+        //e((evaluationPoint * proof) + (commitMinusValu), g2Generator) * e(-proof, g2_TAU) == 1
+        return BN254.pairing(
+            BN254.plus(indexMulProof, commitMinusValue),
+            BN254.generatorG2(),
+            negProof,
+            G2_TAU
+        );
     }
 }
