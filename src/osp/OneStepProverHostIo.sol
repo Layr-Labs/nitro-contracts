@@ -122,6 +122,13 @@ contract OneStepProverHostIo is IOneStepProver {
         return uint256(bytes32(modExpOutput));
     }
 
+
+    uint256 internal constant BN_254_PRIMITIVE_ROOT_OF_UNITY =
+        19103219067921713944291392827692070036145651957329286315305642004821462161904;
+
+    // see: https://github.com/Layr-Labs/eigenda/blob/master/disperser/apiserver/server.go#L35
+    uint256 internal constant eigenDAMaxFieldElementsPerBlob = (2 * 1024 * 1024) / 32;
+
     function executeReadPreImage(
         ExecutionContext calldata,
         Machine memory mach,
@@ -253,25 +260,56 @@ contract OneStepProverHostIo is IOneStepProver {
             require(bytes32(kzgProof[:32]) == leafContents, "KZG_PROOF_WRONG_HASH");
 
             // evaluation point
-            uint256 evaluationPoint = uint256(kzgProof[32:64]);
+            uint256 evaluationPoint = uint256(bytes32(kzgProof[32:64]));
 
             // expected output
-            uint256 expectedOutput = uint256(kzgProof[64:96]);
+            uint256 expectedOutput = uint256(bytes32(kzgProof[64:96]));
 
             // KZG commitment
-            BN254.G1Point memory kzgCommitment = BN254.G1Point{
-                X: [kzgProof[96:128]],
-                Y: [kzgProof[128:160]]
-            };
+            BN254.G1Point memory kzgCommitment = BN254.G1Point(
+                uint256(bytes32(kzgProof[96:128])),
+                uint256(bytes32(kzgProof[128:160]))
+            );
 
             // proof
-            BN254.G1Point memory proof = BN254.G1Point{
-                X: [kzgProof[160:192]],
-                Y: [kzgProof[192:224]]
-            }; 
+            BN254.G1Point memory eigenDAProof = BN254.G1Point(
+                uint256(bytes32(kzgProof[160:192])),
+                uint256(bytes32(kzgProof[192:224]))
+            ); 
 
             // must be valid proof
-            require(verifyEigenDACommitment(kzgCommitment, proof, evaluationPoint, expectedOutput), "INVALID_KZG_PROOF");
+            require(verifyEigenDACommitment(kzgCommitment, eigenDAProof, evaluationPoint, expectedOutput), "INVALID_KZG_PROOF");
+
+
+            // If preimageOffset is greater than or equal to the blob size, leave extracted empty and call it here.
+            if (preimageOffset < eigenDAMaxFieldElementsPerBlob * 32) {
+                // We need to compute what point the polynomial should be evaluated at to get the right part of the preimage.
+                // KZG commitments use a bit reversal permutation to order the roots of unity.
+                // To account for that, we reverse the bit order of the index.
+                uint256 bitReversedIndex = 0;
+                // preimageOffset was required to be 32 byte aligned above
+                uint256 tmp = preimageOffset / 32;
+                for (uint256 i = 1; i < eigenDAMaxFieldElementsPerBlob; i <<= 1) {
+                    bitReversedIndex <<= 1;
+                    if (tmp & 1 == 1) {
+                        bitReversedIndex |= 1;
+                    }
+                    tmp >>= 1;
+                }
+
+                // First, we get the root of unity of order 2**fieldElementsPerBlob.
+                // We start with a root of unity of order 2**32 and then raise it to
+                // the power of (2**32)/fieldElementsPerBlob to get root of unity we need.
+                uint256 rootOfUnityPower = (1 << 32) / eigenDAMaxFieldElementsPerBlob;
+                // Then, we raise the root of unity to the power of bitReversedIndex,
+                // to retrieve this word of the KZG commitment.
+                rootOfUnityPower *= bitReversedIndex;
+                // z is the point the polynomial is evaluated at to retrieve this word of data
+                uint256 z = modExp256(BN_254_PRIMITIVE_ROOT_OF_UNITY, rootOfUnityPower, BN254.FR_MODULUS);
+                require(bytes32(kzgProof[32:64]) == bytes32(z), "KZG_PROOF_WRONG_Z");
+
+                extracted = kzgProof[64:96];
+            }
 
         } else {
             revert("UNKNOWN_PREIMAGE_TYPE");
@@ -513,6 +551,7 @@ contract OneStepProverHostIo is IOneStepProver {
         require(_proof.Y < BN254.FR_MODULUS, "PROOF_Y_LARGER_THAN_FIELD");
 
         // see: https://github.com/bxue-l2/eigenda/blob/a88ad0662a18f2139f9d288d5e667d00a89e26b9/encoding/utils/openCommitment/open_commitment.go#L63
+        //  and https://ethresear.ch/t/a-minimum-viable-kzg-polynomial-commitment-scheme-implementation/7675
 
         // var valueG1 bn254.G1Affine
 	    // var valueBig big.Int
