@@ -259,26 +259,29 @@ contract OneStepProverHostIo is IOneStepProver {
             // expect first 32 bytes of proof to be the expected version hash
             require(bytes32(kzgProof[:32]) == leafContents, "KZG_PROOF_WRONG_HASH");
 
-            // evaluation point
-            uint256 evaluationPoint = uint256(bytes32(kzgProof[32:64]));
+            {
+                // evaluation point
+                uint256 evaluationPoint = uint256(bytes32(kzgProof[32:64]));
 
-            // expected output
-            uint256 expectedOutput = uint256(bytes32(kzgProof[64:96]));
+                // expected output
+                uint256 expectedOutput = uint256(bytes32(kzgProof[64:96]));
+            
 
-            // KZG commitment
-            BN254.G1Point memory kzgCommitment = BN254.G1Point(
-                uint256(bytes32(kzgProof[96:128])),
-                uint256(bytes32(kzgProof[128:160]))
-            );
+                // KZG commitment
+                BN254.G1Point memory kzgCommitment = BN254.G1Point(
+                    uint256(bytes32(kzgProof[96:128])),
+                    uint256(bytes32(kzgProof[128:160]))
+                );
 
-            // proof
-            BN254.G1Point memory eigenDAProof = BN254.G1Point(
-                uint256(bytes32(kzgProof[160:192])),
-                uint256(bytes32(kzgProof[192:224]))
-            ); 
+                // proof
+                BN254.G1Point memory eigenDAProof = BN254.G1Point(
+                    uint256(bytes32(kzgProof[160:192])),
+                    uint256(bytes32(kzgProof[192:224]))
+                ); 
 
-            // must be valid proof
-            require(verifyEigenDACommitment(kzgCommitment, eigenDAProof, evaluationPoint, expectedOutput), "INVALID_KZG_PROOF");
+                // must be valid proof
+                require(verifyEigenDACommitment(kzgCommitment, eigenDAProof, uint256(bytes32(kzgProof[32:64])), uint256(bytes32(kzgProof[64:96]))), "INVALID_KZG_PROOF");
+            }
 
 
             // If preimageOffset is greater than or equal to the blob size, leave extracted empty and call it here.
@@ -568,13 +571,11 @@ contract OneStepProverHostIo is IOneStepProver {
         // multiply the proof by the evaluation point
         BN254.G1Point memory evalPointMulProof = BN254.scalar_mul(_proof, _evaluationPoint);
 
-        // Compute index * proof
-        BN254.G1Point memory indexMulProof = BN254.scalar_mul(_proof, _evaluationPoint);
 
         // Returns true if and only if
         //e((evaluationPoint * proof) + (commitMinusValu), g2Generator) * e(-proof, g2_TAU) == 1
         return BN254.pairing(
-            BN254.plus(indexMulProof, commitMinusValue),
+            BN254.plus(evalPointMulProof, commitMinusValue),
             BN254.generatorG2(),
             negProof,
             G2_TAU
