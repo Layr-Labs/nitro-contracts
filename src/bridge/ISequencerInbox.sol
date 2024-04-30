@@ -10,6 +10,9 @@ import "../libraries/IGasRefunder.sol";
 import "./IDelayedMessageProvider.sol";
 import "./IBridge.sol";
 
+import {EigenDARollupUtils} from "eigenda/contracts/libraries/EigenDARollupUtils.sol";
+import {IEigenDAServiceManager} from "eigenda/contracts/interfaces/IEigenDAServiceManager.sol";
+
 interface ISequencerInbox is IDelayedMessageProvider {
     struct MaxTimeVariation {
         uint256 delayBlocks;
@@ -185,6 +188,16 @@ interface ISequencerInbox is IDelayedMessageProvider {
         uint256 newMessageCount
     ) external;
 
+    function addSequencerL2BatchFromEigenDA(
+        uint256 sequenceNumber,
+        EigenDARollupUtils.BlobVerificationProof calldata blobVerificationProof,
+        IEigenDAServiceManager.BlobHeader calldata blobHeader,
+        uint256 afterDelayedMessagesRead,
+        IGasRefunder gasRefunder,
+        uint256 prevMessageCount,
+        uint256 newMessageCount
+    ) external;
+
     // ---------- onlyRollupOrOwner functions ----------
 
     /**
@@ -228,6 +241,9 @@ interface ISequencerInbox is IDelayedMessageProvider {
 
     /// @notice Allows the rollup owner to sync the rollup address
     function updateRollupAddress() external;
+
+    /// @notice Allows the rollup owner to update the eigenDAServiceManager address
+    function updateEigenDAServiceManager(address newEigenDAServiceManager) external;
 
     // ---------- initializer ----------
 

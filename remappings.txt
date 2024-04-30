@@ -3,3 +3,7 @@ forge-std/=lib/forge-std/src/
 
 @openzeppelin/contracts/=node_modules/@openzeppelin/contracts/
 @openzeppelin/contracts-upgradeable/=node_modules/@openzeppelin/contracts-upgradeable/
+eigenda/contracts/=lib/eigenda/contracts/src
+eigenlayer-middleware/=lib/eigenda/contracts/lib/eigenlayer-middleware/src/
+eigenlayer-core/=lib/eigenda/contracts/lib/eigenlayer-middleware/lib/eigenlayer-contracts/src/
+

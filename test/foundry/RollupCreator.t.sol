@@ -28,6 +28,7 @@ contract RollupCreatorTest is Test {
     IRollupUser public rollupUser;
     DeployHelper public deployHelper;
     IReader4844 dummyReader4844 = IReader4844(address(137));
+    IEigenDAServiceManager dummyEigenDAServiceManager = IEigenDAServiceManager(address(138));
 
     // 1 gwei
     uint256 public constant MAX_FEE_PER_GAS = 1_000_000_000;
@@ -36,7 +37,7 @@ contract RollupCreatorTest is Test {
     BridgeCreator.BridgeContracts public ethBasedTemplates =
         BridgeCreator.BridgeContracts({
             bridge: new Bridge(),
-            sequencerInbox: new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, false),
+            sequencerInbox: new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, dummyEigenDAServiceManager, false),
             inbox: new Inbox(MAX_DATA_SIZE),
             rollupEventInbox: new RollupEventInbox(),
             outbox: new Outbox()
@@ -44,7 +45,7 @@ contract RollupCreatorTest is Test {
     BridgeCreator.BridgeContracts public erc20BasedTemplates =
         BridgeCreator.BridgeContracts({
             bridge: new ERC20Bridge(),
-            sequencerInbox: new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, true),
+            sequencerInbox: new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, dummyEigenDAServiceManager, true),
             inbox: new ERC20Inbox(MAX_DATA_SIZE),
             rollupEventInbox: new ERC20RollupEventInbox(),
             outbox: new ERC20Outbox()
