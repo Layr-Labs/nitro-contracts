@@ -782,10 +782,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     }
 
         /// @inheritdoc ISequencerInbox
-    function updateRollupAddress() external {
-        if (msg.sender != IOwnable(rollup).owner()) {
-            revert NotOwner(msg.sender, IOwnable(rollup).owner());
-        }
+    function updateRollupAddress() external onlyRollupOwner {
         IOwnable newRollup = bridge.rollup();
         if (rollup == newRollup) revert RollupNotChanged();
         rollup = newRollup;
@@ -793,12 +790,9 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     }
 
     /// @inheritdoc ISequencerInbox
-    function updateEigenDAServiceManager(address newEigenDAServiceManager) external {
-        if (msg.sender != IOwnable(rollup).owner()) {
-            revert NotOwner(msg.sender, IOwnable(rollup).owner());
-        }
+    function updateEigenDAServiceManager(address newEigenDAServiceManager) external onlyRollupOwner {
         eigenDAServiceManager = IEigenDAServiceManager(newEigenDAServiceManager);
-        emit OwnerFunctionCalled(7);
+        emit OwnerFunctionCalled(31);
     }
 
     function isValidKeysetHash(bytes32 ksHash) external view returns (bool) {

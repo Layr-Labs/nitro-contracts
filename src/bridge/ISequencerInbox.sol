@@ -46,8 +46,6 @@ interface ISequencerInbox is IDelayedMessageProvider {
 
     function bridge() external view returns (IBridge);
 
-    //function eigenDAManager() external view returns (address);
-
     /// @dev The size of the batch header
     // solhint-disable-next-line func-name-mixedcase
     function HEADER_LENGTH() external view returns (uint256);

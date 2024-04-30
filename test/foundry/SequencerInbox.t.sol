@@ -268,7 +268,7 @@ contract SequencerInboxTest is Test {
         // set 60 gwei basefee
         uint256 basefee = 60000000000;
         vm.fee(basefee);
-        expectEvents(bridge, seqInbox, data, false, false);
+        expectEvents(bridge, seqInbox, data, false, false, true);
 
         vm.prank(tx.origin);
         seqInbox.addSequencerL2BatchFromOrigin(
