@@ -251,6 +251,7 @@ contract SequencerInboxTest is Test {
     bytes eigenDAData =
         hex"ed4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a";
 
+    // note that this test is for continuted compatibility with the m0 arbitrum integration.
     function testAddSequencerL2BatchFromOrigin_EigenDaHeader() public {
         (SequencerInbox seqInbox, Bridge bridge) = deployRollup(false);
         address delayedInboxSender = address(140);
@@ -268,7 +269,7 @@ contract SequencerInboxTest is Test {
         // set 60 gwei basefee
         uint256 basefee = 60000000000;
         vm.fee(basefee);
-        expectEvents(bridge, seqInbox, data, false, false, true);
+        expectEvents(bridge, seqInbox, data, false, false, false);
 
         vm.prank(tx.origin);
         seqInbox.addSequencerL2BatchFromOrigin(
