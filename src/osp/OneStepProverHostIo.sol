@@ -249,19 +249,29 @@ contract OneStepProverHostIo is IOneStepProver {
             // [160:224] - proof (g1 point)
 
 
-            // ecpect first 32 bytes of proof to be the expected version hash
+            // expect first 32 bytes of proof to be the expected version hash
             require(bytes32(kzgProof[:32]) == leafContents, "KZG_PROOF_WRONG_HASH");
 
-            // expec
+            // evaluation point
+            uint256 evaluationPoint = uint256(kzgProof[32:64]);
 
+            // expected output
+            uint256 expectedOutput = uint256(kzgProof[64:96]);
 
+            // KZG commitment
+            BN254.G1Point memory kzgCommitment = BN254.G1Point{
+                X: [kzgProof[96:128]],
+                Y: [kzgProof[128:160]]
+            };
 
+            // proof
+            BN254.G1Point memory proof = BN254.G1Point{
+                X: [kzgProof[160:192]],
+                Y: [kzgProof[192:224]]
+            }; 
 
-
-
-
-
-
+            // must be valid proof
+            require(verifyEigenDACommitment(kzgCommitment, proof, evaluationPoint, expectedOutput), "INVALID_KZG_PROOF");
 
         } else {
             revert("UNKNOWN_PREIMAGE_TYPE");
