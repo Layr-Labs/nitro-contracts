@@ -531,13 +531,11 @@ contract OneStepProverHostIo is IOneStepProver {
         impl(execCtx, mach, mod, inst, proof);
     }
 
-    // these r standin values
-    BN254.G2Point internal G2_TAU; 
-    
-    // = BN254.G2Point{
-    //     X: [BN254.FR_MODULUS, BN254.FR_MODULUS],
-    //     Y: [BN254.FR_MODULUS, BN254.FR_MODULUS]
-    // };
+    // G2_SRS_1
+    BN254.G2Point internal G2_TAU = BN254.G2Point{
+        X: [18029695676650738226693292988307914797657423701064905010927197838374790804409, 14583779054894525174450323658765874724019480979794335525732096752006891875705],
+        Y: [2140229616977736810657479771656733941598412651537078903776637920509952744750, 11474861747383700316476719153975578001603231366361248090558603872215261634898]
+    };
 
     //TODO: move this toa eigenDA utils thing
     function verifyEigenDACommitment(
@@ -556,12 +554,9 @@ contract OneStepProverHostIo is IOneStepProver {
         // see: https://github.com/bxue-l2/eigenda/blob/a88ad0662a18f2139f9d288d5e667d00a89e26b9/encoding/utils/openCommitment/open_commitment.go#L63
         //  and https://ethresear.ch/t/a-minimum-viable-kzg-polynomial-commitment-scheme-implementation/7675
 
-        // var valueG1 bn254.G1Affine
-	    // var valueBig big.Int
 	    // valueG1.ScalarMultiplication(&G1Gen, valueFr.BigInt(&valueBig))
         BN254.G1Point memory valueG1 = BN254.scalar_mul(BN254.generatorG1(), _evaluationPoint);
 
-	    // var commitMinusValue bn254.G1Affine
 	    // commitMinusValue.Sub(&commitment, &valueG1)
         BN254.G1Point memory commitMinusValue = BN254.plus(_commitment, BN254.negate(valueG1));
 
@@ -571,9 +566,8 @@ contract OneStepProverHostIo is IOneStepProver {
         // multiply the proof by the evaluation point
         BN254.G1Point memory evalPointMulProof = BN254.scalar_mul(_proof, _evaluationPoint);
 
-
         // Returns true if and only if
-        //e((evaluationPoint * proof) + (commitMinusValu), g2Generator) * e(-proof, g2_TAU) == 1
+        //e(evalPointMulProof + commitMinusValue, g2Generator) * e(-proof, g2_TAU) == 1
         return BN254.pairing(
             BN254.plus(evalPointMulProof, commitMinusValue),
             BN254.generatorG2(),
