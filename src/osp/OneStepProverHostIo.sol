@@ -531,11 +531,19 @@ contract OneStepProverHostIo is IOneStepProver {
         impl(execCtx, mach, mod, inst, proof);
     }
 
+
     // G2_SRS_1
-    BN254.G2Point internal G2_TAU = BN254.G2Point{
-        X: [18029695676650738226693292988307914797657423701064905010927197838374790804409, 14583779054894525174450323658765874724019480979794335525732096752006891875705],
-        Y: [2140229616977736810657479771656733941598412651537078903776637920509952744750, 11474861747383700316476719153975578001603231366361248090558603872215261634898]
-    };
+    uint256 internal constant G2Taux1 = 14583779054894525174450323658765874724019480979794335525732096752006891875705;
+    uint256 internal constant G2Taux0 = 18029695676650738226693292988307914797657423701064905010927197838374790804409;
+    uint256 internal constant G2Tauy1 = 11474861747383700316476719153975578001603231366361248090558603872215261634898;
+    uint256 internal constant G2Tauy0 = 2140229616977736810657479771656733941598412651537078903776637920509952744750;
+
+    function g2Tau() internal view returns (BN254.G2Point memory) {
+        return BN254.G2Point({
+            X: [G2Taux1, G2Taux0],
+            Y: [G2Tauy1, G2Tauy0]
+        });
+    }
 
     //TODO: move this toa eigenDA utils thing
     function verifyEigenDACommitment(
@@ -555,7 +563,7 @@ contract OneStepProverHostIo is IOneStepProver {
         //  and https://ethresear.ch/t/a-minimum-viable-kzg-polynomial-commitment-scheme-implementation/7675
 
 	    // valueG1.ScalarMultiplication(&G1Gen, valueFr.BigInt(&valueBig))
-        BN254.G1Point memory valueG1 = BN254.scalar_mul(BN254.generatorG1(), _evaluationPoint);
+        BN254.G1Point memory valueG1 = BN254.scalar_mul(BN254.generatorG1(), _expectedOutput);
 
 	    // commitMinusValue.Sub(&commitment, &valueG1)
         BN254.G1Point memory commitMinusValue = BN254.plus(_commitment, BN254.negate(valueG1));
@@ -572,7 +580,7 @@ contract OneStepProverHostIo is IOneStepProver {
             BN254.plus(evalPointMulProof, commitMinusValue),
             BN254.generatorG2(),
             negProof,
-            G2_TAU
+            g2Tau()
         );
     }
 }
