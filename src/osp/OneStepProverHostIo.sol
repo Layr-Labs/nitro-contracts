@@ -252,9 +252,9 @@ contract OneStepProverHostIo is IOneStepProver {
             // [:32] - versionhash (eigenlayer)
             // [32:64] - evaluation point
             // [64:96] - expected output
-            // [96:160] - kzg commitment (g1 point)
-            // [160:224] - proof (g1 point)
-
+            // [96:224] - g2TauMinusG2z
+            // [224:288] - kzg commitment (g1 point)
+            // [288:352] - proof (g1 point)
 
             // expect first 32 bytes of proof to be the expected version hash
             require(bytes32(kzgProof[:32]) == leafContents, "KZG_PROOF_WRONG_HASH");
@@ -265,22 +265,20 @@ contract OneStepProverHostIo is IOneStepProver {
 
                 // expected output
                 uint256 expectedOutput = uint256(bytes32(kzgProof[64:96]));
+
+                BN254.G2Point memory g2TauMinusG2z = BN254.G2Point({
+                    X: [uint256(bytes32(kzgProof[96:128])), uint256(bytes32(kzgProof[128:160]))],
+                    Y: [uint256(bytes32(kzgProof[160:192])), uint256(bytes32(kzgProof[192:224]))]
+                });
+
+                BN254.G1Point memory kzgCommitment =
+                    BN254.G1Point(uint256(bytes32(kzgProof[224:256])), uint256(bytes32(kzgProof[256:288])));
+
+                BN254.G1Point memory eigenDAKZGProof =
+                    BN254.G1Point(uint256(bytes32(kzgProof[288:320])), uint256(bytes32(kzgProof[320:352])));
             
-
-                // KZG commitment
-                BN254.G1Point memory kzgCommitment = BN254.G1Point(
-                    uint256(bytes32(kzgProof[96:128])),
-                    uint256(bytes32(kzgProof[128:160]))
-                );
-
-                // proof
-                BN254.G1Point memory eigenDAProof = BN254.G1Point(
-                    uint256(bytes32(kzgProof[160:192])),
-                    uint256(bytes32(kzgProof[192:224]))
-                ); 
-
                 // must be valid proof
-                require(verifyEigenDACommitment(kzgCommitment, eigenDAProof, uint256(bytes32(kzgProof[32:64])), uint256(bytes32(kzgProof[64:96]))), "INVALID_KZG_PROOF");
+                require(verifyEigenDACommitment(kzgCommitment, eigenDAKZGProof, g2TauMinusG2z, evaluationPoint, expectedOutput), "INVALID_KZG_PROOF");
             }
 
 
@@ -292,6 +290,7 @@ contract OneStepProverHostIo is IOneStepProver {
                 uint256 bitReversedIndex = 0;
                 // preimageOffset was required to be 32 byte aligned above
                 uint256 tmp = preimageOffset / 32;
+                // instead of eigenDAMaxFieldElementsPerBlob should be number of field elements in OUR blob
                 for (uint256 i = 1; i < eigenDAMaxFieldElementsPerBlob; i <<= 1) {
                     bitReversedIndex <<= 1;
                     if (tmp & 1 == 1) {
@@ -533,10 +532,12 @@ contract OneStepProverHostIo is IOneStepProver {
 
 
     // G2_SRS_1
-    uint256 internal constant G2Taux1 = 14583779054894525174450323658765874724019480979794335525732096752006891875705;
-    uint256 internal constant G2Taux0 = 18029695676650738226693292988307914797657423701064905010927197838374790804409;
-    uint256 internal constant G2Tauy1 = 11474861747383700316476719153975578001603231366361248090558603872215261634898;
-    uint256 internal constant G2Tauy0 = 2140229616977736810657479771656733941598412651537078903776637920509952744750;
+
+    //note might be useful to give back to the bn library
+    uint256 internal constant G2Taux1 = 21039730876973405969844107393779063362038454413254731404052240341412356318284;
+    uint256 internal constant G2Taux0 = 7912312892787135728292535536655271843828059318189722219035249994421084560563;
+    uint256 internal constant G2Tauy1 = 7586489485579523767759120334904353546627445333297951253230866312564920951171;
+    uint256 internal constant G2Tauy0 = 18697407556011630376420900106252341752488547575648825575049647403852275261247;
 
     function g2Tau() internal view returns (BN254.G2Point memory) {
         return BN254.G2Point({
@@ -549,8 +550,9 @@ contract OneStepProverHostIo is IOneStepProver {
     function verifyEigenDACommitment(
         BN254.G1Point memory _commitment,
         BN254.G1Point memory _proof,
-        uint256 _evaluationPoint,
-        uint256 _expectedOutput
+        BN254.G2Point memory _g2TauMinusZCommitG2,
+        uint256 _index,
+        uint256 _value
     ) public view returns (bool) {
         // need to have each element less than modulus for underlying F_r field
         require(_commitment.X < BN254.FR_MODULUS, "COMMIT_X_LARGER_THAN_FIELD");
@@ -560,27 +562,57 @@ contract OneStepProverHostIo is IOneStepProver {
         require(_proof.Y < BN254.FR_MODULUS, "PROOF_Y_LARGER_THAN_FIELD");
 
         // see: https://github.com/bxue-l2/eigenda/blob/a88ad0662a18f2139f9d288d5e667d00a89e26b9/encoding/utils/openCommitment/open_commitment.go#L63
-        //  and https://ethresear.ch/t/a-minimum-viable-kzg-polynomial-commitment-scheme-implementation/7675
+        // and https://ethresear.ch/t/a-minimum-viable-kzg-polynomial-commitment-scheme-implementation/7675
 
-	    // valueG1.ScalarMultiplication(&G1Gen, valueFr.BigInt(&valueBig))
-        BN254.G1Point memory valueG1 = BN254.scalar_mul(BN254.generatorG1(), _expectedOutput);
+        	// var valueG1 bn254.G1Affine
+	        // var valueBig big.Int
+	        // valueG1.ScalarMultiplication(&G1Gen, valueFr.BigInt(&valueBig))
+        BN254.G1Point memory valueG1 = BN254.scalar_mul(BN254.generatorG1(), _value);
 
-	    // commitMinusValue.Sub(&commitment, &valueG1)
-        BN254.G1Point memory commitMinusValue = BN254.plus(_commitment, BN254.negate(valueG1));
+	        // var commitMinusValue bn254.G1Affine
+	        // commitMinusValue.Sub(&commitment, &valueG1)
 
-	    // Negate proof
-        BN254.G1Point memory negProof = BN254.negate(_proof);
+        BN254.G1Point memory commitmentMinusValue = BN254.plus(_commitment, BN254.negate(valueG1));
 
-        // multiply the proof by the evaluation point
-        BN254.G1Point memory evalPointMulProof = BN254.scalar_mul(_proof, _evaluationPoint);
+        //console.log("commitmentMinusValue: %s", commitmentMinusValue);
 
-        // Returns true if and only if
-        //e(evalPointMulProof + commitMinusValue, g2Generator) * e(-proof, g2_TAU) == 1
+	        // var zG2 bn254.G2Affine
+	        // zG2.ScalarMultiplication(&G2Gen, zFr.BigInt(&valueBig))
+
+	        // var xMinusZ bn254.G2Affine
+	        // xMinusZ.Sub(&G2tau, &zG2)
+
         return BN254.pairing(
-            BN254.plus(evalPointMulProof, commitMinusValue),
+            commitmentMinusValue,
             BN254.generatorG2(),
-            negProof,
-            g2Tau()
+            BN254.negate(_proof),
+            _g2TauMinusZCommitG2
         );
+
+
+
+	    // return PairingsVerify(&commitMinusValue, &G2Gen, &proof, &xMinusZ)
+
+        // BN254.G1Point memory commitmentMinusA = BN254.plus(
+        //     _commitment,
+        //     BN254.negate(
+        //         BN254.scalar_mul(BN254.generatorG1(), _value)
+        //     )
+        // );
+
+        //         // Negate the proof
+        // BN254.G1Point memory negProof = BN254.negate(_proof);
+
+        // // Compute index * proof
+        // BN254.G1Point memory indexMulProof = BN254.scalar_mul(_proof, _index);
+
+        // // Returns true if and only if
+        // // e((index * proof) + (commitment - aCommitment), G2.g) * e(-proof, xCommit) == 1
+        // return BN254.pairing(
+        //     BN254.plus(indexMulProof, commitmentMinusA),
+        //     BN254.generatorG2(),
+        //     negProof,
+        //     g2Tau()
+        // );
     }
 }
