@@ -27,6 +27,7 @@ import {
   Inbox__factory,
   MessageTester,
   RollupMock__factory,
+  EigenDAServiceManagerStub__factory,
   SequencerInbox,
   SequencerInbox__factory,
   TransparentUpgradeableProxy__factory,
@@ -226,19 +227,42 @@ describe('SequencerInboxForceInclude', async () => {
     const rollupOwner = accounts[3]
     const batchPoster = accounts[4]
     // const batchPosterManager = accounts[5]
+    const dummyAVSContract= accounts[6]
+    const dummyAVSContractAddress = await dummyAVSContract.getAddress()
 
     const rollupMockFac = (await ethers.getContractFactory(
       'RollupMock'
     )) as RollupMock__factory
     const rollup = await rollupMockFac.deploy(await rollupOwner.getAddress())
 
+    const EigenDARollupUtils = await ethers.getContractFactory("EigenDARollupUtils");
+    const eigenDARollupUtils = await EigenDARollupUtils.deploy();
+    await eigenDARollupUtils.deployed();
+
+    const EigenDAServiceManagerStub = await ethers.getContractFactory("EigenDAServiceManagerStub");
+
+    const eigenDAServiceManagerStub = await EigenDAServiceManagerStub.deploy(
+      dummyAVSContractAddress,
+      dummyAVSContractAddress,
+      dummyAVSContractAddress,
+      dummyAVSContractAddress,
+      dummyAVSContractAddress,
+      0,
+      adminAddr,
+      [adminAddr]
+    );
+    await eigenDAServiceManagerStub.deployed();
+
     const reader4844 = await Toolkit4844.deployReader4844(admin)
-    const sequencerInboxFac = (await ethers.getContractFactory(
-      'SequencerInbox'
-    )) as SequencerInbox__factory
+    const sequencerInboxFac = await ethers.getContractFactory("SequencerInbox", {
+      libraries: {
+          EigenDARollupUtils: eigenDARollupUtils.address
+      }
+    }) as SequencerInbox__factory
     const seqInboxTemplate = await sequencerInboxFac.deploy(
       117964,
       reader4844.address,
+      eigenDAServiceManagerStub.address,
       false
     )
     const inboxFac = (await ethers.getContractFactory(

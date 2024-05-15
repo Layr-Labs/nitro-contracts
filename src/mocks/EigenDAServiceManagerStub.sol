@@ -26,11 +26,5 @@ contract EigenDAServiceManagerStub is EigenDAServiceManager {
         __registryCoordinator,
         __stakeRegistry
     ) {
-        initialize(
-            _pauserRegistry,
-            _initialPausedStatus,
-            _initialOwner,
-            _batchConfirmers
-        );
     }
 }

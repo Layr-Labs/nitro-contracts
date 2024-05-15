@@ -14,4 +14,4 @@ module.exports = async hre => {
 }
 
 module.exports.tags = ['SequencerInbox']
-module.exports.dependencies = []
+module.exports.dependencies = ['EigenDARollupUtils']
