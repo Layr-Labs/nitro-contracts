@@ -81,6 +81,11 @@
   dependencies:
     "@cspotcode/source-map-consumer" "0.8.0"
 
+"@eigenda/eigenda-utils@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@eigenda/eigenda-utils/-/eigenda-utils-1.0.1.tgz#8c15121f04d841b50439f753b8118616c08c63a3"
+  integrity sha512-Rz9Mt1++3kcW9h9Dxb67ycP09dsBt63W1qsw7WVygOS5k+M1v00oh2FOhFgNlY9N9y1vSnsoYZDrYb6H9ZmXLA==
+
 "@ensdomains/ens@^0.4.4":
   version "0.4.5"
   resolved "https://registry.yarnpkg.com/@ensdomains/ens/-/ens-0.4.5.tgz#e0aebc005afdc066447c6e22feb4eda89a5edbfc"

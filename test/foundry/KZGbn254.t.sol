@@ -4,7 +4,7 @@ pragma solidity ^0.8.12;
 import "../../src/osp/OneStepProverHostIo.sol";
 import "forge-std/Test.sol";
 
-import {BN254} from "eigenlayer-middleware/libraries/BN254.sol";
+import {BN254} from "@eigenda/eigenda-utils/libraries/BN254.sol";
 
 contract VerifyCommitentTest is Test {
     OneStepProverHostIo public osp;

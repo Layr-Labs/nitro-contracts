@@ -42,6 +42,7 @@
     "deploy-erc20-rollup": "hardhat run scripts/createERC20Rollup.ts"
   },
   "dependencies": {
+    "@eigenda/eigenda-utils": "^1.0.1",
     "@offchainlabs/upgrade-executor": "1.1.0-beta.0",
     "@openzeppelin/contracts": "4.5.0",
     "@openzeppelin/contracts-upgradeable": "4.5.2",
