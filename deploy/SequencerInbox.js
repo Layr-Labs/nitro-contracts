@@ -6,7 +6,11 @@ module.exports = async hre => {
   const blobBasefeeReader = await ethers.getContract('BlobBasefeeReader')
   const dataHashReader = await ethers.getContract('DataHashReader')
 
-  await deploy('SequencerInbox', { from: deployer, args: [117964] })
+  const EigenDARollupUtils = await ethers.getContract('EigenDARollupUtils')
+
+
+
+  await deploy('SequencerInbox', { from: deployer, args: [117964], libraries: { EigenDARollupUtils: EigenDARollupUtils.address } })
 }
 
 module.exports.tags = ['SequencerInbox']
