@@ -8,9 +8,9 @@ import "../../src/bridge/SequencerInbox.sol";
 import {ERC20Bridge} from "../../src/bridge/ERC20Bridge.sol";
 import "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol";
 
-import {EigenDARollupUtils} from "eigenda/contracts/libraries/EigenDARollupUtils.sol";
-import {IEigenDAServiceManager} from "eigenda/contracts/interfaces/IEigenDAServiceManager.sol";
-import {BN254} from "eigenlayer-middleware/libraries/BN254.sol";
+import {EigenDARollupUtils} from "@eigenda/eigenda-utils/libraries/EigenDARollupUtils.sol";
+import {IEigenDAServiceManager} from "@eigenda/eigenda-utils/interfaces/IEigenDAServiceManager.sol";
+import {BN254} from "@eigenda/eigenda-utils/libraries/BN254.sol";
 
 contract RollupMock {
     address public immutable owner;

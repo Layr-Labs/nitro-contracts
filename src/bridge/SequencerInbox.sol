@@ -47,8 +47,8 @@ import {GasRefundEnabled} from "../libraries/GasRefundEnabled.sol";
 import "../libraries/ArbitrumChecker.sol";
 import {IERC20Bridge} from "./IERC20Bridge.sol";
 
-import {EigenDARollupUtils} from "eigenda/contracts/libraries/EigenDARollupUtils.sol";
-import {IEigenDAServiceManager} from "eigenda/contracts/interfaces/IEigenDAServiceManager.sol";
+import {EigenDARollupUtils} from "@eigenda/eigenda-utils/libraries/EigenDARollupUtils.sol";
+import {IEigenDAServiceManager} from "@eigenda/eigenda-utils/interfaces/IEigenDAServiceManager.sol";
 
 /**
  * @title  Accepts batches from the sequencer and adds them to the rollup inbox.
