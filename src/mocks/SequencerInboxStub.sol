@@ -9,6 +9,7 @@ import "../bridge/IEthBridge.sol";
 import {INITIALIZATION_MSG_TYPE} from "../libraries/MessageTypes.sol";
 
 import {IEigenDAServiceManager} from "@eigenda/eigenda-utils/interfaces/IEigenDAServiceManager.sol";
+import {IRollupManager} from "../bridge/RollupManager.sol";
 
 contract SequencerInboxStub is SequencerInbox {
     constructor(
@@ -18,8 +19,10 @@ contract SequencerInboxStub is SequencerInbox {
         uint256 maxDataSize_,
         IReader4844 reader4844_,
         IEigenDAServiceManager eigenDAServiceManager_,
+        IRollupManager eigenDARollupManager_,
+
         bool isUsingFeeToken_
-    ) SequencerInbox(maxDataSize_, reader4844_, eigenDAServiceManager_, isUsingFeeToken_) {
+    ) SequencerInbox(maxDataSize_, reader4844_, eigenDAServiceManager_, eigenDARollupManager_, isUsingFeeToken_) {
         bridge = bridge_;
         rollup = IOwnable(msg.sender);
         delayBlocks = uint64(maxTimeVariation_.delayBlocks);
