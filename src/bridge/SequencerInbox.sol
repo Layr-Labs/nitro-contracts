@@ -47,7 +47,7 @@ import {GasRefundEnabled} from "../libraries/GasRefundEnabled.sol";
 import "../libraries/ArbitrumChecker.sol";
 import {IERC20Bridge} from "./IERC20Bridge.sol";
 
-import {EigenDARollupUtils} from "@eigenda/eigenda-utils/libraries/EigenDARollupUtils.sol";
+import {IRollupManager} from "./RollupManager.sol";
 import {IEigenDAServiceManager} from "@eigenda/eigenda-utils/interfaces/IEigenDAServiceManager.sol";
 
 /**
@@ -63,6 +63,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     IBridge public bridge;
 
     IEigenDAServiceManager public eigenDAServiceManager;
+    IRollupManager public eigenDARollupManager;
 
     /// @inheritdoc ISequencerInbox
     uint256 public constant HEADER_LENGTH = 40;
@@ -139,6 +140,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         uint256 _maxDataSize,
         IReader4844 reader4844_,
         IEigenDAServiceManager eigenDAServiceManager_,
+        IRollupManager eigenDARollupManager_,
         bool _isUsingFeeToken
     ) {
         maxDataSize = _maxDataSize;
@@ -149,6 +151,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         }
         reader4844 = reader4844_;
         eigenDAServiceManager = eigenDAServiceManager_;
+        eigenDARollupManager = eigenDARollupManager_;
         isUsingFeeToken = _isUsingFeeToken;
     }
 
@@ -422,7 +425,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
 
         // verify that the blob was actually included before continuing
-        EigenDARollupUtils.verifyBlob(blobHeader, eigenDAServiceManager, blobVerificationProof);
+        eigenDARollupManager.verifyBlob(blobHeader, eigenDAServiceManager, blobVerificationProof);
 
         // NOTE: to retrieve need the following
         // see: https://github.com/Layr-Labs/eigenda/blob/master/api/docs/retriever.md#blobrequest
