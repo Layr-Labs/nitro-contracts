@@ -15,11 +15,12 @@ contract BridgeCreatorTest is Test {
     uint256 public constant MAX_DATA_SIZE = 117_964;
     IReader4844 dummyReader4844 = IReader4844(address(137));
     IEigenDAServiceManager dummyEigenDAServiceManager = IEigenDAServiceManager(address(138));
+    IRollupManager rollupManager = IRollupManager(address(139));
 
     BridgeCreator.BridgeContracts ethBasedTemplates =
         BridgeCreator.BridgeContracts({
             bridge: new Bridge(),
-            sequencerInbox: new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, dummyEigenDAServiceManager, false),
+            sequencerInbox: new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, dummyEigenDAServiceManager, rollupManager, false),
             inbox: new Inbox(MAX_DATA_SIZE),
             rollupEventInbox: new RollupEventInbox(),
             outbox: new Outbox()
@@ -27,7 +28,7 @@ contract BridgeCreatorTest is Test {
     BridgeCreator.BridgeContracts erc20BasedTemplates =
         BridgeCreator.BridgeContracts({
             bridge: new ERC20Bridge(),
-            sequencerInbox: new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, dummyEigenDAServiceManager, true),
+            sequencerInbox: new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, dummyEigenDAServiceManager, rollupManager, true),
             inbox: new ERC20Inbox(MAX_DATA_SIZE),
             rollupEventInbox: new ERC20RollupEventInbox(),
             outbox: new ERC20Outbox()

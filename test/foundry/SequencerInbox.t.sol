@@ -57,6 +57,7 @@ contract SequencerInboxTest is Test {
     address proxyAdmin = address(140);
     IReader4844 dummyReader4844 = IReader4844(address(137));
     IEigenDAServiceManager dummyEigenDAServiceManager = IEigenDAServiceManager(address(138));
+    IRollupManager rollupManager = IRollupManager(address(139));
 
     uint256 public constant MAX_DATA_SIZE = 117_964;
 
@@ -74,6 +75,7 @@ contract SequencerInboxTest is Test {
             maxDataSize,
             isArbHosted ? IReader4844(address(0)) : dummyReader4844,
             dummyEigenDAServiceManager,
+            rollupManager,
             false
         );
         SequencerInbox seqInbox = SequencerInbox(
@@ -109,7 +111,7 @@ contract SequencerInboxTest is Test {
             abi.encode(uint256(11))
         );
         SequencerInbox seqInboxImpl = new SequencerInbox(
-            maxDataSize, IReader4844(address(0)), dummyEigenDAServiceManager, true
+            maxDataSize, IReader4844(address(0)), dummyEigenDAServiceManager, rollupManager, true
         );
         SequencerInbox seqInbox = SequencerInbox(
             address(new TransparentUpgradeableProxy(address(seqInboxImpl), proxyAdmin, ""))
@@ -354,7 +356,7 @@ contract SequencerInboxTest is Test {
     /* solhint-disable func-name-mixedcase */
     function testConstructor() public {
         SequencerInbox seqInboxLogic =
-            new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, dummyEigenDAServiceManager, false);
+            new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, dummyEigenDAServiceManager, rollupManager, false);
         assertEq(seqInboxLogic.maxDataSize(), MAX_DATA_SIZE, "Invalid MAX_DATA_SIZE");
         assertEq(seqInboxLogic.isUsingFeeToken(), false, "Invalid isUsingFeeToken");
 
@@ -363,7 +365,7 @@ contract SequencerInboxTest is Test {
         assertEq(seqInboxProxy.isUsingFeeToken(), false, "Invalid isUsingFeeToken");
 
         SequencerInbox seqInboxLogicFeeToken =
-            new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, dummyEigenDAServiceManager, true);
+            new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, dummyEigenDAServiceManager, rollupManager, true);
         assertEq(seqInboxLogicFeeToken.maxDataSize(), MAX_DATA_SIZE, "Invalid MAX_DATA_SIZE");
         assertEq(seqInboxLogicFeeToken.isUsingFeeToken(), true, "Invalid isUsingFeeToken");
 
@@ -379,7 +381,7 @@ contract SequencerInboxTest is Test {
         _bridge.initialize(IOwnable(address(new RollupMock(rollupOwner))));
 
         address seqInboxLogic = address(
-            new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, dummyEigenDAServiceManager, false)
+            new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, dummyEigenDAServiceManager, rollupManager, false)
         );
         SequencerInbox seqInboxProxy = SequencerInbox(TestUtil.deployProxy(seqInboxLogic));
         seqInboxProxy.initialize(IBridge(_bridge), maxTimeVariation);
@@ -397,7 +399,7 @@ contract SequencerInboxTest is Test {
         _bridge.initialize(IOwnable(address(new RollupMock(rollupOwner))), nativeToken);
 
         address seqInboxLogic = address(
-            new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, dummyEigenDAServiceManager, true)
+            new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, dummyEigenDAServiceManager, rollupManager, true)
         );
         SequencerInbox seqInboxProxy = SequencerInbox(TestUtil.deployProxy(seqInboxLogic));
         seqInboxProxy.initialize(IBridge(_bridge), maxTimeVariation);
@@ -413,7 +415,7 @@ contract SequencerInboxTest is Test {
         _bridge.initialize(IOwnable(address(new RollupMock(rollupOwner))));
 
         address seqInboxLogic = address(
-            new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, dummyEigenDAServiceManager, true)
+            new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, dummyEigenDAServiceManager, rollupManager, true)
         );
         SequencerInbox seqInboxProxy = SequencerInbox(TestUtil.deployProxy(seqInboxLogic));
 
@@ -429,7 +431,7 @@ contract SequencerInboxTest is Test {
         _bridge.initialize(IOwnable(address(new RollupMock(rollupOwner))), nativeToken);
 
         address seqInboxLogic = address(
-            new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, dummyEigenDAServiceManager, false)
+            new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, dummyEigenDAServiceManager, rollupManager, false)
         );
         SequencerInbox seqInboxProxy = SequencerInbox(TestUtil.deployProxy(seqInboxLogic));
 
@@ -752,7 +754,7 @@ contract SequencerInboxTest is Test {
     function testPostUpgradeInitAlreadyInit() public returns (SequencerInbox, SequencerInbox) {
         (SequencerInbox seqInbox,) = deployRollup(false);
         SequencerInbox seqInboxImpl =
-            new SequencerInbox(maxDataSize, dummyReader4844, dummyEigenDAServiceManager, false);
+            new SequencerInbox(maxDataSize, dummyReader4844, dummyEigenDAServiceManager, rollupManager, false);
 
         vm.expectRevert(abi.encodeWithSelector(AlreadyInit.selector));
         vm.prank(proxyAdmin);
