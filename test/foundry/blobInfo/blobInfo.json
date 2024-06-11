@@ -1,0 +1,44 @@
+{
+  "request_id": "303534656465633164303231316636323466656430636263613964346639343030623065343931633433373432616632633562306162656266306339393064382d33313337333133383331333333303339333533313336333733313333333933303330333333373266333032663333333332663331326633333333326665336230633434323938666331633134396166626634633839393666623932343237616534316534363439623933346361343935393931623738353262383535",
+  "blob_info": {
+    "blob_header": {
+      "commitment": {
+        "x": "0x278a3fd705f7af609df05a835e19dbaf4ffb739ab046b9ed5611318fac7e36bd",
+        "y": "0x1807884a3d61612f244b436cf5d038a83b5a465562aa155ee291302968de104f"
+      },
+      "data_length": 1,
+      "blob_quorum_params": [
+        {
+          "quorum_number": 0,
+          "adversary_threshold_percentage": 33,
+          "confirmation_threshold_percentage": 55,
+          "chunk_length": 1
+        },
+        {
+          "quorum_number": 1,
+          "adversary_threshold_percentage": 33,
+          "confirmation_threshold_percentage": 55,
+          "chunk_length": 1
+        }
+      ]
+    },
+    "blob_verification_proof": {
+      "batch_id": 18782,
+      "blob_index": 1078,
+      "batch_metadata": {
+        "batch_header": {
+          "batch_root": "0x6c97bb63dcab3ce68ed6bcf43aaa9526d77f4c16a132f754909d291ec7ecc5fa",
+          "quorum_numbers": "0x0001",
+          "quorum_signed_percentages": "0x5d5f",
+          "reference_block_number": 1716391
+        },
+        "signatory_record_hash": "0x27675411031ec867b25300f5c97a99c462b9c7780bdde40d9d2623b5c5264b7e",
+        "fee": "0x00",
+        "confirmation_block_number": 1716521,
+        "batch_header_hash": "0x41032605efd3fd1da443b4478a8067d41d1647ac32f26b5a0450a96282ed85b6"
+      },
+      "inclusion_proof": "0x67d74b70e5ea162cac407eae686ab953c940e6f8d38ea3fc82fde2a3ac1c53c7248c3426c33bdc43a937028ffc079eca518569ee0276ee71f2240b5d98750c51dd38e3dc827a1ebda70b6b66d380bf6bb4572e1499ad38086d959f78b718dc85c9c70d54e7607836d37d6382d57020ba14d44ef4d6f3720622a03bb6f2635b02902939347e0eba188d807a9fe59592c54c8cb04779c5cec82eb04588172522675dd1fe5acb38390e427a0255225682039720e541956f973ec85d73b51793750246fe6a8527f7d0f1025b4b46df7c907832f33c5e2613fac20cc96e622979aa263fd2fafd915ad0b0816a388c8ca19af24a2f859dafab26251e42f4a924709e459867cc5f7f196b93bae1e27e6320742445d290f2263827498b54fec539f756afcefad4e508c098b9a7e1d8feb19955fb02ba9675585078710969d3440f5054e0e6d22dd06c098efed540bb36a5325893265de57eff4797b545dfd69c1e858731",
+      "quorum_indexes": "0x0001"
+    }
+  }
+}

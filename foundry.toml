@@ -8,6 +8,7 @@ optimizer = true
 optimizer_runs = 100
 via_ir = false
 solc_version = '0.8.12'
+fs_permissions = [{ access = "read", path = "./"}]
 
 [profile.yul]
 src = 'yul'
