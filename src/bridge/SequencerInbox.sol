@@ -50,6 +50,8 @@ import {IERC20Bridge} from "./IERC20Bridge.sol";
 import {IRollupManager} from "./RollupManager.sol";
 import {IEigenDAServiceManager} from "@eigenda/eigenda-utils/interfaces/IEigenDAServiceManager.sol";
 
+import "forge-std/console.sol";
+
 /**
  * @title  Accepts batches from the sequencer and adds them to the rollup inbox.
  * @notice Contains the inbox accumulator which is the ordering of all data and transactions to be processed by the rollup.
@@ -425,7 +427,9 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
 
         // verify that the blob was actually included before continuing
+        console.log("verifying blob");
         eigenDARollupManager.verifyBlob(blobHeader, eigenDAServiceManager, blobVerificationProof);
+        console.log("blob verified");
 
         // NOTE: to retrieve need the following
         // see: https://github.com/Layr-Labs/eigenda/blob/master/api/docs/retriever.md#blobrequest
