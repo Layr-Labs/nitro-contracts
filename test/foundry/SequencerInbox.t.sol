@@ -732,10 +732,10 @@ contract SequencerInboxTest is Test {
         );
 
         // IMPORTANT: slots have moved down by one because we have added additional variables for eigenDA
-        vm.store(address(seqInbox), bytes32(uint256(5)), bytes32(uint256(delayBlocks))); // slot 5: delayBlocks
-        vm.store(address(seqInbox), bytes32(uint256(6)), bytes32(uint256(futureBlocks))); // slot 6: futureBlocks
-        vm.store(address(seqInbox), bytes32(uint256(7)), bytes32(uint256(delaySeconds))); // slot 7: delaySeconds
-        vm.store(address(seqInbox), bytes32(uint256(8)), bytes32(uint256(futureSeconds))); // slot 8: futureSeconds
+        vm.store(address(seqInbox), bytes32(uint256(6)), bytes32(uint256(delayBlocks))); // slot 6: delayBlocks
+        vm.store(address(seqInbox), bytes32(uint256(7)), bytes32(uint256(futureBlocks))); // slot 7: futureBlocks
+        vm.store(address(seqInbox), bytes32(uint256(8)), bytes32(uint256(delaySeconds))); // slot 8: delaySeconds
+        vm.store(address(seqInbox), bytes32(uint256(9)), bytes32(uint256(futureSeconds))); // slot 9: futureSeconds
         vm.prank(proxyAdmin);
         TransparentUpgradeableProxy(payable(address(seqInbox))).upgradeToAndCall(
             address(seqInboxImpl), abi.encodeWithSelector(SequencerInbox.postUpgradeInit.selector)
