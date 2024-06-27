@@ -116,18 +116,18 @@ function parseBlobInfo(disperseBlobReply: disperser.DisperseBlobReply, blobStatu
                 blob_index: blobStatusReply.info.blob_verification_proof.blob_index,
                 batch_metadata: {
                     batch_header: {
-                        batch_root: Buffer.from(blobStatusReply.info.blob_verification_proof.batch_metadata.batch_header.batch_root).toString("hex"),
-                        quorum_numbers: Buffer.from(blobStatusReply.info.blob_verification_proof.batch_metadata.batch_header.quorum_numbers).toString("hex"),
-                        quorum_signed_percentages: Buffer.from(blobStatusReply.info.blob_verification_proof.batch_metadata.batch_header.quorum_signed_percentages).toString("hex"),
+                        batch_root: '0x' + Buffer.from(blobStatusReply.info.blob_verification_proof.batch_metadata.batch_header.batch_root).toString("hex"),
+                        quorum_numbers: '0x' + Buffer.from(blobStatusReply.info.blob_verification_proof.batch_metadata.batch_header.quorum_numbers).toString("hex"),
+                        quorum_signed_percentages: '0x' + Buffer.from(blobStatusReply.info.blob_verification_proof.batch_metadata.batch_header.quorum_signed_percentages).toString("hex"),
                         reference_block_number: blobStatusReply.info.blob_verification_proof.batch_metadata.batch_header.reference_block_number
                     },
-                    signatory_record_hash: Buffer.from(blobStatusReply.info.blob_verification_proof.batch_metadata.signatory_record_hash).toString("hex"),
-                    fee: Buffer.from(blobStatusReply.info.blob_verification_proof.batch_metadata.fee).toString("hex"),
+                    signatory_record_hash: '0x' + Buffer.from(blobStatusReply.info.blob_verification_proof.batch_metadata.signatory_record_hash).toString("hex"),
+                    fee: '0x' + Buffer.from(blobStatusReply.info.blob_verification_proof.batch_metadata.fee).toString("hex"),
                     confirmation_block_number: blobStatusReply.info.blob_verification_proof.batch_metadata.confirmation_block_number,
-                    batch_header_hash: Buffer.from(blobStatusReply.info.blob_verification_proof.batch_metadata.batch_header_hash).toString("hex")
+                    batch_header_hash: '0x' + Buffer.from(blobStatusReply.info.blob_verification_proof.batch_metadata.batch_header_hash).toString("hex")
                 },
-                inclusion_proof: Buffer.from(blobStatusReply.info.blob_verification_proof.inclusion_proof).toString("hex"),
-                quorum_indexes: Buffer.from(blobStatusReply.info.blob_verification_proof.quorum_indexes).toString("hex")
+                inclusion_proof: '0x' + Buffer.from(blobStatusReply.info.blob_verification_proof.inclusion_proof).toString("hex"),
+                quorum_indexes: '0x' + Buffer.from(blobStatusReply.info.blob_verification_proof.quorum_indexes).toString("hex")
             }
         }
     };

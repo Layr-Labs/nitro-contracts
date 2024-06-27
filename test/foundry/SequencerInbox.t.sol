@@ -10,6 +10,7 @@ import "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol"
 
 import {EigenDARollupUtils} from "@eigenda/eigenda-utils/libraries/EigenDARollupUtils.sol";
 import {IEigenDAServiceManager} from "@eigenda/eigenda-utils/interfaces/IEigenDAServiceManager.sol";
+import {EigenDARollupManager} from "../../src/bridge/RollupManager.sol";
 import {BN254} from "@eigenda/eigenda-utils/libraries/BN254.sol";
 
 contract RollupMock {
@@ -593,11 +594,16 @@ contract SequencerInboxTest is Test {
 
     function testAddSequencerL2BatchFromEigenDA() public {
 
-
+        EigenDARollupManager rollupManagerImpl = new EigenDARollupManager();
         (SequencerInbox seqInbox, Bridge bridge) = deployRollup(false);
         // update the dummyEigenDAServiceManager to use the holesky serviceManager contract
-        vm.prank(rollupOwner);
+        
+        vm.startPrank(rollupOwner);
+        // deploy rollup
+        seqInbox.updateEigenDARollupManager(address(rollupManagerImpl));
         seqInbox.updateEigenDAServiceManager(0xD4A7E1Bd8015057293f0D0A557088c286942e84b);
+        vm.stopPrank();
+
         address delayedInboxSender = address(140);
         uint8 delayedInboxKind = 3;
         bytes32 messageDataHash = RAND.Bytes32();
