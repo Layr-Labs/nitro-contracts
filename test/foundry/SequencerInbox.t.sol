@@ -615,7 +615,7 @@ contract SequencerInboxTest is Test {
 
         // ed is EIGEN_DA_MESSAGE_HEADER_FLAG rest is abi.encodePacked(blobHeader.commitment.X, blobHeader.commitment.Y, blobHeader.dataLength)
         bytes memory data =
-            hex"ed1a78ee576b0026de661b72106bf447f5bb70881f24a3fa8b1f312992c8e165970633b392b3d3f66407d912aafcc2f0231c31918f0485e8476975edc710fcb45200000001";
+            abi.encodePacked(hex"ed",blobHeader.commitment.X, blobHeader.commitment.Y, blobHeader.dataLength);
 
         uint256 subMessageCount = bridge.sequencerReportedSubMessageCount();
         uint256 sequenceNumber = bridge.sequencerMessageCount();
@@ -833,7 +833,6 @@ contract SequencerInboxTest is Test {
     function readAndParseBlobInfo() public returns (IEigenDAServiceManager.BlobHeader memory, EigenDARollupUtils.BlobVerificationProof memory) {
         string memory json = vm.readFile("test/foundry/blobInfo/blobInfo.json");
 
-
         // parse the blob header
 
         IEigenDAServiceManager.BlobHeader memory blobHeader;
@@ -846,19 +845,24 @@ contract SequencerInboxTest is Test {
         blobHeader.commitment = commitment;
         blobHeader.dataLength = uint32(uint256(vm.parseJsonInt(json, ".blob_info.blob_header.data_length")));
         
-        bytes memory quorumParams = vm.parseJson(json, ".blob_info.blob_header.quorum_blob_params");
+        //bytes memory quorumParamsBytes = vm.parseJson(json, ".blob_info.blob_header.blob_quorum_params");
 
-        for (uint256 i = 0; i < quorumParams.length; i++) {
-            IEigenDAServiceManager.QuorumBlobParam memory quorumBlobParam = IEigenDAServiceManager.QuorumBlobParam({
-                quorumNumber: uint8(uint256(vm.parseJsonInt(json, ".blob_info.blob_header.quorum_blob_params[i].quorum_number"))),
-                adversaryThresholdPercentage: uint8(uint256(vm.parseJsonInt(json, ".blob_info.blob_header.quorum_blob_params[i].adversary_threshold_percentage"))),
-                confirmationThresholdPercentage: uint8(uint256(vm.parseJsonInt(json, ".blob_info.blob_header.quorum_blob_params[i].confirmation_threshold_percentage"))),
-                chunkLength: uint32(uint256(vm.parseJsonInt(json, ".blob_info.blob_header.quorum_blob_params[i].chunk_length")))
-            });
+        // TODO: Parse these from the array, for some reason parsing them reads in the wrong order
+        IEigenDAServiceManager.QuorumBlobParam[] memory quorumParams = new IEigenDAServiceManager.QuorumBlobParam[](2);
 
-            blobHeader.quorumBlobParams[i] = quorumBlobParam;
-        }
-        
+        quorumParams[0].quorumNumber = 0;
+        quorumParams[0].adversaryThresholdPercentage = 33;
+        quorumParams[0].confirmationThresholdPercentage = 55;
+        quorumParams[0].chunkLength = 1;
+
+        quorumParams[1].quorumNumber = 1;
+        quorumParams[1].adversaryThresholdPercentage = 33;
+        quorumParams[1].confirmationThresholdPercentage = 55;
+        quorumParams[1].chunkLength = 1;
+
+        blobHeader.quorumBlobParams = quorumParams;
+
+
         // parse the blob verification proof
 
         IEigenDAServiceManager.BatchHeader memory batchHeader = IEigenDAServiceManager.BatchHeader({
@@ -882,8 +886,9 @@ contract SequencerInboxTest is Test {
             inclusionProof: vm.parseJsonBytes(json, ".blob_info.blob_verification_proof.inclusion_proof"),
             quorumIndices: vm.parseJsonBytes(json, ".blob_info.blob_verification_proof.quorum_indexes")
         });
-
+        console.logBytes32(keccak256(abi.encode(blobHeader)));
         return (blobHeader, blobVerificationProof);
+
     }
 
 
