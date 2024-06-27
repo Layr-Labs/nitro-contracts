@@ -244,6 +244,9 @@ interface ISequencerInbox is IDelayedMessageProvider {
 
     /// @notice Allows the rollup owner to update the eigenDAServiceManager address
     function updateEigenDAServiceManager(address newEigenDAServiceManager) external;
+    
+    /// @notice Allows the rollup owner to update the eigenDARollupManager address
+    function updateEigenDARollupManager(address newEigenDARollupManager) external;
 
     // ---------- initializer ----------
 

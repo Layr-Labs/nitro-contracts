@@ -802,6 +802,12 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         emit OwnerFunctionCalled(31);
     }
 
+    /// @inheritdoc ISequencerInbox
+    function updateEigenDARollupManager(address newEigenDARollupManager) external onlyRollupOwner {
+        eigenDARollupManager = IRollupManager(newEigenDARollupManager);
+        emit OwnerFunctionCalled(32);
+    }
+
     function isValidKeysetHash(bytes32 ksHash) external view returns (bool) {
         return dasKeySetInfo[ksHash].isValidKeyset;
     }
