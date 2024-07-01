@@ -193,7 +193,6 @@ interface ISequencerInbox is IDelayedMessageProvider {
         EigenDARollupUtils.BlobVerificationProof calldata blobVerificationProof,
         IEigenDAServiceManager.BlobHeader calldata blobHeader,
         uint256 afterDelayedMessagesRead,
-        IGasRefunder gasRefunder,
         uint256 prevMessageCount,
         uint256 newMessageCount
     ) external;
@@ -240,13 +239,10 @@ interface ISequencerInbox is IDelayedMessageProvider {
     function setBatchPosterManager(address newBatchPosterManager) external;
 
     /// @notice Allows the rollup owner to sync the rollup address
-    function updateRollupAddress() external;
+    // function updateRollupAddress() external;
 
     /// @notice Allows the rollup owner to update the eigenDAServiceManager address
-    function updateEigenDAServiceManager(address newEigenDAServiceManager) external;
-    
-    /// @notice Allows the rollup owner to update the eigenDARollupManager address
-    function updateEigenDARollupManager(address newEigenDARollupManager) external;
+    // function updateEigenDAServiceManager(address newEigenDAServiceManager) external;
 
     // ---------- initializer ----------
 
