@@ -63,8 +63,8 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
 
     IBridge public bridge;
 
-    IEigenDAServiceManager public eigenDAServiceManager;
-    IRollupManager public eigenDARollupManager;
+    IEigenDAServiceManager public immutable eigenDAServiceManager;
+    IRollupManager public immutable eigenDARollupManager;
 
     /// @inheritdoc ISequencerInbox
     uint256 public constant HEADER_LENGTH = 40;
@@ -413,18 +413,20 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
             submitBatchSpendingReport(dataHash, seqMessageIndex, block.basefee, blobGas);
         }
     }
+    
+
 
     function addSequencerL2BatchFromEigenDA(
         uint256 sequenceNumber,
         EigenDARollupUtils.BlobVerificationProof calldata blobVerificationProof,
         IEigenDAServiceManager.BlobHeader calldata blobHeader,
         uint256 afterDelayedMessagesRead,
-        IGasRefunder gasRefunder,
         uint256 prevMessageCount,
         uint256 newMessageCount
     ) external {
         if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
-
+    
+        // verify that the blob was actually included before continuing
         eigenDARollupManager.verifyBlob(blobHeader, eigenDAServiceManager, blobVerificationProof);
 
         // NOTE: to retrieve need the following
@@ -453,13 +455,14 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         }
 
         emit SequencerBatchDelivered(
-            _sequenceNumber,
+            seqMessageIndex,
             beforeAcc,
             afterAcc,
             delayedAcc,
             totalDelayedMessagesRead,
             timeBounds,
             IBridge.BatchDataLocation.EigenDA
+
         );
     }
 
@@ -496,6 +499,19 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
             if (seqMessageIndex != sequenceNumber_ && sequenceNumber_ != ~uint256(0)) {
                 revert BadSequencerNumber(seqMessageIndex, sequenceNumber_);
             }
+
+            /*
+        emit SequencerBatchDelivered(
+            seqMessageIndex,
+            beforeAcc,
+            afterAcc,
+            delayedAcc,
+            totalDelayedMessagesRead,
+            timeBounds,
+            IBridge.BatchDataLocation.EigenDA
+        );
+
+            */
 
             emit SequencerBatchDelivered(
                 seqMessageIndex,
@@ -784,19 +800,19 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         emit OwnerFunctionCalled(5);
     }
 
-        /// @inheritdoc ISequencerInbox
-    function updateRollupAddress() external onlyRollupOwner {
-        IOwnable newRollup = bridge.rollup();
-        if (rollup == newRollup) revert RollupNotChanged();
-        rollup = newRollup;
-        emit OwnerFunctionCalled(6);
-    }
+    //     /// @inheritdoc ISequencerInbox
+    // function updateRollupAddress() external onlyRollupOwner {
+    //     IOwnable newRollup = bridge.rollup();
+    //     if (rollup == newRollup) revert RollupNotChanged();
+    //     rollup = newRollup;
+    //     emit OwnerFunctionCalled(6);
+    // }
 
-    /// @inheritdoc ISequencerInbox
-    function updateEigenDAServiceManager(address newEigenDAServiceManager) external onlyRollupOwner {
-        eigenDAServiceManager = IEigenDAServiceManager(newEigenDAServiceManager);
-        emit OwnerFunctionCalled(31);
-    }
+    // /// @inheritdoc ISequencerInbox
+    // function updateEigenDAServiceManager(address newEigenDAServiceManager) external onlyRollupOwner {
+    //     eigenDAServiceManager = IEigenDAServiceManager(newEigenDAServiceManager);
+    //     emit OwnerFunctionCalled(31);
+    // }
 
     /// @inheritdoc ISequencerInbox
     function updateEigenDARollupManager(address newEigenDARollupManager) external onlyRollupOwner {
