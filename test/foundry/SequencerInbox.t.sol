@@ -75,8 +75,6 @@ contract SequencerInboxTest is Test {
         SequencerInbox seqInboxImpl = new SequencerInbox(
             maxDataSize,
             isArbHosted ? IReader4844(address(0)) : dummyReader4844,
-            dummyEigenDAServiceManager,
-            rollupManager,
             false
         );
         SequencerInbox seqInbox = SequencerInbox(
@@ -357,7 +355,7 @@ contract SequencerInboxTest is Test {
     /* solhint-disable func-name-mixedcase */
     function testConstructor() public {
         SequencerInbox seqInboxLogic =
-            new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, dummyEigenDAServiceManager, rollupManager, false);
+            new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, false);
         assertEq(seqInboxLogic.maxDataSize(), MAX_DATA_SIZE, "Invalid MAX_DATA_SIZE");
         assertEq(seqInboxLogic.isUsingFeeToken(), false, "Invalid isUsingFeeToken");
 
@@ -366,7 +364,7 @@ contract SequencerInboxTest is Test {
         assertEq(seqInboxProxy.isUsingFeeToken(), false, "Invalid isUsingFeeToken");
 
         SequencerInbox seqInboxLogicFeeToken =
-            new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, dummyEigenDAServiceManager, rollupManager, true);
+            new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, true);
         assertEq(seqInboxLogicFeeToken.maxDataSize(), MAX_DATA_SIZE, "Invalid MAX_DATA_SIZE");
         assertEq(seqInboxLogicFeeToken.isUsingFeeToken(), true, "Invalid isUsingFeeToken");
 
@@ -382,7 +380,7 @@ contract SequencerInboxTest is Test {
         _bridge.initialize(IOwnable(address(new RollupMock(rollupOwner))));
 
         address seqInboxLogic = address(
-            new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, dummyEigenDAServiceManager, rollupManager, false)
+            new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, false)
         );
         SequencerInbox seqInboxProxy = SequencerInbox(TestUtil.deployProxy(seqInboxLogic));
         seqInboxProxy.initialize(IBridge(_bridge), maxTimeVariation);
@@ -400,7 +398,7 @@ contract SequencerInboxTest is Test {
         _bridge.initialize(IOwnable(address(new RollupMock(rollupOwner))), nativeToken);
 
         address seqInboxLogic = address(
-            new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, dummyEigenDAServiceManager, rollupManager, true)
+            new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, true)
         );
         SequencerInbox seqInboxProxy = SequencerInbox(TestUtil.deployProxy(seqInboxLogic));
         seqInboxProxy.initialize(IBridge(_bridge), maxTimeVariation);
@@ -416,7 +414,7 @@ contract SequencerInboxTest is Test {
         _bridge.initialize(IOwnable(address(new RollupMock(rollupOwner))));
 
         address seqInboxLogic = address(
-            new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, dummyEigenDAServiceManager, rollupManager, true)
+            new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, true)
         );
         SequencerInbox seqInboxProxy = SequencerInbox(TestUtil.deployProxy(seqInboxLogic));
 
@@ -432,7 +430,7 @@ contract SequencerInboxTest is Test {
         _bridge.initialize(IOwnable(address(new RollupMock(rollupOwner))), nativeToken);
 
         address seqInboxLogic = address(
-            new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, dummyEigenDAServiceManager, rollupManager, false)
+            new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, false)
         );
         SequencerInbox seqInboxProxy = SequencerInbox(TestUtil.deployProxy(seqInboxLogic));
 
@@ -592,136 +590,134 @@ contract SequencerInboxTest is Test {
     }
 
 
-    // function testAddSequencerL2BatchFromEigenDA() public {
-    //     blobHeader.commitment = commitment;
-    //     blobHeader.dataLength = 1;
-    //     blobHeader.quorumBlobParams.push(
-    //         IEigenDAServiceManager.QuorumBlobParam({
-    //             quorumNumber: 0,
-    //             adversaryThresholdPercentage: 33,
-    //             confirmationThresholdPercentage: 55,
-    //             chunkLength: 1
-    //         })
-    //     );
-    //     blobHeader.quorumBlobParams.push(
-    //         IEigenDAServiceManager.QuorumBlobParam({
-    //             quorumNumber: 1,
-    //             adversaryThresholdPercentage: 33,
-    //             confirmationThresholdPercentage: 55,
-    //             chunkLength: 1
-    //         })
-    //     );
+    function testAddSequencerL2BatchFromEigenDA() public {
+        blobHeader.commitment = commitment;
+        blobHeader.dataLength = 1;
+        blobHeader.quorumBlobParams.push(
+            IEigenDAServiceManager.QuorumBlobParam({
+                quorumNumber: 0,
+                adversaryThresholdPercentage: 33,
+                confirmationThresholdPercentage: 55,
+                chunkLength: 1
+            })
+        );
+        blobHeader.quorumBlobParams.push(
+            IEigenDAServiceManager.QuorumBlobParam({
+                quorumNumber: 1,
+                adversaryThresholdPercentage: 33,
+                confirmationThresholdPercentage: 55,
+                chunkLength: 1
+            })
+        );
 
-    //     (SequencerInbox seqInbox, Bridge bridge) = deployRollup(false);
-    //     // update the dummyEigenDAServiceManager to use the holesky serviceManager contract
-    //     vm.prank(rollupOwner);
-    //     seqInbox.updateEigenDAServiceManager(0xD4A7E1Bd8015057293f0D0A557088c286942e84b);
-    //     address delayedInboxSender = address(140);
-    //     uint8 delayedInboxKind = 3;
-    //     bytes32 messageDataHash = RAND.Bytes32();
+        (SequencerInbox seqInbox, Bridge bridge) = deployRollup(false);
+        // update the dummyEigenDAServiceManager to use the holesky serviceManager contract
+        vm.prank(rollupOwner);
+        seqInbox.setEigenDAServiceManager(0xD4A7E1Bd8015057293f0D0A557088c286942e84b);
+        address delayedInboxSender = address(140);
+        uint8 delayedInboxKind = 3;
+        bytes32 messageDataHash = RAND.Bytes32();
 
-    //     vm.prank(dummyInbox);
-    //     bridge.enqueueDelayedMessage(delayedInboxKind, delayedInboxSender, messageDataHash);
+        vm.prank(dummyInbox);
+        bridge.enqueueDelayedMessage(delayedInboxKind, delayedInboxSender, messageDataHash);
 
-    //     // ed is EIGEN_DA_MESSAGE_HEADER_FLAG rest is abi.encodePacked(blobHeader.commitment.X, blobHeader.commitment.Y, blobHeader.dataLength)
-    //     bytes memory data =
-    //         hex"ed1a78ee576b0026de661b72106bf447f5bb70881f24a3fa8b1f312992c8e165970633b392b3d3f66407d912aafcc2f0231c31918f0485e8476975edc710fcb45200000001";
+        // ed is EIGEN_DA_MESSAGE_HEADER_FLAG rest is abi.encodePacked(blobHeader.commitment.X, blobHeader.commitment.Y, blobHeader.dataLength)
+        bytes memory data =
+            hex"ed1a78ee576b0026de661b72106bf447f5bb70881f24a3fa8b1f312992c8e165970633b392b3d3f66407d912aafcc2f0231c31918f0485e8476975edc710fcb45200000001";
 
-    //     uint256 subMessageCount = bridge.sequencerReportedSubMessageCount();
-    //     uint256 sequenceNumber = bridge.sequencerMessageCount();
-    //     uint256 delayedMessagesRead = bridge.delayedMessageCount();
+        uint256 subMessageCount = bridge.sequencerReportedSubMessageCount();
+        uint256 sequenceNumber = bridge.sequencerMessageCount();
+        uint256 delayedMessagesRead = bridge.delayedMessageCount();
 
-    //     expectEvents(bridge, seqInbox, data, false, false, true);
+        expectEvents(bridge, seqInbox, data, false, false, true);
 
-    //     vm.prank(tx.origin);
+        vm.prank(tx.origin);
 
-    //     seqInbox.addSequencerL2BatchFromEigenDA(
-    //         sequenceNumber,
-    //         blobVerificationProof,
-    //         blobHeader,
-    //         delayedMessagesRead,
-    //         IGasRefunder(address(0)),
-    //         subMessageCount,
-    //         subMessageCount + 1
-    //     );
-    // }
+        seqInbox.addSequencerL2BatchFromEigenDA(
+            sequenceNumber,
+            blobVerificationProof,
+            blobHeader,
+            delayedMessagesRead,
+            subMessageCount,
+            subMessageCount + 1
+        );
+    }
 
-    // // TODO: put these in jsons later
-    // // create illegal commitment
-    // BN254.G1Point illegalCommitment = BN254.G1Point({
-    //     X: 11151623676041303181597631684634074376466382703418354161831688442589830350329,
-    //     Y: 4222041728992406478862708226745479381252734858741080790666424175645694456140
-    // });
+    // TODO: put these in jsons later
+    // create illegal commitment
+    BN254.G1Point illegalCommitment = BN254.G1Point({
+        X: 11151623676041303181597631684634074376466382703418354161831688442589830350329,
+        Y: 4222041728992406478862708226745479381252734858741080790666424175645694456140
+    });
 
-    // IEigenDAServiceManager.BlobHeader illegalBlobHeader;
+    IEigenDAServiceManager.BlobHeader illegalBlobHeader;
 
-    // IEigenDAServiceManager.BatchHeader illegalBatchHeader = IEigenDAServiceManager.BatchHeader({
-    //     blobHeadersRoot: bytes32(0),
-    //     quorumNumbers: bytes(""),
-    //     signedStakeForQuorums: bytes(""),
-    //     referenceBlockNumber: 1
-    // });
+    IEigenDAServiceManager.BatchHeader illegalBatchHeader = IEigenDAServiceManager.BatchHeader({
+        blobHeadersRoot: bytes32(0),
+        quorumNumbers: bytes(""),
+        signedStakeForQuorums: bytes(""),
+        referenceBlockNumber: 1
+    });
 
-    // IEigenDAServiceManager.BatchMetadata illegalBatchMetadata = IEigenDAServiceManager.BatchMetadata({
-    //     batchHeader: illegalBatchHeader,
-    //     signatoryRecordHash: bytes32(0),
-    //     confirmationBlockNumber: 1
-    // });
+    IEigenDAServiceManager.BatchMetadata illegalBatchMetadata = IEigenDAServiceManager.BatchMetadata({
+        batchHeader: illegalBatchHeader,
+        signatoryRecordHash: bytes32(0),
+        confirmationBlockNumber: 1
+    });
 
-    // EigenDARollupUtils.BlobVerificationProof illegalBlobVerificationProof = EigenDARollupUtils
-    //     .BlobVerificationProof({
-    //     batchId: 1,
-    //     blobIndex: 1,
-    //     batchMetadata: illegalBatchMetadata,
-    //     inclusionProof: bytes(""),
-    //     quorumIndices: bytes("")
-    // });
+    EigenDARollupUtils.BlobVerificationProof illegalBlobVerificationProof = EigenDARollupUtils
+        .BlobVerificationProof({
+        batchId: 1,
+        blobIndex: 1,
+        batchMetadata: illegalBatchMetadata,
+        inclusionProof: bytes(""),
+        quorumIndices: bytes("")
+    });
 
-    // function testAddSequencerL2BatchFromEigenDARevert() public {
-    //     // finish filling out the illegalBlobHeader
-    //     illegalBlobHeader.commitment = illegalCommitment;
-    //     illegalBlobHeader.dataLength = 20;
-    //     illegalBlobHeader.quorumBlobParams.push(
-    //         IEigenDAServiceManager.QuorumBlobParam({
-    //             quorumNumber: uint8(1),
-    //             adversaryThresholdPercentage: uint8(1),
-    //             confirmationThresholdPercentage: uint8(1),
-    //             chunkLength: uint32(1)
-    //         })
-    //     );
+    function testAddSequencerL2BatchFromEigenDARevert() public {
+        // finish filling out the illegalBlobHeader
+        illegalBlobHeader.commitment = illegalCommitment;
+        illegalBlobHeader.dataLength = 20;
+        illegalBlobHeader.quorumBlobParams.push(
+            IEigenDAServiceManager.QuorumBlobParam({
+                quorumNumber: uint8(1),
+                adversaryThresholdPercentage: uint8(1),
+                confirmationThresholdPercentage: uint8(1),
+                chunkLength: uint32(1)
+            })
+        );
 
-    //     // change the eigenDAServiceManager to use the holesky testnet contract
-    //     (SequencerInbox seqInbox, Bridge bridge) = deployRollup(false);
-    //     address delayedInboxSender = address(140);
-    //     uint8 delayedInboxKind = 3;
-    //     bytes32 messageDataHash = RAND.Bytes32();
-    //     bytes memory data = biggerData; // 00 is BROTLI_MESSAGE_HEADER_FLAG
+        // change the eigenDAServiceManager to use the holesky testnet contract
+        (SequencerInbox seqInbox, Bridge bridge) = deployRollup(false);
+        address delayedInboxSender = address(140);
+        uint8 delayedInboxKind = 3;
+        bytes32 messageDataHash = RAND.Bytes32();
+        bytes memory data = biggerData; // 00 is BROTLI_MESSAGE_HEADER_FLAG
 
-    //     vm.prank(dummyInbox);
-    //     bridge.enqueueDelayedMessage(delayedInboxKind, delayedInboxSender, messageDataHash);
+        vm.prank(dummyInbox);
+        bridge.enqueueDelayedMessage(delayedInboxKind, delayedInboxSender, messageDataHash);
 
-    //     uint256 subMessageCount = bridge.sequencerReportedSubMessageCount();
-    //     uint256 sequenceNumber = bridge.sequencerMessageCount();
-    //     uint256 delayedMessagesRead = bridge.delayedMessageCount();
+        uint256 subMessageCount = bridge.sequencerReportedSubMessageCount();
+        uint256 sequenceNumber = bridge.sequencerMessageCount();
+        uint256 delayedMessagesRead = bridge.delayedMessageCount();
 
-    //     vm.prank(tx.origin);
+        vm.prank(tx.origin);
 
-    //     vm.expectRevert();
-    //     seqInbox.addSequencerL2BatchFromEigenDA(
-    //         sequenceNumber,
-    //         illegalBlobVerificationProof,
-    //         illegalBlobHeader,
-    //         delayedMessagesRead,
-    //         IGasRefunder(address(0)),
-    //         subMessageCount,
-    //         subMessageCount + 1
-    //     );
-    // }
+        vm.expectRevert();
+        seqInbox.addSequencerL2BatchFromEigenDA(
+            sequenceNumber,
+            illegalBlobVerificationProof,
+            illegalBlobHeader,
+            delayedMessagesRead,
+            subMessageCount,
+            subMessageCount + 1
+        );
+    }
 
     function testPostUpgradeInitAlreadyInit() public returns (SequencerInbox, SequencerInbox) {
         (SequencerInbox seqInbox,) = deployRollup(false);
         SequencerInbox seqInboxImpl =
-            new SequencerInbox(maxDataSize, dummyReader4844, dummyEigenDAServiceManager, rollupManager, false);
+            new SequencerInbox(maxDataSize, dummyReader4844, false);
 
         vm.expectRevert(abi.encodeWithSelector(AlreadyInit.selector));
         vm.prank(proxyAdmin);
