@@ -200,6 +200,24 @@ interface ISequencerInbox is IDelayedMessageProvider {
     // ---------- onlyRollupOrOwner functions ----------
 
     /**
+     * @notice Set the eigenda service manager contract
+     * @param newEigenDAServiceManager the new svc manager contract address
+     */
+    function setEigenDAServiceManager(address newEigenDAServiceManager) external;
+
+    /**
+     * @notice Set the rollup manager contract address
+     * @param newRollupManager the new rollup manager contract address
+     */
+    function setEigenDARollupManager(address newRollupManager) external;
+
+    /**
+     * @notice Set the new rollup contract address
+     */
+    function setRollupAddress() external;
+
+
+    /**
      * @notice Set max delay for sequencer inbox
      * @param maxTimeVariation_ the maximum time variation parameters
      */
