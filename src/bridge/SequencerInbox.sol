@@ -50,6 +50,7 @@ import {IERC20Bridge} from "./IERC20Bridge.sol";
 import {IRollupManager} from "./RollupManager.sol";
 import {IEigenDAServiceManager} from "@eigenda/eigenda-utils/interfaces/IEigenDAServiceManager.sol";
 
+
 /**
  * @title  Accepts batches from the sequencer and adds them to the rollup inbox.
  * @notice Contains the inbox accumulator which is the ordering of all data and transactions to be processed by the rollup.
@@ -61,6 +62,9 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     uint256 public totalDelayedMessagesRead;
 
     IBridge public bridge;
+
+    address public eigenDAServiceManager;
+    address public eigenDARollupManager;
 
     /// @inheritdoc ISequencerInbox
     uint256 public constant HEADER_LENGTH = 40;
@@ -132,9 +136,6 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     bool internal immutable hostChainIsArbitrum = ArbitrumChecker.runningOnArbitrum();
     // True if the chain this SequencerInbox is deployed on uses custom fee token
     bool public immutable isUsingFeeToken;
-
-    address public eigenDAServiceManager;
-    address public eigenDARollupManager;
 
     constructor(
         uint256 _maxDataSize,
@@ -423,6 +424,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     
         // verify that the blob was actually included before continuing
         IRollupManager(eigenDARollupManager).verifyBlob(blobHeader, IEigenDAServiceManager(eigenDAServiceManager), blobVerificationProof);
+
 
         // NOTE: to retrieve need the following
         // see: https://github.com/Layr-Labs/eigenda/blob/master/api/docs/retriever.md#blobrequest
@@ -813,6 +815,15 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     function setEigenDARollupManager(address newRollupManager) external onlyRollupOwner {
         eigenDARollupManager = newRollupManager;
         emit OwnerFunctionCalled(8);
+    }
+
+ /// @notice Allows the rollup owner to sync the rollup address
+    function updateRollupAddress() external {
+        if (msg.sender != IOwnable(rollup).owner())
+            revert NotOwner(msg.sender, IOwnable(rollup).owner());
+        IOwnable newRollup = bridge.rollup();
+        if (rollup == newRollup) revert RollupNotChanged();
+        rollup = newRollup;
     }
 
     function isValidKeysetHash(bytes32 ksHash) external view returns (bool) {

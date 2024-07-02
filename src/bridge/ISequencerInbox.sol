@@ -257,10 +257,8 @@ interface ISequencerInbox is IDelayedMessageProvider {
     function setBatchPosterManager(address newBatchPosterManager) external;
 
     /// @notice Allows the rollup owner to sync the rollup address
-    // function updateRollupAddress() external;
+    function updateRollupAddress() external;
 
-    /// @notice Allows the rollup owner to update the eigenDAServiceManager address
-    // function updateEigenDAServiceManager(address newEigenDAServiceManager) external;
 
     // ---------- initializer ----------
 
