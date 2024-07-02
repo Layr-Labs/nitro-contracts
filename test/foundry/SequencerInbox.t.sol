@@ -10,6 +10,7 @@ import "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol"
 
 import {EigenDARollupUtils} from "@eigenda/eigenda-utils/libraries/EigenDARollupUtils.sol";
 import {IEigenDAServiceManager} from "@eigenda/eigenda-utils/interfaces/IEigenDAServiceManager.sol";
+import {EigenDARollupManager} from "../../src/bridge/RollupManager.sol";
 import {BN254} from "@eigenda/eigenda-utils/libraries/BN254.sol";
 
 contract RollupMock {
@@ -590,65 +591,19 @@ contract SequencerInboxTest is Test {
         );
     }
 
-    // TODO: put these in jsons later
-    //     grpcurl \
-    //   -import-path ./api/proto \
-    //   -proto ./api/proto/disperser/disperser.proto \
-    //   -d '{"request_id": "NmQ2ODZiOWY4YzcwOGQ0YjhhNDJiN2FiOGRjYmI2MDAzOTk2NDk4NTU5Nzk0OWZkNjQ3ZGE4N2I2NDViZGUxNS0zMTM3MzEzMjM4MzQzNTMyMzgzNjMzMzkzODM5MzYzOTM3MzMzNDJmMzAyZjMzMzMyZjMxMmYzMzMzMmZlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1"}' \
-    //   disperser-holesky.eigenda.xyz:443 disperser.Disperser/GetBlobStatus
-    BN254.G1Point commitment = BN254.G1Point({
-        X: 11973800683352706081745043032492841023821816921595457420358142752350183450007,
-        Y: 2805225659489681354691976220137232537594717765057043399317547797368322962514
-    });
-
-    IEigenDAServiceManager.BlobHeader blobHeader;
-
-    IEigenDAServiceManager.BatchHeader batchHeader = IEigenDAServiceManager.BatchHeader({
-        blobHeadersRoot: 0x2f3d0afe00f1a3eccb2a77a053c9fa850d4809913ece2f6a5dcdc9ecb5347c8b,
-        quorumNumbers: hex"0001",
-        signedStakeForQuorums: hex"4d4f", // quorum_signed_percentages
-        referenceBlockNumber: 1325741
-    });
-
-    IEigenDAServiceManager.BatchMetadata batchMetadata = IEigenDAServiceManager.BatchMetadata({
-        batchHeader: batchHeader,
-        signatoryRecordHash: 0x9c2295a45e69a5369008e65fa2afc40eccb8e8be2f453998207e9b0a8d3bc72b,
-        confirmationBlockNumber: 1325845
-    });
-
-    EigenDARollupUtils.BlobVerificationProof blobVerificationProof = EigenDARollupUtils
-        .BlobVerificationProof({
-        batchId: 9869,
-        blobIndex: 570,
-        batchMetadata: batchMetadata,
-        inclusionProof: hex"86d042bea74e8fc60ce55410490d2e8bf312ff03aca9d369296d8cb25cd622096d79ebf24023971807ca680bfeac081bca250544e65147ffc0f7fdd3f3f973b885c252331c8385b767138702b5ba6155ae518fd98ebb966c5d2dfc2364ee0d49c203f38ebd01f85755bd59903ad850ea040fb94611fd554deb03c35ce43453f616866b1248350c1f1af7f3ce0f9b1beb712de850ce4e9cdfee6073fd54b8bca69011c9eca7800d59e6831f055972ae7430b8b52423cf455c2e0a3b11343890c713b16d87b5458476d589dd0f2146b14b9380f69aa8b1b546c75de4bfe925167204dd92138a76c02a4854973ed7016c6c110d41563acbc8cafefbe5d2f0ff490a83cd05a84bdfdd1542ebbbf20ca8b8968407a993919ffe5e159faf5941a95ae878a69d797b170a7a375d88b92c000c70871ae9ed5042f481743a27e97cf8665e8ebdea8f3dc226cc4c9a1cf3863ab4e60900a600fbfe5381cc0912f7aab88686",
-        quorumIndices: hex"0001"
-    });
 
     function testAddSequencerL2BatchFromEigenDA() public {
-        blobHeader.commitment = commitment;
-        blobHeader.dataLength = 1;
-        blobHeader.quorumBlobParams.push(
-            IEigenDAServiceManager.QuorumBlobParam({
-                quorumNumber: 0,
-                adversaryThresholdPercentage: 33,
-                confirmationThresholdPercentage: 55,
-                chunkLength: 1
-            })
-        );
-        blobHeader.quorumBlobParams.push(
-            IEigenDAServiceManager.QuorumBlobParam({
-                quorumNumber: 1,
-                adversaryThresholdPercentage: 33,
-                confirmationThresholdPercentage: 55,
-                chunkLength: 1
-            })
-        );
 
+        EigenDARollupManager rollupManagerImpl = new EigenDARollupManager();
         (SequencerInbox seqInbox, Bridge bridge) = deployRollup(false);
         // update the dummyEigenDAServiceManager to use the holesky serviceManager contract
-        vm.prank(rollupOwner);
+        
+        vm.startPrank(rollupOwner);
+        // deploy rollup
+        seqInbox.updateEigenDARollupManager(address(rollupManagerImpl));
         seqInbox.updateEigenDAServiceManager(0xD4A7E1Bd8015057293f0D0A557088c286942e84b);
+        vm.stopPrank();
+
         address delayedInboxSender = address(140);
         uint8 delayedInboxKind = 3;
         bytes32 messageDataHash = RAND.Bytes32();
@@ -656,9 +611,11 @@ contract SequencerInboxTest is Test {
         vm.prank(dummyInbox);
         bridge.enqueueDelayedMessage(delayedInboxKind, delayedInboxSender, messageDataHash);
 
+        (IEigenDAServiceManager.BlobHeader memory blobHeader, EigenDARollupUtils.BlobVerificationProof memory blobVerificationProof) = readAndParseBlobInfo();
+
         // ed is EIGEN_DA_MESSAGE_HEADER_FLAG rest is abi.encodePacked(blobHeader.commitment.X, blobHeader.commitment.Y, blobHeader.dataLength)
         bytes memory data =
-            hex"ed1a78ee576b0026de661b72106bf447f5bb70881f24a3fa8b1f312992c8e165970633b392b3d3f66407d912aafcc2f0231c31918f0485e8476975edc710fcb45200000001";
+            abi.encodePacked(hex"ed",blobHeader.commitment.X, blobHeader.commitment.Y, blobHeader.dataLength);
 
         uint256 subMessageCount = bridge.sequencerReportedSubMessageCount();
         uint256 sequenceNumber = bridge.sequencerMessageCount();
@@ -710,7 +667,7 @@ contract SequencerInboxTest is Test {
         quorumIndices: bytes("")
     });
 
-    function testAddSequencerL2BatchFromEigenDARevert() public {
+    function testAddSequencerL2BatchFrom() public {
         // finish filling out the illegalBlobHeader
         illegalBlobHeader.commitment = illegalCommitment;
         illegalBlobHeader.dataLength = 20;
@@ -781,10 +738,10 @@ contract SequencerInboxTest is Test {
         );
 
         // IMPORTANT: slots have moved down by one because we have added additional variables for eigenDA
-        vm.store(address(seqInbox), bytes32(uint256(5)), bytes32(uint256(delayBlocks))); // slot 5: delayBlocks
-        vm.store(address(seqInbox), bytes32(uint256(6)), bytes32(uint256(futureBlocks))); // slot 6: futureBlocks
-        vm.store(address(seqInbox), bytes32(uint256(7)), bytes32(uint256(delaySeconds))); // slot 7: delaySeconds
-        vm.store(address(seqInbox), bytes32(uint256(8)), bytes32(uint256(futureSeconds))); // slot 8: futureSeconds
+        vm.store(address(seqInbox), bytes32(uint256(6)), bytes32(uint256(delayBlocks))); // slot 6: delayBlocks
+        vm.store(address(seqInbox), bytes32(uint256(7)), bytes32(uint256(futureBlocks))); // slot 7: futureBlocks
+        vm.store(address(seqInbox), bytes32(uint256(8)), bytes32(uint256(delaySeconds))); // slot 8: delaySeconds
+        vm.store(address(seqInbox), bytes32(uint256(9)), bytes32(uint256(futureSeconds))); // slot 9: futureSeconds
         vm.prank(proxyAdmin);
         TransparentUpgradeableProxy(payable(address(seqInbox))).upgradeToAndCall(
             address(seqInboxImpl), abi.encodeWithSelector(SequencerInbox.postUpgradeInit.selector)
@@ -872,4 +829,67 @@ contract SequencerInboxTest is Test {
             })
         );
     }
+
+    function readAndParseBlobInfo() public returns (IEigenDAServiceManager.BlobHeader memory, EigenDARollupUtils.BlobVerificationProof memory) {
+        string memory json = vm.readFile("test/foundry/blobInfo/blobInfo.json");
+
+        // parse the blob header
+
+        IEigenDAServiceManager.BlobHeader memory blobHeader;
+
+        BN254.G1Point memory commitment = BN254.G1Point({
+        X:  uint256(vm.parseJsonInt(json, ".blob_info.blob_header.commitment.x")),
+        Y: uint256(vm.parseJsonInt(json, ".blob_info.blob_header.commitment.y"))
+        });
+
+        blobHeader.commitment = commitment;
+        blobHeader.dataLength = uint32(uint256(vm.parseJsonInt(json, ".blob_info.blob_header.data_length")));
+        
+        //bytes memory quorumParamsBytes = vm.parseJson(json, ".blob_info.blob_header.blob_quorum_params");
+
+        // TODO: Parse these from the array, for some reason parsing them reads in the wrong order
+        IEigenDAServiceManager.QuorumBlobParam[] memory quorumParams = new IEigenDAServiceManager.QuorumBlobParam[](2);
+
+        quorumParams[0].quorumNumber = 0;
+        quorumParams[0].adversaryThresholdPercentage = 33;
+        quorumParams[0].confirmationThresholdPercentage = 55;
+        quorumParams[0].chunkLength = 1;
+
+        quorumParams[1].quorumNumber = 1;
+        quorumParams[1].adversaryThresholdPercentage = 33;
+        quorumParams[1].confirmationThresholdPercentage = 55;
+        quorumParams[1].chunkLength = 1;
+
+        blobHeader.quorumBlobParams = quorumParams;
+
+
+        // parse the blob verification proof
+
+        IEigenDAServiceManager.BatchHeader memory batchHeader = IEigenDAServiceManager.BatchHeader({
+            blobHeadersRoot: vm.parseJsonBytes32(json, ".blob_info.blob_verification_proof.batch_metadata.batch_header.batch_root"),
+            quorumNumbers: vm.parseJsonBytes(json, ".blob_info.blob_verification_proof.batch_metadata.batch_header.quorum_numbers"),
+            signedStakeForQuorums: vm.parseJsonBytes(json, ".blob_info.blob_verification_proof.batch_metadata.batch_header.quorum_signed_percentages"),
+            referenceBlockNumber: uint32(uint256(vm.parseJsonUint(json, ".blob_info.blob_verification_proof.batch_metadata.batch_header.reference_block_number")))
+        });
+
+        IEigenDAServiceManager.BatchMetadata memory batchMetadata = IEigenDAServiceManager.BatchMetadata({
+            batchHeader: batchHeader,
+            signatoryRecordHash: vm.parseJsonBytes32(json, ".blob_info.blob_verification_proof.batch_metadata.signatory_record_hash"),
+            confirmationBlockNumber: uint32(uint256(vm.parseJsonUint(json, ".blob_info.blob_verification_proof.batch_metadata.confirmation_block_number")))
+        });
+
+        EigenDARollupUtils.BlobVerificationProof memory blobVerificationProof = EigenDARollupUtils
+            .BlobVerificationProof({
+            batchId: uint32(uint256(vm.parseJsonUint(json, ".blob_info.blob_verification_proof.batch_id"))),
+            blobIndex: uint32(uint256(vm.parseJsonUint(json, ".blob_info.blob_verification_proof.blob_index"))),
+            batchMetadata: batchMetadata,
+            inclusionProof: vm.parseJsonBytes(json, ".blob_info.blob_verification_proof.inclusion_proof"),
+            quorumIndices: vm.parseJsonBytes(json, ".blob_info.blob_verification_proof.quorum_indexes")
+        });
+        console.logBytes32(keccak256(abi.encode(blobHeader)));
+        return (blobHeader, blobVerificationProof);
+
+    }
+
+
 }
