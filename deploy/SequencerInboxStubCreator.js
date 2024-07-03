@@ -26,8 +26,6 @@ module.exports = async hre => {
       maxTime,
       117964,
       reader4844.address,
-      dummyManager.address,
-      dummyManager.address,
       false,
     ],
   })
