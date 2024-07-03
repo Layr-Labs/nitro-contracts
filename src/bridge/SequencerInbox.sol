@@ -497,19 +497,6 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
                 revert BadSequencerNumber(seqMessageIndex, sequenceNumber_);
             }
 
-            /*
-        emit SequencerBatchDelivered(
-            seqMessageIndex,
-            beforeAcc,
-            afterAcc,
-            delayedAcc,
-            totalDelayedMessagesRead,
-            timeBounds,
-            IBridge.BatchDataLocation.EigenDA
-        );
-
-            */
-
             emit SequencerBatchDelivered(
                 seqMessageIndex,
                 beforeAcc,
