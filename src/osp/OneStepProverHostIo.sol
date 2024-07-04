@@ -248,7 +248,7 @@ contract OneStepProverHostIo is IOneStepProver {
         } else if (inst.argumentData == 3) {
             // The machine is asking for a EigenDA versioned hash preimage
 
-            require(proofType == 1, "UNKNOWN_PREIMAGE_PROOF");
+            require(proofType == 0, "UNKNOWN_EIGENDA_PREIMAGE_PROOF");
 
             bytes calldata kzgProof = proof[proofOffset:];
 
