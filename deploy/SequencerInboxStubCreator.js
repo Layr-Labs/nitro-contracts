@@ -16,8 +16,6 @@ module.exports = async hre => {
     futureSeconds: 10000,
   }
 
-  const dummyManager = await ethers.getContract('EigenDADummyManager')
-
   await deploy('SequencerInboxStub', {
     from: deployer,
     args: [
@@ -32,4 +30,4 @@ module.exports = async hre => {
 }
 
 module.exports.tags = ['SequencerInboxStub', 'test']
-module.exports.dependencies = ['BridgeStub', 'EigenDADummyManager']
+module.exports.dependencies = ['BridgeStub']
