@@ -7,7 +7,15 @@ cache_path  = 'forge-cache/sol'
 optimizer = true
 optimizer_runs = 100
 via_ir = false
-solc_version = '0.8.12'
+solc_version = '0.8.9'
+remappings = ['ds-test/=lib/forge-std/lib/ds-test/src/',
+              'forge-std/=lib/forge-std/src/',
+              '@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/',
+              '@openzeppelin/contracts-upgradeable/=node_modules/@openzeppelin/contracts-upgradeable/',
+              'eigenda/contracts/=lib/eigenda/contracts/src',
+              'eigenlayer-middleware/=lib/eigenda/contracts/lib/eigenlayer-middleware/src/',
+              'eigenlayer-core/=lib/eigenda/contracts/lib/eigenlayer-middleware/lib/eigenlayer-contracts/src/'
+              ]
 fs_permissions = [{ access = "read", path = "./"}]
 
 [profile.yul]
