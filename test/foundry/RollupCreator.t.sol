@@ -38,7 +38,7 @@ contract RollupCreatorTest is Test {
     BridgeCreator.BridgeContracts public ethBasedTemplates =
         BridgeCreator.BridgeContracts({
             bridge: new Bridge(),
-            sequencerInbox: new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, dummyEigenDAServiceManager, rollupManager, false),
+            sequencerInbox: new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, false),
             inbox: new Inbox(MAX_DATA_SIZE),
             rollupEventInbox: new RollupEventInbox(),
             outbox: new Outbox()
@@ -46,7 +46,7 @@ contract RollupCreatorTest is Test {
     BridgeCreator.BridgeContracts public erc20BasedTemplates =
         BridgeCreator.BridgeContracts({
             bridge: new ERC20Bridge(),
-            sequencerInbox: new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, dummyEigenDAServiceManager, rollupManager, true),
+            sequencerInbox: new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, true),
             inbox: new ERC20Inbox(MAX_DATA_SIZE),
             rollupEventInbox: new ERC20RollupEventInbox(),
             outbox: new ERC20Outbox()
@@ -126,18 +126,23 @@ contract RollupCreatorTest is Test {
         address[] memory validators = new address[](2);
         validators[0] = makeAddr("validator1");
         validators[1] = makeAddr("validator2");
+        
+        address eigenDASvcManager = makeAddr("eigenDASvcManager");
+        address eigenDARollupManager = makeAddr("rollupManager");
 
-        RollupCreator.RollupDeploymentParams memory deployParams = RollupCreator
-            .RollupDeploymentParams({
-                config: config,
-                batchPosters: batchPosters,
-                validators: validators,
-                maxDataSize: MAX_DATA_SIZE,
-                nativeToken: address(0),
-                deployFactoriesToL2: true,
-                maxFeePerGasForRetryables: MAX_FEE_PER_GAS,
-                batchPosterManager: batchPosterManager
-            });
+        RollupCreator.RollupDeploymentParams memory deployParams = RollupCreator.RollupDeploymentParams({
+            config: config,
+            batchPosters: batchPosters,
+            validators: validators,
+            maxDataSize: MAX_DATA_SIZE,
+            nativeToken: address(0),
+            deployFactoriesToL2: true,
+            maxFeePerGasForRetryables: MAX_FEE_PER_GAS,
+            batchPosterManager: batchPosterManager,
+            eigenDAServiceManager: eigenDASvcManager,
+            eigenDARollupManager: eigenDARollupManager
+        });
+        
         address rollupAddress = rollupCreator.createRollup{value: factoryDeploymentFunds}(
             deployParams
         );
@@ -283,6 +288,9 @@ contract RollupCreatorTest is Test {
         validators[0] = makeAddr("validator1");
         validators[1] = makeAddr("validator2");
 
+        address eigenDASvcManager = makeAddr("eigenDASvcManager");
+        address eigenDARollupManager = makeAddr("rollupManager");
+
         RollupCreator.RollupDeploymentParams memory deployParams = RollupCreator
             .RollupDeploymentParams({
                 config: config,
@@ -292,7 +300,9 @@ contract RollupCreatorTest is Test {
                 nativeToken: nativeToken,
                 deployFactoriesToL2: true,
                 maxFeePerGasForRetryables: MAX_FEE_PER_GAS,
-                batchPosterManager: batchPosterManager
+                batchPosterManager: batchPosterManager,
+                eigenDAServiceManager: eigenDASvcManager,
+                eigenDARollupManager: eigenDARollupManager
             });
 
         address rollupAddress = rollupCreator.createRollup(deployParams);
@@ -435,6 +445,8 @@ contract RollupCreatorTest is Test {
         address[] memory validators = new address[](2);
         validators[0] = makeAddr("validator1");
         validators[1] = makeAddr("validator2");
+        address eigenDASvcManager = makeAddr("eigenDASvcManager");
+        address eigenDARollupManager = makeAddr("rollupManager");
 
         RollupCreator.RollupDeploymentParams memory deployParams = RollupCreator
             .RollupDeploymentParams({
@@ -445,7 +457,9 @@ contract RollupCreatorTest is Test {
                 nativeToken: address(0),
                 deployFactoriesToL2: true,
                 maxFeePerGasForRetryables: MAX_FEE_PER_GAS,
-                batchPosterManager: batchPosterManager
+                batchPosterManager: batchPosterManager,
+                eigenDAServiceManager: eigenDASvcManager,
+                eigenDARollupManager: eigenDARollupManager
             });
         address rollupAddress = rollupCreator.createRollup{value: factoryDeploymentFunds}(
             deployParams
