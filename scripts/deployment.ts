@@ -1,11 +1,7 @@
 import { ethers } from 'hardhat'
 import '@nomiclabs/hardhat-ethers'
-import { deployAllContracts, _isRunningOnArbitrum } from './deploymentUtils'
+import { deployAllContracts } from './deploymentUtils'
 import { maxDataSize } from './config'
-
-import {
-  ArbSys__factory
-} from '../build/types'
 
 async function main() {
   const [signer] = await ethers.getSigners()

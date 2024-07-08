@@ -1,5 +1,5 @@
 import { ethers } from 'hardhat'
-import { ContractFactory, Contract, Overrides, BigNumber, Wallet } from 'ethers'
+import { ContractFactory, Contract, Overrides, BigNumber } from 'ethers'
 import '@nomiclabs/hardhat-ethers'
 import { run } from 'hardhat'
 import {
@@ -247,15 +247,6 @@ export async function deployAllContracts(
     verify
   )
   const deployHelper = await deployContract('DeployHelper', signer, [], verify)
-  if (verify && !process.env.DISABLE_VERIFICATION) {
-    // Deploy RollupProxy contract only for verification, should not be used anywhere else
-    await deployContract(
-      'RollupProxy',
-      signer,
-      [],
-      verify
-    )
-  }
   return {
     bridgeCreator,
     prover0,
