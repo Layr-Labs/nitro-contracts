@@ -55,6 +55,7 @@ export async function deployContract(
   verify: boolean = true,
   overrides?: Overrides
 ): Promise<Contract> {
+  console.log("Deploying contract EigenDA x Arbitrum", contractName)
   const factory: ContractFactory = await ethers.getContractFactory(contractName)
   const connectedFactory: ContractFactory = factory.connect(signer)
 
