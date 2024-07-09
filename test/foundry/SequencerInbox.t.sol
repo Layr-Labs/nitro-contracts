@@ -612,8 +612,12 @@ contract SequencerInboxTest is Test {
 
         (SequencerInbox seqInbox, Bridge bridge) = deployRollup(false);
         // update the dummyEigenDAServiceManager to use the holesky serviceManager contract
-        vm.prank(rollupOwner);
-        seqInbox.setEigenDAServiceManager(0xD4A7E1Bd8015057293f0D0A557088c286942e84b);
+        
+        vm.startPrank(rollupOwner);
+        // deploy rollup
+        seqInbox.setEigenDARollupManager(address(rollupManagerImpl));
+        vm.stopPrank();
+
         address delayedInboxSender = address(140);
         uint8 delayedInboxKind = 3;
         bytes32 messageDataHash = RAND.Bytes32();
