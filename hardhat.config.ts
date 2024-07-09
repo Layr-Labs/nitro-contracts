@@ -5,7 +5,6 @@ import '@nomiclabs/hardhat-etherscan'
 import '@typechain/hardhat'
 import 'solidity-coverage'
 import 'hardhat-gas-reporter'
-import 'hardhat-contract-sizer'
 import 'hardhat-ignore-warnings'
 // import '@tovarishfin/hardhat-yul';
 import dotenv from 'dotenv'
@@ -15,7 +14,7 @@ dotenv.config()
 const solidity = {
   compilers: [
     {
-      version: '0.8.9',
+      version: '0.8.12',
       settings: {
         optimizer: {
           enabled: true,
@@ -24,17 +23,7 @@ const solidity = {
       },
     },
   ],
-  overrides: {
-    'src/rollup/RollupUserLogic.sol': {
-      version: '0.8.9',
-      settings: {
-        optimizer: {
-          enabled: true,
-          runs: 20,
-        },
-      },
-    },
-  },
+  overrides: {},
 }
 
 if (process.env['INTERFACE_TESTER_SOLC_VERSION']) {
