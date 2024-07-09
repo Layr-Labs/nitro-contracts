@@ -75,11 +75,9 @@ async function main() {
     deployerWallet,
     true,
     contracts.rollupCreator.address,
-    feeToken
+    feeToken,
+    contracts.eigenDARollupManager.address,
   )
-
-  console.log("Binding rollup manager to the SequencerInbox")
-  await contracts.ethSequencerInbox.setEigenDARollupManager(contracts.eigenDARollupManager.address)
 
   if (!result) {
     throw new Error('Rollup creation failed')

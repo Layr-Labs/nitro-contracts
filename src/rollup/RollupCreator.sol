@@ -29,7 +29,8 @@ contract RollupCreator is Ownable {
         address bridge,
         address upgradeExecutor,
         address validatorUtils,
-        address validatorWalletCreator
+        address validatorWalletCreator,
+        address eigenDARollupManager
     );
     event TemplatesUpdated();
 
@@ -43,7 +44,6 @@ contract RollupCreator is Ownable {
         //// @dev The address of the batch poster, not used when set to zero address
         address[] batchPosters;
         address batchPosterManager;
-        address eigenDAServiceManager;
         address eigenDARollupManager;
     }
 
@@ -199,7 +199,6 @@ contract RollupCreator is Ownable {
         }
 
         // Setting EigenDAServiceManager and EigenDARollupManager
-        bridgeContracts.sequencerInbox.setEigenDAServiceManager(deployParams.eigenDAServiceManager);
         bridgeContracts.sequencerInbox.setEigenDARollupManager(deployParams.eigenDARollupManager);
 
         // Call setValidator on the newly created rollup contract just if validator set is not empty
@@ -233,7 +232,8 @@ contract RollupCreator is Ownable {
             address(bridgeContracts.bridge),
             address(upgradeExecutor),
             address(validatorUtils),
-            address(validatorWalletCreator)
+            address(validatorWalletCreator),
+            deployParams.eigenDARollupManager
         );
         return address(rollup);
     }
