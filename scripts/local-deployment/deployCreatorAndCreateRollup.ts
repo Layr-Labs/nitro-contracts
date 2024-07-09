@@ -78,6 +78,9 @@ async function main() {
     feeToken
   )
 
+  console.log("Binding rollup manager to the SequencerInbox")
+  await contracts.sequencerInbox.setEigenDARollupManager(contracts.eigenDARollupManager.address)
+
   if (!result) {
     throw new Error('Rollup creation failed')
   }
