@@ -139,7 +139,6 @@ contract RollupCreatorTest is Test {
             deployFactoriesToL2: true,
             maxFeePerGasForRetryables: MAX_FEE_PER_GAS,
             batchPosterManager: batchPosterManager,
-            eigenDAServiceManager: eigenDASvcManager,
             eigenDARollupManager: eigenDARollupManager
         });
         
@@ -301,7 +300,6 @@ contract RollupCreatorTest is Test {
                 deployFactoriesToL2: true,
                 maxFeePerGasForRetryables: MAX_FEE_PER_GAS,
                 batchPosterManager: batchPosterManager,
-                eigenDAServiceManager: eigenDASvcManager,
                 eigenDARollupManager: eigenDARollupManager
             });
 
@@ -458,7 +456,6 @@ contract RollupCreatorTest is Test {
                 deployFactoriesToL2: true,
                 maxFeePerGasForRetryables: MAX_FEE_PER_GAS,
                 batchPosterManager: batchPosterManager,
-                eigenDAServiceManager: eigenDASvcManager,
                 eigenDARollupManager: eigenDARollupManager
             });
         address rollupAddress = rollupCreator.createRollup{value: factoryDeploymentFunds}(

@@ -599,7 +599,6 @@ contract SequencerInboxTest is Test {
         vm.startPrank(rollupOwner);
         // deploy rollup
         seqInbox.setEigenDARollupManager(address(rollupManagerImpl));
-        seqInbox.setEigenDAServiceManager(0xD4A7E1Bd8015057293f0D0A557088c286942e84b);
         vm.stopPrank();
 
         address delayedInboxSender = address(140);
