@@ -29,8 +29,7 @@ contract RollupCreator is Ownable {
         address bridge,
         address upgradeExecutor,
         address validatorUtils,
-        address validatorWalletCreator,
-        address eigenDARollupManager
+        address validatorWalletCreator
     );
     event TemplatesUpdated();
 
@@ -232,8 +231,7 @@ contract RollupCreator is Ownable {
             address(bridgeContracts.bridge),
             address(upgradeExecutor),
             address(validatorUtils),
-            address(validatorWalletCreator),
-            deployParams.eigenDARollupManager
+            address(validatorWalletCreator)
         );
         return address(rollup);
     }
