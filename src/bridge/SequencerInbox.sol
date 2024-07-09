@@ -63,6 +63,8 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
 
     IBridge public bridge;
 
+    address public eigenDARollupManager;
+
     /// @inheritdoc ISequencerInbox
     uint256 public constant HEADER_LENGTH = 40;
 
@@ -423,7 +425,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
     
         // verify that the blob was actually included before continuing
-        IRollupManager(eigenDARollupManager).verifyBlob(blobHeader, IEigenDAServiceManager(eigenDAServiceManager), blobVerificationProof);
+        IRollupManager(eigenDARollupManager).verifyBlob(blobHeader, blobVerificationProof);
 
         // NOTE: to retrieve need the following
         // see: https://github.com/Layr-Labs/eigenda/blob/master/api/docs/retriever.md#blobrequest
@@ -792,15 +794,9 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     }
 
     /// @inheritdoc ISequencerInbox
-    function setEigenDAServiceManager(address newEigenDAServiceManager) external onlyRollupOwner {
-        eigenDAServiceManager = newEigenDAServiceManager;
-        emit OwnerFunctionCalled(7);
-    }
-
-    /// @inheritdoc ISequencerInbox
     function setEigenDARollupManager(address newRollupManager) external onlyRollupOwner {
         eigenDARollupManager = newRollupManager;
-        emit OwnerFunctionCalled(8);
+        emit OwnerFunctionCalled(7);
     }
 
     /// @inheritdoc ISequencerInbox
