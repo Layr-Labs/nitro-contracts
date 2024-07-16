@@ -453,7 +453,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         }
 
         emit SequencerBatchDelivered(
-            seqMessageIndex,
+            _sequenceNumber,
             beforeAcc,
             afterAcc,
             delayedAcc,
