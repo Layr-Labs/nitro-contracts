@@ -132,7 +132,7 @@ contract OneStepProverHostIo is IOneStepProver {
         19103219067921713944291392827692070036145651957329286315305642004821462161904;
 
     // see: https://github.com/Layr-Labs/eigenda/blob/master/disperser/apiserver/server.go#L35
-    uint256 internal constant eigenDAMaxFieldElementsPerBlob = (2 * 1024 * 1024) / 32;
+    uint256 internal constant eigenDAMaxFieldElementsPerBlob = 268435456;
 
     function executeReadPreImage(
         ExecutionContext calldata,
@@ -260,6 +260,7 @@ contract OneStepProverHostIo is IOneStepProver {
             // [96:224] - g2TauMinusG2z
             // [224:288] - kzg commitment (g1 point)
             // [288:352] - proof (g1 point)
+            // [352:385] - preimage length
 
             // expect first 32 bytes of proof to be the expected version hash
             require(bytes32(kzgProof[:32]) == leafContents, "KZG_PROOF_WRONG_HASH");
@@ -286,9 +287,12 @@ contract OneStepProverHostIo is IOneStepProver {
                 require(verifyEigenDACommitment(kzgCommitment, eigenDAKZGProof, g2TauMinusG2z, evaluationPoint, expectedOutput), "INVALID_KZG_PROOF");
             }
 
+            // read the preimage length
+            uint256 preimageLength = uint256(bytes32(kzgProof[352:384]));
+
 
             // If preimageOffset is greater than or equal to the blob size, leave extracted empty and call it here.
-            if (preimageOffset < eigenDAMaxFieldElementsPerBlob * 32) {
+            if (preimageOffset < preimageLength) {
                 // We need to compute what point the polynomial should be evaluated at to get the right part of the preimage.
                 // KZG commitments use a bit reversal permutation to order the roots of unity.
                 // To account for that, we reverse the bit order of the index.
@@ -313,7 +317,7 @@ contract OneStepProverHostIo is IOneStepProver {
                 rootOfUnityPower *= bitReversedIndex;
                 // z is the point the polynomial is evaluated at to retrieve this word of data
                 uint256 z = modExp256(BN_254_PRIMITIVE_ROOT_OF_UNITY, rootOfUnityPower, BN254.FR_MODULUS);
-                require(bytes32(kzgProof[32:64]) == bytes32(z), "KZG_PROOF_WRONG_Z");
+                require(bytes32(kzgProof[32:64]) == bytes32(z), "KZG_BN254_PROOF_WRONG_Z");
 
                 extracted = kzgProof[64:96];
             }
