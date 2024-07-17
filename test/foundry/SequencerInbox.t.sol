@@ -641,6 +641,7 @@ contract SequencerInboxTest is Test {
             sequenceNumber,
             blobVerificationProof,
             blobHeader,
+            IGasRefunder(address(0)),
             delayedMessagesRead,
             subMessageCount,
             subMessageCount + 1
@@ -712,6 +713,7 @@ contract SequencerInboxTest is Test {
             sequenceNumber,
             illegalBlobVerificationProof,
             illegalBlobHeader,
+            IGasRefunder(address(0)),
             delayedMessagesRead,
             subMessageCount,
             subMessageCount + 1
