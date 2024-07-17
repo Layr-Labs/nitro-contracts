@@ -21,6 +21,13 @@ interface ISequencerInbox is IDelayedMessageProvider {
         uint256 futureSeconds;
     }
 
+    struct SequenceMetadata {
+        uint256 sequenceNumber;
+        uint256 afterDelayedMessagesRead;
+        uint256 prevMessageCount;
+        uint256 newMessageCount;
+    }
+
     event SequencerBatchDelivered(
         uint256 indexed batchSequenceNumber,
         bytes32 indexed beforeAcc,
@@ -189,12 +196,13 @@ interface ISequencerInbox is IDelayedMessageProvider {
     ) external;
 
     function addSequencerL2BatchFromEigenDA(
-        uint256 sequenceNumber,
-        EigenDARollupUtils.BlobVerificationProof calldata blobVerificationProof,
-        IEigenDAServiceManager.BlobHeader calldata blobHeader,
-        uint256 afterDelayedMessagesRead,
-        uint256 prevMessageCount,
-        uint256 newMessageCount
+    uint256 sequenceNumber,
+    EigenDARollupUtils.BlobVerificationProof calldata blobVerificationProof,
+    IEigenDAServiceManager.BlobHeader calldata blobHeader,
+    IGasRefunder gasRefunder,
+    uint256 afterDelayedMessagesRead,
+    uint256 prevMessageCount,
+    uint256 newMessageCount
     ) external;
 
     // ---------- onlyRollupOrOwner functions ----------
@@ -258,3 +266,4 @@ interface ISequencerInbox is IDelayedMessageProvider {
 
     function initialize(IBridge bridge_, MaxTimeVariation calldata maxTimeVariation_) external;
 }
+

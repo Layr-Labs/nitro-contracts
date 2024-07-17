@@ -411,56 +411,57 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     
 
 
-    function addSequencerL2BatchFromEigenDA(
-        uint256 sequenceNumber,
-        EigenDARollupUtils.BlobVerificationProof calldata blobVerificationProof,
-        IEigenDAServiceManager.BlobHeader calldata blobHeader,
-        uint256 afterDelayedMessagesRead,
-        uint256 prevMessageCount,
-        uint256 newMessageCount
-    ) external {
-        if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
+function addSequencerL2BatchFromEigenDA(
+    uint256 sequenceNumber,
+    EigenDARollupUtils.BlobVerificationProof calldata blobVerificationProof,
+    IEigenDAServiceManager.BlobHeader calldata blobHeader,
+    IGasRefunder gasRefunder,
+    uint256 afterDelayedMessagesRead,
+    uint256 prevMessageCount,
+    uint256 newMessageCount
+) external {
+    if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
+    return;
+    // Verify that the blob was actually included before continuing
+    IRollupManager(eigenDARollupManager).verifyBlob(blobHeader, blobVerificationProof);
+    // Form the EigenDA data hash and get the time bounds
+    (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) = formEigenDADataHash(blobHeader, afterDelayedMessagesRead);
     
-        // verify that the blob was actually included before continuing
-        IRollupManager(eigenDARollupManager).verifyBlob(blobHeader, blobVerificationProof);
+    ISequencerInbox.SequenceMetadata memory metadata = ISequencerInbox.SequenceMetadata({
+        sequenceNumber: sequenceNumber,
+        afterDelayedMessagesRead: afterDelayedMessagesRead,
+        prevMessageCount: prevMessageCount,
+        newMessageCount: newMessageCount
+    });
+    
+    // Call a helper function to add the sequencer L2 batch
+    _addSequencerL2Batch(metadata, dataHash, timeBounds);
+}
 
+function _addSequencerL2Batch(
+    ISequencerInbox.SequenceMetadata memory sequenceMetadata,
+    bytes32 dataHash,
+    IBridge.TimeBounds memory timeBounds
+) internal {
+    (uint256 seqMessageIndex, bytes32 beforeAcc, bytes32 delayedAcc, bytes32 afterAcc) = 
+        addSequencerL2BatchImpl(dataHash, sequenceMetadata.afterDelayedMessagesRead, 0, sequenceMetadata.prevMessageCount, sequenceMetadata.newMessageCount);
 
-        // NOTE: to retrieve need the following
-        // see: https://github.com/Layr-Labs/eigenda/blob/master/api/docs/retriever.md#blobrequest
-        // batch header hash -> can get by computing hash(blobVerificationproof.batchMetadata.batchheader)
-        // blob index -> included in blobVerificationproof.blobIndex
-        // reference block number -> included in blobVerificationproof.batchMetadata.BatchHeaderreferenceBlockNumber
-        // quorum id -> included in blobHeader.QuorumBlobParam[0].quorumNumber
-        // todo: what do to for dual quorum?
-        (
-            bytes32 dataHash,
-            IBridge.TimeBounds memory timeBounds,
-            uint256 eigenDABatchCost //set as 0 rn
-        ) = formEigenDADataHash(blobHeader, afterDelayedMessagesRead);
-
-        (uint256 seqMessageIndex, bytes32 beforeAcc, bytes32 delayedAcc, bytes32 afterAcc) =
-        addSequencerL2BatchImpl(
-            dataHash, afterDelayedMessagesRead, 0, prevMessageCount, newMessageCount
-        );
-
-        uint256 _sequenceNumber = sequenceNumber; // stack workaround
-
-        // ~uint256(0) is type(uint256).max, but ever so slightly cheaper
-        if (seqMessageIndex != _sequenceNumber && _sequenceNumber != ~uint256(0)) {
-            revert BadSequencerNumber(seqMessageIndex, _sequenceNumber);
-        }
-
-        emit SequencerBatchDelivered(
-            seqMessageIndex,
-            beforeAcc,
-            afterAcc,
-            delayedAcc,
-            totalDelayedMessagesRead,
-            timeBounds,
-            IBridge.BatchDataLocation.EigenDA
-
-        );
+    uint256 sequenceNumber = sequenceMetadata.sequenceNumber;
+    // Check the sequence number
+    if (seqMessageIndex != sequenceNumber && sequenceNumber != ~uint256(0)) {
+        revert BadSequencerNumber(seqMessageIndex, sequenceNumber);
     }
+
+    emit SequencerBatchDelivered(
+        sequenceNumber,
+        beforeAcc,
+        afterAcc,
+        delayedAcc,
+        totalDelayedMessagesRead,
+        timeBounds,
+        IBridge.BatchDataLocation.EigenDA
+    );
+}
 
     function addSequencerL2Batch(
         uint256 sequenceNumber,
@@ -616,11 +617,8 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     function formEigenDADataHash(
         IEigenDAServiceManager.BlobHeader memory blobHeader,
         uint256 afterDelayedMessagesRead
-    ) internal view returns (bytes32, IBridge.TimeBounds memory, uint256) {
+    ) internal view returns (bytes32, IBridge.TimeBounds memory) {
         // we can't get the full data preimage onchain, so we hash the commitment to the blobdata and the datalength
-
-        uint256 eigenDABlobCost = GAS_PER_SYMBOL_EIGENDA * blobHeader.dataLength; // set as some cost equal to some multiple of the length of the length of the blobs
-
         (bytes memory header, IBridge.TimeBounds memory timeBounds) =
             packHeader(afterDelayedMessagesRead);
 
@@ -634,8 +632,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
                     )
                 )
                 ),
-            timeBounds,
-            block.basefee > 0 ? eigenDABlobCost / block.basefee : 0
+            timeBounds
         );
     }
 
