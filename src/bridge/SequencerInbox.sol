@@ -419,9 +419,8 @@ function addSequencerL2BatchFromEigenDA(
     uint256 afterDelayedMessagesRead,
     uint256 prevMessageCount,
     uint256 newMessageCount
-) external {
+) external refundsGas(gasRefunder, IReader4844(address(0))) {
     if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
-    return;
     // Verify that the blob was actually included before continuing
     IRollupManager(eigenDARollupManager).verifyBlob(blobHeader, blobVerificationProof);
     // Form the EigenDA data hash and get the time bounds
