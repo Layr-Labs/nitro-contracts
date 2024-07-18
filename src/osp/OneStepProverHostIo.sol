@@ -112,6 +112,8 @@ contract OneStepProverHostIo is IOneStepProver {
         52435875175126190479447740508185965837690552500527637822603658699938581184513;
     uint256 internal constant PRIMITIVE_ROOT_OF_UNITY =
         10238227357739495823651030575849232062558860180284477541189508159991286009131;
+    uint256 internal constant BLS_MODULUS_ROOT_TEST =
+        1;
 
     // Computes b**e % m
     // Really pure but the Solidity compiler sees the staticcall and requires view
@@ -223,6 +225,7 @@ contract OneStepProverHostIo is IOneStepProver {
                 // To account for that, we reverse the bit order of the index.
                 uint256 bitReversedIndex = 0;
                 // preimageOffset was required to be 32 byte aligned above
+                
                 uint256 tmp = preimageOffset / 32;
                 for (uint256 i = 1; i < fieldElementsPerBlob; i <<= 1) {
                     bitReversedIndex <<= 1;
@@ -293,32 +296,19 @@ contract OneStepProverHostIo is IOneStepProver {
 
             // If preimageOffset is greater than or equal to the blob size, leave extracted empty and call it here.
             if (preimageOffset < preimageLength) {
-                // We need to compute what point the polynomial should be evaluated at to get the right part of the preimage.
-                // KZG commitments use a bit reversal permutation to order the roots of unity.
-                // To account for that, we reverse the bit order of the index.
-                uint256 bitReversedIndex = 0;
                 // preimageOffset was required to be 32 byte aligned above
                 uint256 tmp = preimageOffset / 32;
-                // instead of eigenDAMaxFieldElementsPerBlob should be number of field elements in OUR blob
-                for (uint256 i = 1; i < eigenDAMaxFieldElementsPerBlob; i <<= 1) {
-                    bitReversedIndex <<= 1;
-                    if (tmp & 1 == 1) {
-                        bitReversedIndex |= 1;
-                    }
-                    tmp >>= 1;
-                }
 
                 // First, we get the root of unity of order 2**fieldElementsPerBlob.
                 // We start with a root of unity of order 2**32 and then raise it to
                 // the power of (2**32)/fieldElementsPerBlob to get root of unity we need.
-                uint256 rootOfUnityPower = (1 << 32) / eigenDAMaxFieldElementsPerBlob;
+                uint256 rootOfUnityPower = (1 << 28) / preimageLength * 32;
                 // Then, we raise the root of unity to the power of bitReversedIndex,
                 // to retrieve this word of the KZG commitment.
-                rootOfUnityPower *= bitReversedIndex;
+                rootOfUnityPower *= tmp;
                 // z is the point the polynomial is evaluated at to retrieve this word of data
                 uint256 z = modExp256(BN_254_PRIMITIVE_ROOT_OF_UNITY, rootOfUnityPower, BN254.FR_MODULUS);
                 require(bytes32(kzgProof[32:64]) == bytes32(z), "KZG_BN254_PROOF_WRONG_Z");
-
                 extracted = kzgProof[64:96];
             }
 
