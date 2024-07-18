@@ -6,7 +6,7 @@ import {
   abi as UpgradeExecutorABI,
   bytecode as UpgradeExecutorBytecode,
 } from '@offchainlabs/upgrade-executor/build/contracts/src/UpgradeExecutor.sol/UpgradeExecutor.json'
-import { maxDataSize } from './config'
+import { maxDataSize, eigenDAServiceManager } from './config'
 import { Toolkit4844 } from '../test/contract/toolkit4844'
 import { ArbSys__factory } from '../build/types'
 import { ARB_SYS_ADDRESS } from '@arbitrum/sdk/dist/lib/dataEntities/constants'
@@ -96,11 +96,16 @@ export async function deployAllContracts(
     ? ethers.constants.AddressZero
     : (await Toolkit4844.deployReader4844(signer)).address
 
+  const rollupManager = await deployContract('EigenDARollupManager', signer, [])
+
   const ethSequencerInbox = await deployContract('SequencerInbox', signer, [
     maxDataSize,
     reader4844,
     false,
   ])
+
+  await ethSequencerInbox.setEigenDAServiceManager(eigenDAServiceManager)
+  await ethSequencerInbox.setEigenDARollupManager(rollupManager.address)
 
   const ethInbox = await deployContract('Inbox', signer, [maxDataSize])
   const ethRollupEventInbox = await deployContract(
