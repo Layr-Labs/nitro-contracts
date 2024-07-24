@@ -8,8 +8,7 @@ import "../bridge/SequencerInbox.sol";
 import "../bridge/IEthBridge.sol";
 import {INITIALIZATION_MSG_TYPE} from "../libraries/MessageTypes.sol";
 
-import {IEigenDAServiceManager} from "@eigenda/eigenda-utils/interfaces/IEigenDAServiceManager.sol";
-import {IRollupManager} from "../bridge/RollupManager.sol";
+import "../bridge/IRollupManager.sol";
 
 contract SequencerInboxStub is SequencerInbox {
     constructor(
