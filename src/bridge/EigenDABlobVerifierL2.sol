@@ -2,9 +2,8 @@
 pragma solidity ^0.8.9;
 
 import "./IRollupManager.sol";
-import {OwnableUpgradeable} from "@openzeppelin-upgrades/contracts/access/OwnableUpgradeable.sol";
 
-contract EigenDABlobVerifierL2 is IRollupManager, OwnableUpgradeable {
+contract EigenDABlobVerifierL2 is IRollupManager {
 
     function verifyBlob(
         IEigenDAServiceManager.BlobHeader calldata blobHeader,
