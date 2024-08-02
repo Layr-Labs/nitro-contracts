@@ -51,8 +51,8 @@
     "@grpc/grpc-js": "^1.8.22",
     "@grpc/proto-loader": "^0.7.13",
     "@offchainlabs/upgrade-executor": "1.1.0-beta.0",
-    "@openzeppelin/contracts": "4.7.0",
     "@openzeppelin-upgrades/contracts": "npm:@openzeppelin/contracts-upgradeable@4.7",
+    "@openzeppelin/contracts": "4.7.0",
     "@openzeppelin/contracts-upgradeable": "4.7.2",
     "patch-package": "^6.4.7",
     "solady": "0.0.182"
@@ -74,7 +74,7 @@
     "@typescript-eslint/eslint-plugin": "^5.14.0",
     "@typescript-eslint/eslint-plugin-tslint": "^5.27.1",
     "@typescript-eslint/parser": "^5.14.0",
-    "audit-ci": "^6.6.1",
+    "audit-ci": "^7.1.0",
     "chai": "^4.3.4",
     "dotenv": "^16.3.1",
     "eslint": "^8.23.1",
