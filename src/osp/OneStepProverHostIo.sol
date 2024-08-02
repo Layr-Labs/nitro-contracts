@@ -39,7 +39,7 @@ contract OneStepProverHostIo is IOneStepProver {
     // AlphaG1
     // This is from the SRS points being used.
     // This is the point at index 1, since index 0 is the generator value of the G1 group.
-    BN254.G1Point private ALPHA_G1 = BN254.G1Point(15397661830938158195220872607788450164522003659458108417904919983213308643927, 4051901473739185471504766068400292374549287637553596337727654132125147894034);
+    BN254.G1Point private ALPHA_G1 = BN254.G1Point(5421624913032980671919055010798735843841011930764711817607050648427876929258, 12995821280260994872112541311010834261076556242291585164372488699033268245381);
 
     function computeGamma(uint256 z, uint256 y, uint256[2] memory p, uint256[4] memory alpha_minus_z_g2) internal pure returns (uint256) {
         // Encode the variables and compute the keccak256 hash
