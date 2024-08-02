@@ -16,6 +16,38 @@ import "../bridge/IBridge.sol";
 
 import {BN254} from "@eigenda/eigenda-utils/libraries/BN254.sol";
 
+library BN254Precompiles {
+
+    function ecAdd(uint256[4] memory input) internal view returns (uint256[2] memory result) {
+        assembly {
+            // Call precompiled contract 0x06 for ECADD
+            if iszero(staticcall(gas(), 0x06, input, 0x80, result, 0x40)) {
+                revert(0, 0)
+            }
+        }
+    }
+
+    function ecMul(uint256[3] memory input) internal view returns (uint256[2] memory result) {
+        assembly {
+            // Call precompiled contract 0x07 for ECMUL
+            if iszero(staticcall(gas(), 0x07, input, 0x60, result, 0x40)) {
+                revert(0, 0)
+            }
+        }
+    }
+
+    function ecPairing(uint256[12] memory input) internal view returns (bool) {
+        uint256[1] memory result;
+        assembly {
+            // Call precompiled contract 0x08 for ECPAIRING
+            if iszero(staticcall(gas(), 0x08, input, 0x180, result, 0x20)) {
+                revert(0, 0)
+            }
+        }
+        return result[0] == 1;
+    }
+}
+
 contract OneStepProverHostIo is IOneStepProver {
     using GlobalStateLib for GlobalState;
     using MachineLib for Machine;
@@ -30,6 +62,75 @@ contract OneStepProverHostIo is IOneStepProver {
     uint256 private constant INBOX_NUM = 2;
     uint64 private constant INBOX_HEADER_LEN = 40;
     uint64 private constant DELAYED_HEADER_LEN = 112 + 1;
+    using BN254Precompiles for uint256[4];
+    using BN254Precompiles for uint256[3];
+
+    // Generator point G1 on BN254 curve
+    uint256 constant G1_X = 1;
+    uint256 constant G1_Y = 2;
+
+    // AlphaG1
+    // This is from the SRS points being used.
+    // This is the point at index 1, since index 0 is the generator value of the G1 group.
+    uint256 private constant ALPHA_G1x = 5421624913032980671919055010798735843841011930764711817607050648427876929258;
+    uint256 private constant ALPHA_G1y = 12995821280260994872112541311010834261076556242291585164372488699033268245381;
+
+    // AlphaG2
+    // This is from the SRS points.
+    // This is the point at index 1, since index 0 is the generator value of the G2 group.
+    uint256 private constant ALPHA_G2xa0 = 7912312892787135728292535536655271843828059318189722219035249994421084560563;
+    uint256 private constant ALPHA_G2xa1 = 21039730876973405969844107393779063362038454413254731404052240341412356318284;
+    uint256 private constant ALPHA_G2ya0 = 18697407556011630376420900106252341752488547575648825575049647403852275261247;
+    uint256 private constant ALPHA_G2ya1 = 7586489485579523767759120334904353546627445333297951253230866312564920951171;
+
+    // Generator point G2 on BN254 curve
+    uint256 private constant G2xa0 = 10857046999023057135944570762232829481370756359578518086990519993285655852781;
+    uint256 private constant G2xa1 = 11559732032986387107991004021392285783925812861821192530917403151452391805634;
+    uint256 private constant G2ya0 = 8495653923123431417604973247489272438418190587263600148770280649306958101930;
+    uint256 private constant G2ya1 = 4082367875863433681332203403145435568316851327593401208105741076214120093531;
+
+    // Prime order of BN254
+    uint256 private constant BN254_FR_FIELD_MODULUS = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
+
+    function computeGamma(uint256 z, uint256 y, uint256[2] memory p) internal pure returns (uint256) {
+        // Encode the variables and compute the keccak256 hash
+        return uint256(keccak256(abi.encodePacked(z, y, p[0], p[1]))) % BN254_FR_FIELD_MODULUS;
+    }
+
+    //  e((P - y) + gamma . (alpha - z), G2) = e((Q + gamma), (alpha - z)) 
+    function VerifyKzgProofWithG1Equivalence(
+        uint256[2] memory commitment,
+        uint256 y,
+        uint256[2] memory proof,
+        uint256 z,
+        uint256[4] memory alpha_minus_z_g2
+    ) public {
+
+        uint256[2] memory yG1Neg = [G1_X, G1_Y, ((BN254_FR_FIELD_MODULUS - y) % BN254_FR_FIELD_MODULUS)].ecMul();
+        uint256[2] memory P_minus_y = [commitment[0], commitment[1], yG1Neg[0], yG1Neg[1]].ecAdd();
+
+        // zG1
+        uint256[2] memory zG1Neg = [G1_X, G1_Y, ((BN254_FR_FIELD_MODULUS - z) % BN254_FR_FIELD_MODULUS)].ecMul();
+
+        // (alphaG1 - zG1) 
+        uint256[2] memory alpha_minus_z_g1 = [ALPHA_G1x, ALPHA_G1y, zG1Neg[0], zG1Neg[1]].ecAdd();
+
+        // gamma
+        uint256 gamma = computeGamma(z, y, commitment);
+        
+        // gamma . (alpha - z)G1
+        uint256[2] memory gamma_alpha_minus_z_g1 = [alpha_minus_z_g1[0], alpha_minus_z_g1[1], gamma].ecMul();
+        
+        // gammaG1
+        uint256[2] memory gammaG1 = [G1_X, G1_Y, gamma].ecMul(); 
+        
+        // Q + gamma
+        uint256[2] memory q_plus_gamma = [proof[0], proof[1], gammaG1[0], gammaG1[1]].ecAdd();
+        uint256[2] memory lhsG1 = [P_minus_y[0], P_minus_y[1], gamma_alpha_minus_z_g1[0], gamma_alpha_minus_z_g1[1]].ecAdd();
+        uint256[12] memory Input = [lhsG1[0], lhsG1[1], G2xa1, G2xa0, G2ya1, G2ya0, q_plus_gamma[0], 
+        q_plus_gamma[1], alpha_minus_z_g2[1], alpha_minus_z_g2[0], alpha_minus_z_g2[3], alpha_minus_z_g2[2]].ecPairing();
+
+    }
 
     function setLeafByte(
         bytes32 oldLeaf,
@@ -261,30 +362,29 @@ contract OneStepProverHostIo is IOneStepProver {
             // [224:288] - kzg commitment (g1 point)
             // [288:352] - proof (g1 point)
             // [352:385] - preimage length
-
+            
             // expect first 32 bytes of proof to be the expected version hash
             require(bytes32(kzgProof[:32]) == leafContents, "KZG_PROOF_WRONG_HASH");
 
             {
-                // evaluation point
-                uint256 evaluationPoint = uint256(bytes32(kzgProof[32:64]));
+                
+                uint256[2] memory kzgCommitment = [uint256(bytes32(kzgProof[224:256])), uint256(bytes32(kzgProof[256:288]))];
+                uint256[4] memory alphaMinusG2 = [uint256(bytes32(kzgProof[96:128])), uint256(bytes32(kzgProof[128:160])), uint256(bytes32(kzgProof[160:192])), uint256(bytes32(kzgProof[192:224]))];
+                uint256[2] memory proof = [uint256(bytes32(kzgProof[288:320])), uint256(bytes32(kzgProof[320:352]))];
+                uint256 z = uint256(bytes32(kzgProof[32:64]));
+                uint256 y = uint256(bytes32(kzgProof[64:96]));
 
-                // expected output
-                uint256 expectedOutput = uint256(bytes32(kzgProof[64:96]));
+                require(kzgCommitment[0] < BN254_FR_FIELD_MODULUS, "COMMIT_X_LARGER_THAN_FIELD");
+                require(kzgCommitment[1] < BN254_FR_FIELD_MODULUS, "COMMIT_Y_LARGER_THAN_FIELD");
 
-                BN254.G2Point memory g2TauMinusG2z = BN254.G2Point({
-                    X: [uint256(bytes32(kzgProof[96:128])), uint256(bytes32(kzgProof[128:160]))],
-                    Y: [uint256(bytes32(kzgProof[160:192])), uint256(bytes32(kzgProof[192:224]))]
-                });
+                require(proof[0] < BN254_FR_FIELD_MODULUS, "PROOF_X_LARGER_THAN_FIELD");
+                require(proof[1] < BN254_FR_FIELD_MODULUS, "PROOF_Y_LARGER_THAN_FIELD");
 
-                BN254.G1Point memory kzgCommitment =
-                    BN254.G1Point(uint256(bytes32(kzgProof[224:256])), uint256(bytes32(kzgProof[256:288])));
+                require(z < BN254_FR_FIELD_MODULUS, "Z_LARGER_THAN_FIELD");
+                require(y < BN254_FR_FIELD_MODULUS, "Y_LARGER_THAN_FIELD");
 
-                BN254.G1Point memory eigenDAKZGProof =
-                    BN254.G1Point(uint256(bytes32(kzgProof[288:320])), uint256(bytes32(kzgProof[320:352])));
-            
                 // must be valid proof
-                require(verifyEigenDACommitment(kzgCommitment, eigenDAKZGProof, g2TauMinusG2z, evaluationPoint, expectedOutput), "INVALID_KZG_PROOF");
+                require(VerifyKzgProofWithG1Equivalence(kzgCommitment, y, proof, z, alphaMinusG2), "INVALID_KZG_PROOF");
             }
 
             // read the preimage length
@@ -763,7 +863,6 @@ contract OneStepProverHostIo is IOneStepProver {
 
         BN254.G1Point memory commitmentMinusValue = BN254.plus(_commitment, BN254.negate(valueG1));
 
-        //console.log("commitmentMinusValue: %s", commitmentMinusValue);
 
 	        // var zG2 bn254.G2Affine
 	        // zG2.ScalarMultiplication(&G2Gen, zFr.BigInt(&valueBig))
@@ -777,31 +876,5 @@ contract OneStepProverHostIo is IOneStepProver {
             BN254.negate(_proof),
             _g2TauMinusZCommitG2
         );
-
-
-
-	    // return PairingsVerify(&commitMinusValue, &G2Gen, &proof, &xMinusZ)
-
-        // BN254.G1Point memory commitmentMinusA = BN254.plus(
-        //     _commitment,
-        //     BN254.negate(
-        //         BN254.scalar_mul(BN254.generatorG1(), _value)
-        //     )
-        // );
-
-        //         // Negate the proof
-        // BN254.G1Point memory negProof = BN254.negate(_proof);
-
-        // // Compute index * proof
-        // BN254.G1Point memory indexMulProof = BN254.scalar_mul(_proof, _index);
-
-        // // Returns true if and only if
-        // // e((index * proof) + (commitment - aCommitment), G2.g) * e(-proof, xCommit) == 1
-        // return BN254.pairing(
-        //     BN254.plus(indexMulProof, commitmentMinusA),
-        //     BN254.generatorG2(),
-        //     negProof,
-        //     g2Tau()
-        // );
     }
 }
