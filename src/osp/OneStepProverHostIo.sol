@@ -323,14 +323,14 @@ contract OneStepProverHostIo is IOneStepProver {
                 uint256 z = uint256(bytes32(kzgProof[32:64]));
                 uint256 y = uint256(bytes32(kzgProof[64:96]));
 
-                require(kzgCommitment[0] < BN254_FR_FIELD_MODULUS, "COMMIT_X_LARGER_THAN_FIELD");
-                require(kzgCommitment[1] < BN254_FR_FIELD_MODULUS, "COMMIT_Y_LARGER_THAN_FIELD");
+                require(kzgCommitment[0] < BN254.FR_MODULUS, "COMMIT_X_LARGER_THAN_FIELD");
+                require(kzgCommitment[1] < BN254.FR_MODULUS, "COMMIT_Y_LARGER_THAN_FIELD");
 
-                require(proof[0] < BN254_FR_FIELD_MODULUS, "PROOF_X_LARGER_THAN_FIELD");
-                require(proof[1] < BN254_FR_FIELD_MODULUS, "PROOF_Y_LARGER_THAN_FIELD");
+                require(proof[0] < BN254.FR_MODULUS, "PROOF_X_LARGER_THAN_FIELD");
+                require(proof[1] < BN254.FR_MODULUS, "PROOF_Y_LARGER_THAN_FIELD");
 
-                require(z < BN254_FR_FIELD_MODULUS, "Z_LARGER_THAN_FIELD");
-                require(y < BN254_FR_FIELD_MODULUS, "Y_LARGER_THAN_FIELD");
+                require(z < BN254.FR_MODULUS, "Z_LARGER_THAN_FIELD");
+                require(y < BN254.FR_MODULUS, "Y_LARGER_THAN_FIELD");
 
                 // must be valid proof
                 require(VerifyKzgProofWithG1Equivalence(kzgCommitment, y, proof, z, alphaMinusG2), "INVALID_KZG_PROOF");
