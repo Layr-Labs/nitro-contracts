@@ -834,47 +834,4 @@ contract OneStepProverHostIo is IOneStepProver {
             Y: [G2Tauy1, G2Tauy0]
         });
     }
-
-    //TODO: move this toa eigenDA utils thing
-    function verifyEigenDACommitment(
-        BN254.G1Point memory _commitment,
-        BN254.G1Point memory _proof,
-        BN254.G2Point memory _g2TauMinusZCommitG2,
-        uint256 _index,
-        uint256 _value
-    ) public view returns (bool) {
-        // need to have each element less than modulus for underlying F_r field
-        require(_commitment.X < BN254.FR_MODULUS, "COMMIT_X_LARGER_THAN_FIELD");
-        require(_commitment.Y < BN254.FR_MODULUS, "COMMIT_Y_LARGER_THAN_FIELD");
-
-        require(_proof.X < BN254.FR_MODULUS, "PROOF_X_LARGER_THAN_FIELD");
-        require(_proof.Y < BN254.FR_MODULUS, "PROOF_Y_LARGER_THAN_FIELD");
-
-        // see: https://github.com/bxue-l2/eigenda/blob/a88ad0662a18f2139f9d288d5e667d00a89e26b9/encoding/utils/openCommitment/open_commitment.go#L63
-        // and https://ethresear.ch/t/a-minimum-viable-kzg-polynomial-commitment-scheme-implementation/7675
-
-        	// var valueG1 bn254.G1Affine
-	        // var valueBig big.Int
-	        // valueG1.ScalarMultiplication(&G1Gen, valueFr.BigInt(&valueBig))
-        BN254.G1Point memory valueG1 = BN254.scalar_mul(BN254.generatorG1(), _value);
-
-	        // var commitMinusValue bn254.G1Affine
-	        // commitMinusValue.Sub(&commitment, &valueG1)
-
-        BN254.G1Point memory commitmentMinusValue = BN254.plus(_commitment, BN254.negate(valueG1));
-
-
-	        // var zG2 bn254.G2Affine
-	        // zG2.ScalarMultiplication(&G2Gen, zFr.BigInt(&valueBig))
-
-	        // var xMinusZ bn254.G2Affine
-	        // xMinusZ.Sub(&G2tau, &zG2)
-
-        return BN254.pairing(
-            commitmentMinusValue,
-            BN254.generatorG2(),
-            BN254.negate(_proof),
-            _g2TauMinusZCommitG2
-        );
-    }
 }
