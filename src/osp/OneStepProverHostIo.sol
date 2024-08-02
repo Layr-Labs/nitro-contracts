@@ -92,9 +92,9 @@ contract OneStepProverHostIo is IOneStepProver {
     // Prime order of BN254
     uint256 private constant BN254_FR_FIELD_MODULUS = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
 
-    function computeGamma(uint256 z, uint256 y, uint256[2] memory p) internal pure returns (uint256) {
+    function computeGamma(uint256 z, uint256 y, uint256[2] p, uint256[4] memory alpha_minus_z_g2) internal pure returns (uint256) {
         // Encode the variables and compute the keccak256 hash
-        return uint256(keccak256(abi.encodePacked(z, y, p[0], p[1]))) % BN254_FR_FIELD_MODULUS;
+        return uint256(keccak256(abi.encodePacked(z, y, p[0], p[1], alpha_minus_z_g2[0], alpha_minus_z_g2[1], alpha_minus_z_g2[2], alpha_minus_z_g2[3]))) % BN254_FR_FIELD_MODULUS;
     }
 
     //  e((P - y) + gamma . (alpha - z), G2) = e((Q + gamma), (alpha - z)) 
@@ -116,7 +116,7 @@ contract OneStepProverHostIo is IOneStepProver {
         uint256[2] memory alpha_minus_z_g1 = [ALPHA_G1x, ALPHA_G1y, zG1Neg[0], zG1Neg[1]].ecAdd();
 
         // gamma
-        uint256 gamma = computeGamma(z, y, commitment);
+        uint256 gamma = computeGamma(z, y, commitment, alpha_minus_z_g2);
         
         // gamma . (alpha - z)G1
         uint256[2] memory gamma_alpha_minus_z_g1 = [alpha_minus_z_g1[0], alpha_minus_z_g1[1], gamma].ecMul();
