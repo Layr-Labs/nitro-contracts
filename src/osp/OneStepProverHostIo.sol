@@ -16,67 +16,6 @@ import "../bridge/IBridge.sol";
 
 import {BN254} from "@eigenda/eigenda-utils/libraries/BN254.sol";
 
-library BN254Precompiles {
-
-    function ecAdd(uint256[4] memory input) internal view returns (uint256[2] memory result) {
-        assembly {
-            // Call precompiled contract 0x06 for ECADD
-            if iszero(staticcall(gas(), 0x06, input, 0x80, result, 0x40)) {
-                let message := "ECADD failed"
-                let messageLength := mload(message)
-                let messageData := add(message, 0x20)
-
-                mstore(0x00, 0x08c379a0)
-                mstore(0x04, 0x20)
-                mstore(0x24, messageLength)
-                for { let i := 0 } lt(i, messageLength) { i := add(i, 0x20) } {
-                    mstore(add(0x44, i), mload(add(messageData, i)))
-                }
-                revert(0x00, add(0x44, messageLength))
-            }
-        }
-    }
-
-    function ecMul(uint256[3] memory input) internal view returns (uint256[2] memory result) {
-        assembly {
-            // Call precompiled contract 0x07 for ECMUL
-            if iszero(staticcall(gas(), 0x07, input, 0x60, result, 0x40)) {
-                let message := "ECMUL failed"
-                let messageLength := mload(message)
-                let messageData := add(message, 0x20)
-
-                mstore(0x00, 0x08c379a0)
-                mstore(0x04, 0x20)
-                mstore(0x24, messageLength)
-                for { let i := 0 } lt(i, messageLength) { i := add(i, 0x20) } {
-                    mstore(add(0x44, i), mload(add(messageData, i)))
-                }
-                revert(0x00, add(0x44, messageLength))
-            }
-        }
-    }
-
-    function ecPairing(uint256[12] memory input) internal view returns (bool) {
-        uint256[1] memory result;
-        assembly {
-            // Call precompiled contract 0x08 for ECPAIRING
-            if iszero(staticcall(gas(), 0x08, input, 0x180, result, 0x20)) {
-                let message := "ECPAIRING failed"
-                let messageLength := mload(message)
-                let messageData := add(message, 0x20)
-
-                mstore(0x00, 0x08c379a0)
-                mstore(0x04, 0x20)
-                mstore(0x24, messageLength)
-                for { let i := 0 } lt(i, messageLength) { i := add(i, 0x20) } {
-                    mstore(add(0x44, i), mload(add(messageData, i)))
-                }
-                revert(0x00, add(0x44, messageLength))
-            }
-        }
-        return result[0] == 1;
-    }
-}
 
 contract OneStepProverHostIo is IOneStepProver {
     using GlobalStateLib for GlobalState;
@@ -92,39 +31,20 @@ contract OneStepProverHostIo is IOneStepProver {
     uint256 private constant INBOX_NUM = 2;
     uint64 private constant INBOX_HEADER_LEN = 40;
     uint64 private constant DELAYED_HEADER_LEN = 112 + 1;
-    using BN254Precompiles for uint256[4];
-    using BN254Precompiles for uint256[3];
 
-    // Generator point G1 on BN254 curve
-    uint256 constant G1_X = 1;
-    uint256 constant G1_Y = 2;
+    using BN254 for uint256[4];
+    using BN254 for uint256[3];
+    using BN254 for uint256[12];
 
     // AlphaG1
     // This is from the SRS points being used.
     // This is the point at index 1, since index 0 is the generator value of the G1 group.
-    uint256 private constant ALPHA_G1x = 5421624913032980671919055010798735843841011930764711817607050648427876929258;
-    uint256 private constant ALPHA_G1y = 12995821280260994872112541311010834261076556242291585164372488699033268245381;
+    BN254.G1Point private ALPHA_G1 = BN254.G1Point(15397661830938158195220872607788450164522003659458108417904919983213308643927, 4051901473739185471504766068400292374549287637553596337727654132125147894034);
 
-    // AlphaG2
-    // This is from the SRS points.
-    // This is the point at index 1, since index 0 is the generator value of the G2 group.
-    uint256 private constant ALPHA_G2xa0 = 7912312892787135728292535536655271843828059318189722219035249994421084560563;
-    uint256 private constant ALPHA_G2xa1 = 21039730876973405969844107393779063362038454413254731404052240341412356318284;
-    uint256 private constant ALPHA_G2ya0 = 18697407556011630376420900106252341752488547575648825575049647403852275261247;
-    uint256 private constant ALPHA_G2ya1 = 7586489485579523767759120334904353546627445333297951253230866312564920951171;
-
-    // Generator point G2 on BN254 curve
-    uint256 private constant G2xa0 = 10857046999023057135944570762232829481370756359578518086990519993285655852781;
-    uint256 private constant G2xa1 = 11559732032986387107991004021392285783925812861821192530917403151452391805634;
-    uint256 private constant G2ya0 = 8495653923123431417604973247489272438418190587263600148770280649306958101930;
-    uint256 private constant G2ya1 = 4082367875863433681332203403145435568316851327593401208105741076214120093531;
-
-    // Prime order of BN254
-    uint256 private constant BN254_FR_FIELD_MODULUS = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
-
-    function computeGamma(uint256 z, uint256 y, uint256[2] p, uint256[4] memory alpha_minus_z_g2) internal pure returns (uint256) {
+    function computeGamma(uint256 z, uint256 y, uint256[2] memory p, uint256[4] memory alpha_minus_z_g2) internal pure returns (uint256) {
         // Encode the variables and compute the keccak256 hash
-        return uint256(keccak256(abi.encodePacked(z, y, p[0], p[1], alpha_minus_z_g2[0], alpha_minus_z_g2[1], alpha_minus_z_g2[2], alpha_minus_z_g2[3]))) % BN254_FR_FIELD_MODULUS;
+        bytes32 hash = keccak256(abi.encodePacked(z, y, p[0], p[1], alpha_minus_z_g2[0], alpha_minus_z_g2[1], alpha_minus_z_g2[2], alpha_minus_z_g2[3]));
+        return uint256(hash) % BN254.FR_MODULUS;
     }
 
     //  e((P - y) + gamma . (alpha - z), G2) = e((Q + gamma), (alpha - z)) 
@@ -134,32 +54,31 @@ contract OneStepProverHostIo is IOneStepProver {
         uint256[2] memory proof,
         uint256 z,
         uint256[4] memory alpha_minus_z_g2
-    ) public returns (bool) {
+    ) public view returns (bool) {
 
-        uint256[2] memory yG1Neg = [G1_X, G1_Y, ((BN254_FR_FIELD_MODULUS - y) % BN254_FR_FIELD_MODULUS)].ecMul();
-        uint256[2] memory P_minus_y = [commitment[0], commitment[1], yG1Neg[0], yG1Neg[1]].ecAdd();
+        BN254.G1Point memory yG1Neg = BN254.negate(BN254.scalar_mul(BN254.generatorG1(), y));
+        BN254.G1Point memory P_minus_y = BN254.plus(BN254.G1Point(commitment[0], commitment[1]), yG1Neg);
 
         // zG1
-        uint256[2] memory zG1Neg = [G1_X, G1_Y, ((BN254_FR_FIELD_MODULUS - z) % BN254_FR_FIELD_MODULUS)].ecMul();
+        BN254.G1Point memory zG1Neg = BN254.negate(BN254.scalar_mul(BN254.generatorG1(), z));
 
-        // (alphaG1 - zG1) 
-        uint256[2] memory alpha_minus_z_g1 = [ALPHA_G1x, ALPHA_G1y, zG1Neg[0], zG1Neg[1]].ecAdd();
+        // (alphaG1 - zG1)
+        BN254.G1Point memory alpha_minus_z_g1 = BN254.plus(ALPHA_G1, zG1Neg);
 
         // gamma
         uint256 gamma = computeGamma(z, y, commitment, alpha_minus_z_g2);
-        
+
         // gamma . (alpha - z)G1
-        uint256[2] memory gamma_alpha_minus_z_g1 = [alpha_minus_z_g1[0], alpha_minus_z_g1[1], gamma].ecMul();
-        
+        BN254.G1Point memory gamma_alpha_minus_z_g1 = BN254.scalar_mul(alpha_minus_z_g1, gamma);
+
         // gammaG1
-        uint256[2] memory gammaG1 = [G1_X, G1_Y, gamma].ecMul(); 
+        BN254.G1Point memory gammaG1 = BN254.scalar_mul(BN254.generatorG1(), gamma); 
         
         // Q + gamma
-        uint256[2] memory q_plus_gamma = [proof[0], proof[1], gammaG1[0], gammaG1[1]].ecAdd();
-        uint256[2] memory lhsG1 = [P_minus_y[0], P_minus_y[1], gamma_alpha_minus_z_g1[0], gamma_alpha_minus_z_g1[1]].ecAdd();
-        uint256[12] memory Input = [lhsG1[0], lhsG1[1], G2xa1, G2xa0, G2ya1, G2ya0, q_plus_gamma[0], 
-        q_plus_gamma[1], alpha_minus_z_g2[1], alpha_minus_z_g2[0], alpha_minus_z_g2[3], alpha_minus_z_g2[2]].ecPairing();
-
+        BN254.G1Point memory q_plus_gamma = BN254.plus(BN254.G1Point(proof[0], proof[1]), gammaG1);
+        BN254.G1Point memory lhsG1 = BN254.plus(P_minus_y, gamma_alpha_minus_z_g1);
+        BN254.G2Point memory alpha_minus_z_g22 = BN254.G2Point([alpha_minus_z_g2[1], alpha_minus_z_g2[0]], [alpha_minus_z_g2[3], alpha_minus_z_g2[2]]); 
+        return BN254.pairing(lhsG1, BN254.negGeneratorG2(), q_plus_gamma, alpha_minus_z_g22);
     }
 
     function setLeafByte(
