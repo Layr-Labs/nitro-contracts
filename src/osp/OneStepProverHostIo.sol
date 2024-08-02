@@ -22,7 +22,17 @@ library BN254Precompiles {
         assembly {
             // Call precompiled contract 0x06 for ECADD
             if iszero(staticcall(gas(), 0x06, input, 0x80, result, 0x40)) {
-                revert(0, 0)
+                let message := "ECADD failed"
+                let messageLength := mload(message)
+                let messageData := add(message, 0x20)
+
+                mstore(0x00, 0x08c379a0)
+                mstore(0x04, 0x20)
+                mstore(0x24, messageLength)
+                for { let i := 0 } lt(i, messageLength) { i := add(i, 0x20) } {
+                    mstore(add(0x44, i), mload(add(messageData, i)))
+                }
+                revert(0x00, add(0x44, messageLength))
             }
         }
     }
@@ -31,7 +41,17 @@ library BN254Precompiles {
         assembly {
             // Call precompiled contract 0x07 for ECMUL
             if iszero(staticcall(gas(), 0x07, input, 0x60, result, 0x40)) {
-                revert(0, 0)
+                let message := "ECMUL failed"
+                let messageLength := mload(message)
+                let messageData := add(message, 0x20)
+
+                mstore(0x00, 0x08c379a0)
+                mstore(0x04, 0x20)
+                mstore(0x24, messageLength)
+                for { let i := 0 } lt(i, messageLength) { i := add(i, 0x20) } {
+                    mstore(add(0x44, i), mload(add(messageData, i)))
+                }
+                revert(0x00, add(0x44, messageLength))
             }
         }
     }
@@ -41,7 +61,17 @@ library BN254Precompiles {
         assembly {
             // Call precompiled contract 0x08 for ECPAIRING
             if iszero(staticcall(gas(), 0x08, input, 0x180, result, 0x20)) {
-                revert(0, 0)
+                let message := "ECPAIRING failed"
+                let messageLength := mload(message)
+                let messageData := add(message, 0x20)
+
+                mstore(0x00, 0x08c379a0)
+                mstore(0x04, 0x20)
+                mstore(0x24, messageLength)
+                for { let i := 0 } lt(i, messageLength) { i := add(i, 0x20) } {
+                    mstore(add(0x44, i), mload(add(messageData, i)))
+                }
+                revert(0x00, add(0x44, messageLength))
             }
         }
         return result[0] == 1;
@@ -104,7 +134,7 @@ contract OneStepProverHostIo is IOneStepProver {
         uint256[2] memory proof,
         uint256 z,
         uint256[4] memory alpha_minus_z_g2
-    ) public {
+    ) public returns (bool) {
 
         uint256[2] memory yG1Neg = [G1_X, G1_Y, ((BN254_FR_FIELD_MODULUS - y) % BN254_FR_FIELD_MODULUS)].ecMul();
         uint256[2] memory P_minus_y = [commitment[0], commitment[1], yG1Neg[0], yG1Neg[1]].ecAdd();
