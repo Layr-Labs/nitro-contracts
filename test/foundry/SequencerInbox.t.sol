@@ -8,9 +8,7 @@ import "../../src/bridge/SequencerInbox.sol";
 import {ERC20Bridge} from "../../src/bridge/ERC20Bridge.sol";
 import "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol";
 
-import {EigenDARollupUtils} from "@eigenda/eigenda-utils/libraries/EigenDARollupUtils.sol";
-import {IEigenDAServiceManager} from "@eigenda/eigenda-utils/interfaces/IEigenDAServiceManager.sol";
-import {EigenDARollupManager} from "../../src/bridge/RollupManager.sol";
+import "./DummyEigenDABlobVerifier.sol";
 import {BN254} from "@eigenda/eigenda-utils/libraries/BN254.sol";
 
 contract RollupMock {
@@ -610,6 +608,7 @@ contract SequencerInboxTest is Test {
             })
         );
 
+        DummyEigenDABlobVerifier rollupManagerImpl = new DummyEigenDABlobVerifier();
         (SequencerInbox seqInbox, Bridge bridge) = deployRollup(false);
         // update the dummyEigenDAServiceManager to use the holesky serviceManager contract
         
@@ -746,21 +745,26 @@ contract SequencerInboxTest is Test {
         vm.expectRevert(abi.encodeWithSelector(AlreadyInit.selector));
         vm.prank(proxyAdmin);
         TransparentUpgradeableProxy(payable(address(seqInbox))).upgradeToAndCall(
-            address(seqInboxImpl), abi.encodeWithSelector(SequencerInbox.postUpgradeInit.selector)
+            address(seqInboxImpl),
+            abi.encodeWithSelector(SequencerInbox.postUpgradeInit.selector)
         );
 
-        // IMPORTANT: slots have moved down by one because we have added additional variables for eigenDA
-        vm.store(address(seqInbox), bytes32(uint256(6)), bytes32(uint256(delayBlocks))); // slot 6: delayBlocks
-        vm.store(address(seqInbox), bytes32(uint256(7)), bytes32(uint256(futureBlocks))); // slot 7: futureBlocks
-        vm.store(address(seqInbox), bytes32(uint256(8)), bytes32(uint256(delaySeconds))); // slot 8: delaySeconds
-        vm.store(address(seqInbox), bytes32(uint256(9)), bytes32(uint256(futureSeconds))); // slot 9: futureSeconds
+        vm.store(address(seqInbox), bytes32(uint256(4)), bytes32(uint256(delayBlocks))); // slot 4: delayBlocks
+        vm.store(address(seqInbox), bytes32(uint256(5)), bytes32(uint256(futureBlocks))); // slot 5: futureBlocks
+        vm.store(address(seqInbox), bytes32(uint256(6)), bytes32(uint256(delaySeconds))); // slot 6: delaySeconds
+        vm.store(address(seqInbox), bytes32(uint256(7)), bytes32(uint256(futureSeconds))); // slot 7: futureSeconds
         vm.prank(proxyAdmin);
         TransparentUpgradeableProxy(payable(address(seqInbox))).upgradeToAndCall(
-            address(seqInboxImpl), abi.encodeWithSelector(SequencerInbox.postUpgradeInit.selector)
+            address(seqInboxImpl),
+            abi.encodeWithSelector(SequencerInbox.postUpgradeInit.selector)
         );
 
-        (uint256 delayBlocks_, uint256 futureBlocks_, uint256 delaySeconds_, uint256 futureSeconds_)
-        = seqInbox.maxTimeVariation();
+        (
+            uint256 delayBlocks_,
+            uint256 futureBlocks_,
+            uint256 delaySeconds_,
+            uint256 futureSeconds_
+        ) = seqInbox.maxTimeVariation();
         assertEq(delayBlocks_, delayBlocks);
         assertEq(futureBlocks_, futureBlocks);
         assertEq(delaySeconds_, delaySeconds);
@@ -769,7 +773,8 @@ contract SequencerInboxTest is Test {
         vm.expectRevert(abi.encodeWithSelector(AlreadyInit.selector));
         vm.prank(proxyAdmin);
         TransparentUpgradeableProxy(payable(address(seqInbox))).upgradeToAndCall(
-            address(seqInboxImpl), abi.encodeWithSelector(SequencerInbox.postUpgradeInit.selector)
+            address(seqInboxImpl),
+            abi.encodeWithSelector(SequencerInbox.postUpgradeInit.selector)
         );
     }
 
