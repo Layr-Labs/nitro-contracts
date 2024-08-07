@@ -333,7 +333,7 @@ contract OneStepProverHostIo is IOneStepProver {
                 require(y < BN254.FR_MODULUS, "Y_LARGER_THAN_FIELD");
 
                 // must be valid proof
-                require(VerifyKzgProofWithG1Equivalence(kzgCommitment, y, proof, z, alphaMinusG2), "INVALID_KZG_PROOF");
+                require(VerifyKzgProofWithG1Equivalence(kzgCommitment, y, proof, z, alphaMinusG2), "INVALID_KZG_PROOF_EIGENDA");
             }
 
             // read the preimage length
