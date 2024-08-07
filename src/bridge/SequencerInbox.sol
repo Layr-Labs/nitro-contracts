@@ -47,9 +47,7 @@ import {GasRefundEnabled} from "../libraries/GasRefundEnabled.sol";
 import "../libraries/ArbitrumChecker.sol";
 import {IERC20Bridge} from "./IERC20Bridge.sol";
 
-import {IRollupManager} from "./RollupManager.sol";
-import {IEigenDAServiceManager} from "@eigenda/eigenda-utils/interfaces/IEigenDAServiceManager.sol";
-
+import "./IRollupManager.sol";
 
 /**
  * @title  Accepts batches from the sequencer and adds them to the rollup inbox.
@@ -62,8 +60,6 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     uint256 public totalDelayedMessagesRead;
 
     IBridge public bridge;
-
-    address public eigenDARollupManager;
 
     /// @inheritdoc ISequencerInbox
     uint256 public constant HEADER_LENGTH = 40;
@@ -103,6 +99,8 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     ISequencerInbox.MaxTimeVariation private __LEGACY_MAX_TIME_VARIATION;
 
     mapping(bytes32 => DasKeySetInfo) public dasKeySetInfo;
+
+    IRollupManager public rollupManager;
 
     modifier onlyRollupOwner() {
         if (msg.sender != rollup.owner()) revert NotOwner(msg.sender, rollup.owner());
@@ -409,59 +407,56 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         }
     }
     
-
-
-function addSequencerL2BatchFromEigenDA(
-    uint256 sequenceNumber,
-    EigenDARollupUtils.BlobVerificationProof calldata blobVerificationProof,
-    IEigenDAServiceManager.BlobHeader calldata blobHeader,
-    IGasRefunder gasRefunder,
-    uint256 afterDelayedMessagesRead,
-    uint256 prevMessageCount,
-    uint256 newMessageCount
-) external {
-    if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
-    return;
-    // Verify that the blob was actually included before continuing
-    IRollupManager(eigenDARollupManager).verifyBlob(blobHeader, blobVerificationProof);
-    // Form the EigenDA data hash and get the time bounds
-    (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) = formEigenDADataHash(blobHeader, afterDelayedMessagesRead);
-    
-    ISequencerInbox.SequenceMetadata memory metadata = ISequencerInbox.SequenceMetadata({
-        sequenceNumber: sequenceNumber,
-        afterDelayedMessagesRead: afterDelayedMessagesRead,
-        prevMessageCount: prevMessageCount,
-        newMessageCount: newMessageCount
-    });
-    
-    // Call a helper function to add the sequencer L2 batch
-    _addSequencerL2Batch(metadata, dataHash, timeBounds);
-}
-
-function _addSequencerL2Batch(
-    ISequencerInbox.SequenceMetadata memory sequenceMetadata,
-    bytes32 dataHash,
-    IBridge.TimeBounds memory timeBounds
-) internal {
-    (uint256 seqMessageIndex, bytes32 beforeAcc, bytes32 delayedAcc, bytes32 afterAcc) = 
-        addSequencerL2BatchImpl(dataHash, sequenceMetadata.afterDelayedMessagesRead, 0, sequenceMetadata.prevMessageCount, sequenceMetadata.newMessageCount);
-
-    uint256 sequenceNumber = sequenceMetadata.sequenceNumber;
-    // Check the sequence number
-    if (seqMessageIndex != sequenceNumber && sequenceNumber != ~uint256(0)) {
-        revert BadSequencerNumber(seqMessageIndex, sequenceNumber);
+    function addSequencerL2BatchFromEigenDA(
+        uint256 sequenceNumber,
+        EigenDARollupUtils.BlobVerificationProof calldata blobVerificationProof,
+        IEigenDAServiceManager.BlobHeader calldata blobHeader,
+        IGasRefunder gasRefunder,
+        uint256 afterDelayedMessagesRead,
+        uint256 prevMessageCount,
+        uint256 newMessageCount
+    ) external refundsGas(gasRefunder, IReader4844(address(0))) {
+        if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
+        // Verify that the blob was actually included before continuing
+        rollupManager.verifyBlob(blobHeader, blobVerificationProof);
+        // Form the EigenDA data hash and get the time bounds
+        (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) = formEigenDADataHash(blobHeader, afterDelayedMessagesRead);
+        
+        ISequencerInbox.SequenceMetadata memory metadata = ISequencerInbox.SequenceMetadata({
+            sequenceNumber: sequenceNumber,
+            afterDelayedMessagesRead: afterDelayedMessagesRead,
+            prevMessageCount: prevMessageCount,
+            newMessageCount: newMessageCount
+        });
+        
+        // Call a helper function to add the sequencer L2 batch
+        _addSequencerL2Batch(metadata, dataHash, timeBounds);
     }
 
-    emit SequencerBatchDelivered(
-        sequenceNumber,
-        beforeAcc,
-        afterAcc,
-        delayedAcc,
-        totalDelayedMessagesRead,
-        timeBounds,
-        IBridge.BatchDataLocation.EigenDA
-    );
-}
+    function _addSequencerL2Batch(
+        ISequencerInbox.SequenceMetadata memory sequenceMetadata,
+        bytes32 dataHash,
+        IBridge.TimeBounds memory timeBounds
+    ) internal {
+        (uint256 seqMessageIndex, bytes32 beforeAcc, bytes32 delayedAcc, bytes32 afterAcc) = 
+            addSequencerL2BatchImpl(dataHash, sequenceMetadata.afterDelayedMessagesRead, 0, sequenceMetadata.prevMessageCount, sequenceMetadata.newMessageCount);
+
+        uint256 sequenceNumber = sequenceMetadata.sequenceNumber;
+        // Check the sequence number
+        if (seqMessageIndex != sequenceNumber && sequenceNumber != ~uint256(0)) {
+            revert BadSequencerNumber(seqMessageIndex, sequenceNumber);
+        }
+
+        emit SequencerBatchDelivered(
+            sequenceNumber,
+            beforeAcc,
+            afterAcc,
+            delayedAcc,
+            totalDelayedMessagesRead,
+            timeBounds,
+            IBridge.BatchDataLocation.EigenDA
+        );
+    }
 
     function addSequencerL2Batch(
         uint256 sequenceNumber,
@@ -780,7 +775,7 @@ function _addSequencerL2Batch(
         emit OwnerFunctionCalled(5);
     }
 
-        /// @inheritdoc ISequencerInbox
+    /// @inheritdoc ISequencerInbox
     function setRollupAddress() external onlyRollupOwner {
         IOwnable newRollup = bridge.rollup();
         if (rollup == newRollup) revert RollupNotChanged();
@@ -788,13 +783,12 @@ function _addSequencerL2Batch(
         emit OwnerFunctionCalled(6);
     }
 
-    /// @inheritdoc ISequencerInbox
     function setEigenDARollupManager(address newRollupManager) external onlyRollupOwner {
-        eigenDARollupManager = newRollupManager;
+        rollupManager = IRollupManager(newRollupManager);
         emit OwnerFunctionCalled(7);
     }
 
- /// @notice Allows the rollup owner to sync the rollup address
+    /// @notice Allows the rollup owner to sync the rollup address
     function updateRollupAddress() external {
         if (msg.sender != IOwnable(rollup).owner())
             revert NotOwner(msg.sender, IOwnable(rollup).owner());
