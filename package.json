@@ -18,7 +18,6 @@
     "url": "https://github.com/offchainlabs/nitro-contracts/issues"
   },
   "scripts": {
-    "audit:ci": "yarn audit-ci --config ./audit-ci.jsonc",
     "audit:fix": "yarn-audit-fix",
     "prepublishOnly": "hardhat clean && forge clean && hardhat compile && yarn build:forge:yul",
     "build:all": "yarn build && yarn build:forge",
