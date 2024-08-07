@@ -31,4 +31,4 @@ jobs:
           cache-key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock') }}-${{ matrix.node-version }}
 
       - name: Run audit
-        run: yarn audit:ci
+        run: yarn audit-ci --config ./audit-ci.jsonc
