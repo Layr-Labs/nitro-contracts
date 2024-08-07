@@ -45,4 +45,4 @@ jobs:
         uses: OffchainLabs/actions/node-modules/restore@main
 
       - name: Run audit
-        run: yarn audit-ci
+        run: yarn audit:ci
