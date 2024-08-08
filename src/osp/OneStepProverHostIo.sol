@@ -77,7 +77,8 @@ contract OneStepProverHostIo is IOneStepProver {
         // Q + gamma
         BN254.G1Point memory q_plus_gamma = BN254.plus(BN254.G1Point(proof[0], proof[1]), gammaG1);
         BN254.G1Point memory lhsG1 = BN254.plus(P_minus_y, gamma_alpha_minus_z_g1);
-        BN254.G2Point memory alpha_minus_z_g22 = BN254.G2Point([alpha_minus_z_g2[1], alpha_minus_z_g2[0]], [alpha_minus_z_g2[3], alpha_minus_z_g2[2]]); 
+        // The order is switched in the arbitrator already. It is passed as x_c1, x_c0, y_c1, y_c0
+        BN254.G2Point memory alpha_minus_z_g22 = BN254.G2Point([alpha_minus_z_g2[0], alpha_minus_z_g2[1]], [alpha_minus_z_g2[2], alpha_minus_z_g2[3]]); 
         return BN254.pairing(lhsG1, BN254.negGeneratorG2(), q_plus_gamma, alpha_minus_z_g22);
     }
 
