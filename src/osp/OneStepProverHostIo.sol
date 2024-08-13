@@ -317,15 +317,15 @@ contract OneStepProverHostIo is IOneStepProver {
                 
                 uint256[2] memory kzgCommitment = [uint256(bytes32(kzgProof[224:256])), uint256(bytes32(kzgProof[256:288]))];
                 uint256[4] memory alphaMinusG2 = [uint256(bytes32(kzgProof[96:128])), uint256(bytes32(kzgProof[128:160])), uint256(bytes32(kzgProof[160:192])), uint256(bytes32(kzgProof[192:224]))];
-                uint256[2] memory proof = [uint256(bytes32(kzgProof[288:320])), uint256(bytes32(kzgProof[320:352]))];
+                uint256[2] memory proofUint256 = [uint256(bytes32(kzgProof[288:320])), uint256(bytes32(kzgProof[320:352]))];
                 uint256 z = uint256(bytes32(kzgProof[32:64]));
                 uint256 y = uint256(bytes32(kzgProof[64:96]));
 
                 require(kzgCommitment[0] < BN254.FP_MODULUS, "COMMIT_X_LARGER_THAN_FIELD");
                 require(kzgCommitment[1] < BN254.FP_MODULUS, "COMMIT_Y_LARGER_THAN_FIELD");
 
-                require(proof[0] < BN254.FP_MODULUS, "PROOF_X_LARGER_THAN_FIELD");
-                require(proof[1] < BN254.FP_MODULUS, "PROOF_Y_LARGER_THAN_FIELD");
+                require(proofUint256[0] < BN254.FP_MODULUS, "PROOF_X_LARGER_THAN_FIELD");
+                require(proofUint256[1] < BN254.FP_MODULUS, "PROOF_Y_LARGER_THAN_FIELD");
 
                 require(z < BN254.FR_MODULUS, "Z_LARGER_THAN_FIELD");
                 require(y < BN254.FR_MODULUS, "Y_LARGER_THAN_FIELD");
@@ -333,7 +333,7 @@ contract OneStepProverHostIo is IOneStepProver {
                 require((keccak256(kzgProof[224:288]) == bytes32(kzgProof[:32])), "KZG_PROOF_WRONG_HASH");
 
                 // must be valid proof
-                require(VerifyKzgProofWithG1Equivalence(kzgCommitment, y, proof, z, alphaMinusG2), "INVALID_KZG_PROOF_EIGENDA");
+                require(VerifyKzgProofWithG1Equivalence(kzgCommitment, y, proofUint256, z, alphaMinusG2), "INVALID_KZG_PROOF_EIGENDA");
             }
 
             // read the preimage length
