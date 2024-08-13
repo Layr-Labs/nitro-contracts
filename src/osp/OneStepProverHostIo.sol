@@ -313,9 +313,6 @@ contract OneStepProverHostIo is IOneStepProver {
             // [288:352] - proof (g1 point)
             // [352:385] - preimage length
             
-            // expect first 32 bytes of proof to be the expected version hash
-            require(bytes32(kzgProof[:32]) == leafContents, "KZG_PROOF_WRONG_HASH");
-
             {
                 
                 uint256[2] memory kzgCommitment = [uint256(bytes32(kzgProof[224:256])), uint256(bytes32(kzgProof[256:288]))];
@@ -332,6 +329,8 @@ contract OneStepProverHostIo is IOneStepProver {
 
                 require(z < BN254.FR_MODULUS, "Z_LARGER_THAN_FIELD");
                 require(y < BN254.FR_MODULUS, "Y_LARGER_THAN_FIELD");
+
+                require((keccak256(abi.encodePacked(kzgProof[224:288], leafContents)) == bytes32(kzgProof[:32])), "KZG_PROOF_WRONG_HASH");
 
                 // must be valid proof
                 require(VerifyKzgProofWithG1Equivalence(kzgCommitment, y, proof, z, alphaMinusG2), "INVALID_KZG_PROOF_EIGENDA");
