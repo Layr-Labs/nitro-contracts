@@ -305,7 +305,7 @@ contract OneStepProverHostIo is IOneStepProver {
 
             // NOTE we are expecting the following layout for our proof data, similar
             // to that expected for the point evaluation precompile
-            // [:32] - versionhash (eigenlayer)
+            // [:32] - hash (eigenlayer) (not versioned like 4844)
             // [32:64] - evaluation point
             // [64:96] - expected output
             // [96:224] - g2TauMinusG2z
@@ -330,7 +330,7 @@ contract OneStepProverHostIo is IOneStepProver {
                 require(z < BN254.FR_MODULUS, "Z_LARGER_THAN_FIELD");
                 require(y < BN254.FR_MODULUS, "Y_LARGER_THAN_FIELD");
 
-                require((keccak256(abi.encodePacked(kzgProof[224:288], leafContents)) == bytes32(kzgProof[:32])), "KZG_PROOF_WRONG_HASH");
+                require((keccak256(kzgProof[224:288]) == bytes32(kzgProof[:32])), "KZG_PROOF_WRONG_HASH");
 
                 // must be valid proof
                 require(VerifyKzgProofWithG1Equivalence(kzgCommitment, y, proof, z, alphaMinusG2), "INVALID_KZG_PROOF_EIGENDA");
