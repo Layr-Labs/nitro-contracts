@@ -47,7 +47,8 @@ contract OneStepProverHostIo is IOneStepProver {
         return uint256(hash) % BN254.FR_MODULUS;
     }
 
-    //  e((P - y) + gamma . (alpha - z), G2) = e((Q + gamma), (alpha - z)) 
+    // e((P - y) + gamma . (alpha - z), G2) = e((Q + gamma), (alpha - z)) 
+    // The last term, i.e (alpha - z) is passed into the contract.
     function VerifyKzgProofWithG1Equivalence(
         uint256[2] memory commitment,
         uint256 y,
