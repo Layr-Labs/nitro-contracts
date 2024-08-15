@@ -389,8 +389,7 @@ contract OneStepProverHostIo is IOneStepProver {
                 // preimageOffset was required to be 32 byte aligned above
                 uint256 tmp = preimageOffset / 32;
                 uint256 rootOfUnityPower = (1 << 28) / preimageLength * 32;
-                // Then, we raise the root of unity to the power of bitReversedIndex,
-                // to retrieve this word of the KZG commitment.
+                // Then, we raise the root of unity to the power.
                 rootOfUnityPower *= tmp;
                 // z is the point the polynomial is evaluated at to retrieve this word of data
                 uint256 z = modExp256(
