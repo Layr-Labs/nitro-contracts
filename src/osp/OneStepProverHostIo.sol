@@ -183,9 +183,6 @@ contract OneStepProverHostIo is IOneStepProver {
     uint256 internal constant BN_254_PRIMITIVE_ROOT_OF_UNITY =
         19103219067921713944291392827692070036145651957329286315305642004821462161904;
 
-    // see: https://github.com/Layr-Labs/eigenda/blob/master/disperser/apiserver/server.go#L35
-    uint256 internal constant eigenDAMaxFieldElementsPerBlob = (2 * 1024 * 1024) / 32;
-
     function executeReadPreImage(
         ExecutionContext calldata,
         Machine memory mach,
