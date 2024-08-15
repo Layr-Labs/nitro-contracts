@@ -341,9 +341,6 @@ contract OneStepProverHostIo is IOneStepProver {
             if (preimageOffset < preimageLength) {
                 // preimageOffset was required to be 32 byte aligned above
                 uint256 tmp = preimageOffset / 32;
-                                // First, we get the root of unity of order 2**fieldElementsPerBlob.
-                // We start with a root of unity of order 2**32 and then raise it to
-                // the power of (2**32)/fieldElementsPerBlob to get root of unity we need.
                 uint256 rootOfUnityPower = (1 << 28) / preimageLength * 32;
                 // Then, we raise the root of unity to the power of bitReversedIndex,
                 // to retrieve this word of the KZG commitment.
