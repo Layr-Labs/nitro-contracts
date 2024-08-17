@@ -38,6 +38,11 @@ interface ISequencerInbox is IDelayedMessageProvider {
         IBridge.BatchDataLocation dataLocation
     );
 
+    struct EigenDACert {
+        EigenDARollupUtils.BlobVerificationProof blobVerificationProof;
+        IEigenDAServiceManager.BlobHeader blobHeader;
+    }
+
     event OwnerFunctionCalled(uint256 indexed id);
 
     /// @dev a separate event that emits batch data when this isn't easily accessible in the tx.input
@@ -197,8 +202,7 @@ interface ISequencerInbox is IDelayedMessageProvider {
 
     function addSequencerL2BatchFromEigenDA(
     uint256 sequenceNumber,
-    EigenDARollupUtils.BlobVerificationProof calldata blobVerificationProof,
-    IEigenDAServiceManager.BlobHeader calldata blobHeader,
+    EigenDACert calldata cert,
     IGasRefunder gasRefunder,
     uint256 afterDelayedMessagesRead,
     uint256 prevMessageCount,

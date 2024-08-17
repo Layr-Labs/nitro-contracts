@@ -330,11 +330,7 @@ contract OneStepProverHostIo is IOneStepProver {
                 require(z < BN254.FR_MODULUS, "Z_LARGER_THAN_FIELD");
                 require(y < BN254.FR_MODULUS, "Y_LARGER_THAN_FIELD");
 
-                // construct hash
-
                 require(keccak256(abi.encodePacked(kzgProof[224:288], kzgProof[352:384])) == leafContents, "KZG_PROOF_WRONG_HASH");
-
-                // require((keccak256(kzgProof[224:288]) == bytes32(kzgProof[:32])) && (bytes32(kzgProof[:32]) == leafContents), "KZG_PROOF_WRONG_HASH");
 
                 // must be valid proof
                 require(VerifyKzgProofWithG1Equivalence(kzgCommitment, y, proofUint256, z, alphaMinusG2), "INVALID_KZG_PROOF_EIGENDA");
