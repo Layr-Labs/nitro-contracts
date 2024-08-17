@@ -409,8 +409,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     
     function addSequencerL2BatchFromEigenDA(
         uint256 sequenceNumber,
-        EigenDARollupUtils.BlobVerificationProof calldata blobVerificationProof,
-        IEigenDAServiceManager.BlobHeader calldata blobHeader,
+        EigenDACert calldata cert,
         IGasRefunder gasRefunder,
         uint256 afterDelayedMessagesRead,
         uint256 prevMessageCount,
@@ -418,9 +417,9 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     ) external refundsGas(gasRefunder, IReader4844(address(0))) {
         if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
         // Verify that the blob was actually included before continuing
-        rollupManager.verifyBlob(blobHeader, blobVerificationProof);
+        rollupManager.verifyBlob(cert.blobHeader, cert.blobVerificationProof);
         // Form the EigenDA data hash and get the time bounds
-        (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) = formEigenDADataHash(blobHeader, afterDelayedMessagesRead);
+        (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) = formEigenDADataHash(cert, afterDelayedMessagesRead);
         
         ISequencerInbox.SequenceMetadata memory metadata = ISequencerInbox.SequenceMetadata({
             sequenceNumber: sequenceNumber,
@@ -448,7 +447,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         }
 
         emit SequencerBatchDelivered(
-            sequenceNumber,
+            seqMessageIndex,
             beforeAcc,
             afterAcc,
             delayedAcc,
@@ -545,7 +544,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     function isValidCallDataFlag(bytes1 headerByte) internal pure returns (bool) {
         return headerByte == BROTLI_MESSAGE_HEADER_FLAG || headerByte == DAS_MESSAGE_HEADER_FLAG
             || (headerByte == (DAS_MESSAGE_HEADER_FLAG | TREE_DAS_MESSAGE_HEADER_FLAG))
-            || headerByte == ZERO_HEAVY_MESSAGE_HEADER_FLAG || headerByte == EIGENDA_MESSAGE_HEADER_FLAG;
+            || headerByte == ZERO_HEAVY_MESSAGE_HEADER_FLAG;
     }
 
     /// @dev    Form a hash of the data taken from the calldata
@@ -571,12 +570,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
             // would allow the supplier of the data to spoof an incorrect 4844 data batch
             if (!isValidCallDataFlag(data[0])) revert InvalidHeaderFlag(data[0]);
 
-            // the first byte is used to identify the type of batch data
-            // das batches expect to have the type byte set, followed by the keyset (so they should have at least 33 bytes)
-            // if invalid data is supplied here the state transition function will process it as an empty block
-            // however we can provide a nice additional check here for the batch poster
-            // ignore if the first byte is 0xed, as that is the eigenDA message flag
-            if (data[0] != EIGENDA_MESSAGE_HEADER_FLAG && (data[0] & DAS_MESSAGE_HEADER_FLAG != 0) && data.length >= 33) {
+            if ((data[0] & DAS_MESSAGE_HEADER_FLAG != 0) && data.length >= 33) {
                 // we skip the first byte, then read the next 32 bytes for the keyset
                 bytes32 dasKeysetHash = bytes32(data[1:33]);
                 if (!dasKeySetInfo[dasKeysetHash].isValidKeyset) revert NoSuchKeyset(dasKeysetHash);
@@ -609,11 +603,14 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         );
     }
 
+    /// @dev    Form a hash of the eigenDA certificate
+    /// @param  afterDelayedMessagesRead The delayed messages count read up to
+    /// @return The data hash
+    /// @return The timebounds within which the message should be processed
     function formEigenDADataHash(
-        IEigenDAServiceManager.BlobHeader memory blobHeader,
+        ISequencerInbox.EigenDACert calldata cert,
         uint256 afterDelayedMessagesRead
     ) internal view returns (bytes32, IBridge.TimeBounds memory) {
-        // we can't get the full data preimage onchain, so we hash the commitment to the blobdata and the datalength
         (bytes memory header, IBridge.TimeBounds memory timeBounds) =
             packHeader(afterDelayedMessagesRead);
 
@@ -622,8 +619,8 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
                 bytes.concat(
                     header,
                     EIGENDA_MESSAGE_HEADER_FLAG,
-                    abi.encodePacked(
-                        blobHeader.commitment.X, blobHeader.commitment.Y, blobHeader.dataLength
+                    abi.encode(
+                        cert
                     )
                 )
                 ),
