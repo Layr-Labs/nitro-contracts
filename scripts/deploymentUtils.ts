@@ -122,7 +122,7 @@ export async function deployAllContracts(
 ): Promise<Record<string, Contract>> {
   const isOnArb = await _isRunningOnArbitrum(signer)
 
-  const eigenDARollupManager = await deployContract('EigenDADummyManager', signer, [], verify)
+  const eigenDARollupManager = await deployContract('EigenDABlobVerifierL2', signer, [], verify)
 
   const ethBridge = await deployContract('Bridge', signer, [], verify)
   const reader4844 = isOnArb
