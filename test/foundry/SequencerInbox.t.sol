@@ -247,41 +247,6 @@ contract SequencerInboxTest is Test {
         );
     }
 
-    bytes eigenDAData =
-        hex"ed4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a";
-
-    // note that this test is for continuted compatibility with the m0 arbitrum integration.
-    function testAddSequencerL2BatchFromOrigin_EigenDaHeader() public {
-        (SequencerInbox seqInbox, Bridge bridge) = deployRollup(false);
-        address delayedInboxSender = address(140);
-        uint8 delayedInboxKind = 3;
-        bytes32 messageDataHash = RAND.Bytes32();
-        bytes memory data = eigenDAData; // ed is EIGENDA_MESSAGE_HEADER_FLAG
-
-        vm.prank(dummyInbox);
-        bridge.enqueueDelayedMessage(delayedInboxKind, delayedInboxSender, messageDataHash);
-
-        uint256 subMessageCount = bridge.sequencerReportedSubMessageCount();
-        uint256 sequenceNumber = bridge.sequencerMessageCount();
-        uint256 delayedMessagesRead = bridge.delayedMessageCount();
-
-        // set 60 gwei basefee
-        uint256 basefee = 60000000000;
-        vm.fee(basefee);
-        expectEvents(bridge, seqInbox, data, false, false, false);
-
-        vm.prank(tx.origin);
-        seqInbox.addSequencerL2BatchFromOrigin(
-            sequenceNumber,
-            data,
-            delayedMessagesRead,
-            IGasRefunder(address(0)),
-            subMessageCount,
-            subMessageCount + 1
-        );
-
-    }
-
     bytes invalidHeaderData = 
         hex"ab4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a4567890a";
 
@@ -607,10 +572,13 @@ contract SequencerInboxTest is Test {
         bridge.enqueueDelayedMessage(delayedInboxKind, delayedInboxSender, messageDataHash);
 
         (IEigenDAServiceManager.BlobHeader memory blobHeader, EigenDARollupUtils.BlobVerificationProof memory blobVerificationProof) = readAndParseBlobInfo();
+        ISequencerInbox.EigenDACert memory cert  = ISequencerInbox.EigenDACert({
+            blobHeader: blobHeader,
+            blobVerificationProof: blobVerificationProof
+        });
 
-        // ed is EIGEN_DA_MESSAGE_HEADER_FLAG rest is abi.encodePacked(blobHeader.commitment.X, blobHeader.commitment.Y, blobHeader.dataLength)
         bytes memory data =
-            abi.encodePacked(hex"ed", blobHeader.commitment.X, blobHeader.commitment.Y, blobHeader.dataLength);
+            bytes.concat(hex"ed", abi.encode(cert));
 
         uint256 subMessageCount = bridge.sequencerReportedSubMessageCount();
         uint256 sequenceNumber = bridge.sequencerMessageCount();
@@ -622,8 +590,7 @@ contract SequencerInboxTest is Test {
 
         seqInbox.addSequencerL2BatchFromEigenDA(
             sequenceNumber,
-            blobVerificationProof,
-            blobHeader,
+            cert,
             IGasRefunder(address(0)),
             delayedMessagesRead,
             subMessageCount,
@@ -675,6 +642,11 @@ contract SequencerInboxTest is Test {
             })
         );
 
+        ISequencerInbox.EigenDACert memory illegalCert = ISequencerInbox.EigenDACert({
+            blobHeader: illegalBlobHeader,
+            blobVerificationProof: illegalBlobVerificationProof
+        });
+
         // change the eigenDAServiceManager to use the holesky testnet contract
         (SequencerInbox seqInbox, Bridge bridge) = deployRollup(false);
         address delayedInboxSender = address(140);
@@ -694,8 +666,7 @@ contract SequencerInboxTest is Test {
         vm.expectRevert();
         seqInbox.addSequencerL2BatchFromEigenDA(
             sequenceNumber,
-            illegalBlobVerificationProof,
-            illegalBlobHeader,
+            illegalCert,
             IGasRefunder(address(0)),
             delayedMessagesRead,
             subMessageCount,
