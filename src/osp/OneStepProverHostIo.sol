@@ -320,6 +320,8 @@ contract OneStepProverHostIo is IOneStepProver {
                 uint256[2] memory proofUint256 = [uint256(bytes32(kzgProof[288:320])), uint256(bytes32(kzgProof[320:352]))];
                 uint256 z = uint256(bytes32(kzgProof[32:64]));
                 uint256 y = uint256(bytes32(kzgProof[64:96]));
+                uint256 length = uint32(uint256(bytes32(kzgProof[352:384])));
+                uint32 length_u32 = uint32(length);
 
                 require(kzgCommitment[0] < BN254.FP_MODULUS, "COMMIT_X_LARGER_THAN_FIELD");
                 require(kzgCommitment[1] < BN254.FP_MODULUS, "COMMIT_Y_LARGER_THAN_FIELD");
@@ -330,10 +332,10 @@ contract OneStepProverHostIo is IOneStepProver {
                 require(z < BN254.FR_MODULUS, "Z_LARGER_THAN_FIELD");
                 require(y < BN254.FR_MODULUS, "Y_LARGER_THAN_FIELD");
 
-                require(keccak256(abi.encodePacked(kzgProof[224:288], kzgProof[352:384])) == leafContents, "KZG_PROOF_WRONG_HASH");
+                require(keccak256(abi.encodePacked(kzgProof[224:288], length_u32)) == leafContents, "BN254_KZG_PROOF_WRONG_HASH");
 
                 // must be valid proof
-                require(VerifyKzgProofWithG1Equivalence(kzgCommitment, y, proofUint256, z, alphaMinusG2), "INVALID_KZG_PROOF_EIGENDA");
+                require(VerifyKzgProofWithG1Equivalence(kzgCommitment, y, proofUint256, z, alphaMinusG2), "INVALID_BN254_KZG_PROOF");
             }
 
             // read the preimage length
