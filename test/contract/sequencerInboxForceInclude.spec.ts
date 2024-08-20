@@ -225,7 +225,7 @@ describe('SequencerInboxForceInclude', async () => {
     const rollupOwner = accounts[3]
     const batchPoster = accounts[4]
     // const batchPosterManager = accounts[5]
-    const dummyAVSContract= accounts[6]
+    const dummyAVSContract = accounts[6]
     const dummyAVSContractAddress = await dummyAVSContract.getAddress()
 
     const rollupMockFac = (await ethers.getContractFactory(
@@ -233,11 +233,15 @@ describe('SequencerInboxForceInclude', async () => {
     )) as RollupMock__factory
     const rollup = await rollupMockFac.deploy(await rollupOwner.getAddress())
 
-    const EigenDARollupUtils = await ethers.getContractFactory("EigenDARollupUtils");
-    const eigenDARollupUtils = await EigenDARollupUtils.deploy();
-    await eigenDARollupUtils.deployed();
+    const EigenDARollupUtils = await ethers.getContractFactory(
+      'EigenDARollupUtils'
+    )
+    const eigenDARollupUtils = await EigenDARollupUtils.deploy()
+    await eigenDARollupUtils.deployed()
 
-    const EigenDAServiceManagerStub = await ethers.getContractFactory("EigenDAServiceManagerStub");
+    const EigenDAServiceManagerStub = await ethers.getContractFactory(
+      'EigenDAServiceManagerStub'
+    )
 
     const eigenDAServiceManagerStub = await EigenDAServiceManagerStub.deploy(
       dummyAVSContractAddress,
@@ -248,15 +252,18 @@ describe('SequencerInboxForceInclude', async () => {
       0,
       adminAddr,
       [adminAddr]
-    );
-    await eigenDAServiceManagerStub.deployed();
+    )
+    await eigenDAServiceManagerStub.deployed()
 
     const reader4844 = await Toolkit4844.deployReader4844(admin)
-    const sequencerInboxFac = await ethers.getContractFactory("SequencerInbox", {
-      libraries: {
-          EigenDARollupUtils: eigenDARollupUtils.address
+    const sequencerInboxFac = (await ethers.getContractFactory(
+      'SequencerInbox',
+      {
+        libraries: {
+          EigenDARollupUtils: eigenDARollupUtils.address,
+        },
       }
-    }) as SequencerInbox__factory
+    )) as SequencerInbox__factory
     const seqInboxTemplate = await sequencerInboxFac.deploy(
       117964,
       reader4844.address,

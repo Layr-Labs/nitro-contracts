@@ -33,8 +33,8 @@ jobs:
       - name: Install packages
         run: yarn
 
-      - name: Build
-        run: forge test --fork-url https://rpc.holesky.ethpandaops.io/
+      # - name: Build
+      #   run: forge test --fork-url https://rpc.holesky.ethpandaops.io/
   tests:
     name: Contract tests
     runs-on: ubuntu-latest

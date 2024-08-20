@@ -55,7 +55,7 @@ export async function deployContract(
   verify: boolean = true,
   overrides?: Overrides
 ): Promise<Contract> {
-  console.log("Deploying contract EigenDA x Arbitrum", contractName)
+  console.log('Deploying contract EigenDA x Arbitrum', contractName)
   const factory: ContractFactory = await ethers.getContractFactory(contractName)
   const connectedFactory: ContractFactory = factory.connect(signer)
 
@@ -93,7 +93,12 @@ export async function deployAllContracts(
 ): Promise<Record<string, Contract>> {
   const isOnArb = await _isRunningOnArbitrum(signer)
 
-  const eigenDARollupManager = await deployContract('EigenDABlobVerifierL2', signer, [], verify)
+  const eigenDARollupManager = await deployContract(
+    'EigenDABlobVerifierL2',
+    signer,
+    [],
+    verify
+  )
 
   const ethBridge = await deployContract('Bridge', signer, [], verify)
   const reader4844 = isOnArb
