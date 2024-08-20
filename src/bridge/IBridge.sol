@@ -23,7 +23,6 @@ interface IBridge {
         Blob,
         /// @notice The data can be found in the EigenDA blob associated with the metadata of this transaction
         EigenDA
-
     }
 
     struct TimeBounds {
