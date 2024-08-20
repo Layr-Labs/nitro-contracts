@@ -282,7 +282,7 @@ describe('SequencerInboxForceInclude', async () => {
       .connect(user)
     await bridge.initialize(rollup.address)
 
-    await sequencerInbox.setEigenDARollupManager(eigenDAblobVerifierL2.address)
+    // await sequencerInbox.setEigenDARollupManager(eigenDAblobVerifierL2.address)
 
     await sequencerInbox.initialize(bridgeProxy.address, {
       delayBlocks: maxDelayBlocks,
