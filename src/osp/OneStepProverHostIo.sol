@@ -66,7 +66,8 @@ contract OneStepProverHostIo is IOneStepProver {
         return uint256(hash) % BN254.FR_MODULUS;
     }
 
-    //  e((P - y) + gamma . (alpha - z), G2) = e((Q + gamma), (alpha - z))
+    // e((P - y) + gamma . (alpha - z), G2) = e((Q + gamma), (alpha - z)) 
+    // The last term, i.e (alpha - z) is passed into the contract.
     function VerifyKzgProofWithG1Equivalence(
         uint256[2] memory commitment,
         uint256 y,
@@ -204,9 +205,6 @@ contract OneStepProverHostIo is IOneStepProver {
 
     uint256 internal constant BN_254_PRIMITIVE_ROOT_OF_UNITY =
         19103219067921713944291392827692070036145651957329286315305642004821462161904;
-
-    // see: https://github.com/Layr-Labs/eigenda/blob/master/disperser/apiserver/server.go#L35
-    uint256 internal constant eigenDAMaxFieldElementsPerBlob = (2 * 1024 * 1024) / 32;
 
     function executeReadPreImage(
         ExecutionContext calldata,

@@ -20,7 +20,10 @@ interface IBridge {
         /// @notice This batch contains no data
         NoData,
         /// @notice The data can be found in the 4844 data blobs on this transaction
-        Blob
+        Blob,
+        /// @notice The data can be found in the EigenDA blob associated with the metadata of this transaction
+        EigenDA
+
     }
 
     struct TimeBounds {
