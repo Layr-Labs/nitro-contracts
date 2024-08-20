@@ -12,7 +12,7 @@ on:
 jobs:
   test-unit:
     name: Test unit
-    runs-on: linux-2xl
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
         with:
@@ -37,7 +37,7 @@ jobs:
         run: forge test --fork-url https://rpc.holesky.ethpandaops.io/
   tests:
     name: Contract tests
-    runs-on: linux-2xl
+    runs-on: ubuntu-latest
     defaults:
       run:
         shell: bash
@@ -116,7 +116,7 @@ jobs:
 
   test-4844:
     name: 4844 tests
-    runs-on: linux-2xl
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
         with:
