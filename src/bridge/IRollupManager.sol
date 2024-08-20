@@ -5,7 +5,6 @@ import {EigenDARollupUtils} from "@eigenda/eigenda-utils/libraries/EigenDARollup
 import {IEigenDAServiceManager} from "@eigenda/eigenda-utils/interfaces/IEigenDAServiceManager.sol";
 
 interface IRollupManager {
-
     function verifyBlob(
         IEigenDAServiceManager.BlobHeader calldata blobHeader,
         EigenDARollupUtils.BlobVerificationProof calldata blobVerificationProof
