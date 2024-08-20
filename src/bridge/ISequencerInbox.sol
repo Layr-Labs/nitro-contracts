@@ -201,12 +201,12 @@ interface ISequencerInbox is IDelayedMessageProvider {
     ) external;
 
     function addSequencerL2BatchFromEigenDA(
-    uint256 sequenceNumber,
-    EigenDACert calldata cert,
-    IGasRefunder gasRefunder,
-    uint256 afterDelayedMessagesRead,
-    uint256 prevMessageCount,
-    uint256 newMessageCount
+        uint256 sequenceNumber,
+        EigenDACert calldata cert,
+        IGasRefunder gasRefunder,
+        uint256 afterDelayedMessagesRead,
+        uint256 prevMessageCount,
+        uint256 newMessageCount
     ) external;
 
     // ---------- onlyRollupOrOwner functions ----------
@@ -221,7 +221,6 @@ interface ISequencerInbox is IDelayedMessageProvider {
      * @notice Set the new rollup contract address
      */
     function setRollupAddress() external;
-
 
     /**
      * @notice Set max delay for sequencer inbox
@@ -264,9 +263,6 @@ interface ISequencerInbox is IDelayedMessageProvider {
 
     /// @notice Allows the rollup owner to sync the rollup address
     // function updateRollupAddress() external;
-
-    /// @notice Allows the rollup owner to update the eigenDAServiceManager address
-    // function updateEigenDAServiceManager(address newEigenDAServiceManager) external;
 
     // ---------- initializer ----------
 

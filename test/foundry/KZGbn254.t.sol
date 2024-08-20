@@ -12,15 +12,11 @@ contract VerifyKzgBN245Commitment is Test {
     }
 
     function testVerifyCommitment() public {
-
         uint256 commitX = 19070058680970706162154662779699659917241938423048978712039328696898981234708;
         uint256 commitY = 11823711927945062212181456259672826202645633805996688691575607391116183704220;
         uint256 evaluationY = 124448554745810004944228143885327110275920855486363883336842102793103679599;
 
-
         uint256[2] memory commit = [commitX, commitY];
-
-
 
         uint256 proofX = 3494873036786265278705899204171091912768379376170087008335233101540628332609;
         uint256 proofY = 8608960508439403080401521741368234568803206554328273041427052980854260749148;
@@ -49,7 +45,13 @@ contract VerifyKzgBN245Commitment is Test {
 
         uint256 bad_z = 69;
         assertFalse(
-            osp.VerifyKzgProofWithG1Equivalence(commit, evaluationY, proofArray, bad_z, alphaMinusZG2)
+            osp.VerifyKzgProofWithG1Equivalence(
+                commit,
+                evaluationY,
+                proofArray,
+                bad_z,
+                alphaMinusZG2
+            )
         );
     }
 }

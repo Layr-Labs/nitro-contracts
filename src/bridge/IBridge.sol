@@ -20,9 +20,7 @@ interface IBridge {
         /// @notice This batch contains no data
         NoData,
         /// @notice The data can be found in the 4844 data blobs on this transaction
-        Blob,
-        /// @notice The data can be found in the EigenDA blob associated with this batch
-        EigenDA
+        Blob
     }
 
     struct TimeBounds {
@@ -44,7 +42,10 @@ interface IBridge {
     );
 
     event BridgeCallTriggered(
-        address indexed outbox, address indexed to, uint256 value, bytes data
+        address indexed outbox,
+        address indexed to,
+        uint256 value,
+        bytes data
     );
 
     event InboxToggle(address indexed inbox, bool enabled);
@@ -77,9 +78,11 @@ interface IBridge {
 
     function sequencerReportedSubMessageCount() external view returns (uint256);
 
-    function executeCall(address to, uint256 value, bytes calldata data)
-        external
-        returns (bool success, bytes memory returnData);
+    function executeCall(
+        address to,
+        uint256 value,
+        bytes calldata data
+    ) external returns (bool success, bytes memory returnData);
 
     function delayedMessageCount() external view returns (uint256);
 
@@ -94,7 +97,12 @@ interface IBridge {
         uint256 newMessageCount
     )
         external
-        returns (uint256 seqMessageIndex, bytes32 beforeAcc, bytes32 delayedAcc, bytes32 acc);
+        returns (
+            uint256 seqMessageIndex,
+            bytes32 beforeAcc,
+            bytes32 delayedAcc,
+            bytes32 acc
+        );
 
     /**
      * @dev Allows the sequencer inbox to submit a delayed message of the batchPostingReport type
