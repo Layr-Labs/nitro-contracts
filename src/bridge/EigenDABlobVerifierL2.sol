@@ -4,7 +4,6 @@ pragma solidity ^0.8.9;
 import "./IRollupManager.sol";
 
 contract EigenDABlobVerifierL2 is IRollupManager {
-
     function verifyBlob(
         IEigenDAServiceManager.BlobHeader calldata blobHeader,
         EigenDARollupUtils.BlobVerificationProof calldata blobVerificationProof

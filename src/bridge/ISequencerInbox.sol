@@ -38,6 +38,11 @@ interface ISequencerInbox is IDelayedMessageProvider {
         IBridge.BatchDataLocation dataLocation
     );
 
+    struct EigenDACert {
+        EigenDARollupUtils.BlobVerificationProof blobVerificationProof;
+        IEigenDAServiceManager.BlobHeader blobHeader;
+    }
+
     event OwnerFunctionCalled(uint256 indexed id);
 
     /// @dev a separate event that emits batch data when this isn't easily accessible in the tx.input
@@ -196,13 +201,12 @@ interface ISequencerInbox is IDelayedMessageProvider {
     ) external;
 
     function addSequencerL2BatchFromEigenDA(
-    uint256 sequenceNumber,
-    EigenDARollupUtils.BlobVerificationProof calldata blobVerificationProof,
-    IEigenDAServiceManager.BlobHeader calldata blobHeader,
-    IGasRefunder gasRefunder,
-    uint256 afterDelayedMessagesRead,
-    uint256 prevMessageCount,
-    uint256 newMessageCount
+        uint256 sequenceNumber,
+        EigenDACert calldata cert,
+        IGasRefunder gasRefunder,
+        uint256 afterDelayedMessagesRead,
+        uint256 prevMessageCount,
+        uint256 newMessageCount
     ) external;
 
     // ---------- onlyRollupOrOwner functions ----------
@@ -217,7 +221,6 @@ interface ISequencerInbox is IDelayedMessageProvider {
      * @notice Set the new rollup contract address
      */
     function setRollupAddress() external;
-
 
     /**
      * @notice Set max delay for sequencer inbox
@@ -260,7 +263,6 @@ interface ISequencerInbox is IDelayedMessageProvider {
 
     /// @notice Allows the rollup owner to sync the rollup address
     function updateRollupAddress() external;
-
 
     // ---------- initializer ----------
 

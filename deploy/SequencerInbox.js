@@ -8,9 +8,11 @@ module.exports = async hre => {
 
   const EigenDARollupUtils = await ethers.getContract('EigenDARollupUtils')
 
-
-
-  await deploy('SequencerInbox', { from: deployer, args: [117964], libraries: { EigenDARollupUtils: EigenDARollupUtils.address } })
+  await deploy('SequencerInbox', {
+    from: deployer,
+    args: [117964],
+    libraries: { EigenDARollupUtils: EigenDARollupUtils.address },
+  })
 }
 
 module.exports.tags = ['SequencerInbox']
