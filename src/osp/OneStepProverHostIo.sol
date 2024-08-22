@@ -31,6 +31,82 @@ contract OneStepProverHostIo is IOneStepProver {
     uint64 private constant INBOX_HEADER_LEN = 40;
     uint64 private constant DELAYED_HEADER_LEN = 112 + 1;
 
+    using BN254 for uint256[4];
+    using BN254 for uint256[3];
+    using BN254 for uint256[12];
+
+    // AlphaG1
+    // This is from the SRS points being used.
+    // This is the point at index 1, since index 0 is the generator value of the G1 group.
+    BN254.G1Point private ALPHA_G1 =
+        BN254.G1Point(
+            5421624913032980671919055010798735843841011930764711817607050648427876929258,
+            12995821280260994872112541311010834261076556242291585164372488699033268245381
+        );
+
+    function computeGamma(
+        uint256 z,
+        uint256 y,
+        uint256[2] memory p,
+        uint256[4] memory alpha_minus_z_g2
+    ) internal pure returns (uint256) {
+        // Encode the variables and compute the keccak256 hash
+        bytes32 hash = keccak256(
+            abi.encodePacked(
+                z,
+                y,
+                p[0],
+                p[1],
+                alpha_minus_z_g2[0],
+                alpha_minus_z_g2[1],
+                alpha_minus_z_g2[2],
+                alpha_minus_z_g2[3]
+            )
+        );
+        return uint256(hash) % BN254.FR_MODULUS;
+    }
+
+    // e((P - y) + gamma . (alpha - z), G2) = e((Q + gamma), (alpha - z))
+    // The last term, i.e (alpha - z) is passed into the contract.
+    function VerifyKzgProofWithG1Equivalence(
+        uint256[2] memory commitment,
+        uint256 y,
+        uint256[2] memory proof,
+        uint256 z,
+        uint256[4] memory alpha_minus_z_g2
+    ) public view returns (bool) {
+        BN254.G1Point memory yG1Neg = BN254.negate(BN254.scalar_mul(BN254.generatorG1(), y));
+        BN254.G1Point memory P_minus_y = BN254.plus(
+            BN254.G1Point(commitment[0], commitment[1]),
+            yG1Neg
+        );
+
+        // zG1
+        BN254.G1Point memory zG1Neg = BN254.negate(BN254.scalar_mul(BN254.generatorG1(), z));
+
+        // (alphaG1 - zG1)
+        BN254.G1Point memory alpha_minus_z_g1 = BN254.plus(ALPHA_G1, zG1Neg);
+
+        // gamma
+        uint256 gamma = computeGamma(z, y, commitment, alpha_minus_z_g2);
+
+        // gamma . (alpha - z)G1
+        BN254.G1Point memory gamma_alpha_minus_z_g1 = BN254.scalar_mul(alpha_minus_z_g1, gamma);
+
+        // gammaG1
+        BN254.G1Point memory gammaG1 = BN254.scalar_mul(BN254.generatorG1(), gamma);
+
+        // Q + gamma
+        BN254.G1Point memory q_plus_gamma = BN254.plus(BN254.G1Point(proof[0], proof[1]), gammaG1);
+        BN254.G1Point memory lhsG1 = BN254.plus(P_minus_y, gamma_alpha_minus_z_g1);
+        // The order is switched in the arbitrator already. It is passed as x_c1, x_c0, y_c1, y_c0
+        BN254.G2Point memory alpha_minus_z_g22 = BN254.G2Point(
+            [alpha_minus_z_g2[0], alpha_minus_z_g2[1]],
+            [alpha_minus_z_g2[2], alpha_minus_z_g2[3]]
+        );
+        return BN254.pairing(lhsG1, BN254.negGeneratorG2(), q_plus_gamma, alpha_minus_z_g22);
+    }
+
     function setLeafByte(
         bytes32 oldLeaf,
         uint256 idx,
@@ -127,12 +203,8 @@ contract OneStepProverHostIo is IOneStepProver {
         return uint256(bytes32(modExpOutput));
     }
 
-
     uint256 internal constant BN_254_PRIMITIVE_ROOT_OF_UNITY =
         19103219067921713944291392827692070036145651957329286315305642004821462161904;
-
-    // see: https://github.com/Layr-Labs/eigenda/blob/master/disperser/apiserver/server.go#L35
-    uint256 internal constant eigenDAMaxFieldElementsPerBlob = 268435456;
 
     function executeReadPreImage(
         ExecutionContext calldata,
@@ -254,7 +326,7 @@ contract OneStepProverHostIo is IOneStepProver {
 
             // NOTE we are expecting the following layout for our proof data, similar
             // to that expected for the point evaluation precompile
-            // [:32] - versionhash (eigenlayer)
+            // [:32] - hash (eigenlayer) (not versioned like 4844)
             // [32:64] - evaluation point
             // [64:96] - expected output
             // [96:224] - g2TauMinusG2z
@@ -262,54 +334,77 @@ contract OneStepProverHostIo is IOneStepProver {
             // [288:352] - proof (g1 point)
             // [352:385] - preimage length
 
-            // expect first 32 bytes of proof to be the expected version hash
-            require(bytes32(kzgProof[:32]) == leafContents, "KZG_PROOF_WRONG_HASH");
-
             {
-                // evaluation point
-                uint256 evaluationPoint = uint256(bytes32(kzgProof[32:64]));
+                uint256[2] memory kzgCommitment = [
+                    uint256(bytes32(kzgProof[224:256])),
+                    uint256(bytes32(kzgProof[256:288]))
+                ];
+                uint256[4] memory alphaMinusG2 = [
+                    uint256(bytes32(kzgProof[96:128])),
+                    uint256(bytes32(kzgProof[128:160])),
+                    uint256(bytes32(kzgProof[160:192])),
+                    uint256(bytes32(kzgProof[192:224]))
+                ];
+                uint256[2] memory proofUint256 = [
+                    uint256(bytes32(kzgProof[288:320])),
+                    uint256(bytes32(kzgProof[320:352]))
+                ];
+                uint256 z = uint256(bytes32(kzgProof[32:64]));
+                uint256 y = uint256(bytes32(kzgProof[64:96]));
+                uint256 length = uint32(uint256(bytes32(kzgProof[352:384])));
+                uint32 length_u32 = uint32(length);
 
-                // expected output
-                uint256 expectedOutput = uint256(bytes32(kzgProof[64:96]));
+                require(kzgCommitment[0] < BN254.FP_MODULUS, "COMMIT_X_LARGER_THAN_FIELD");
+                require(kzgCommitment[1] < BN254.FP_MODULUS, "COMMIT_Y_LARGER_THAN_FIELD");
 
-                BN254.G2Point memory g2TauMinusG2z = BN254.G2Point({
-                    X: [uint256(bytes32(kzgProof[96:128])), uint256(bytes32(kzgProof[128:160]))],
-                    Y: [uint256(bytes32(kzgProof[160:192])), uint256(bytes32(kzgProof[192:224]))]
-                });
+                require(proofUint256[0] < BN254.FP_MODULUS, "PROOF_X_LARGER_THAN_FIELD");
+                require(proofUint256[1] < BN254.FP_MODULUS, "PROOF_Y_LARGER_THAN_FIELD");
 
-                BN254.G1Point memory kzgCommitment =
-                    BN254.G1Point(uint256(bytes32(kzgProof[224:256])), uint256(bytes32(kzgProof[256:288])));
+                require(z < BN254.FR_MODULUS, "Z_LARGER_THAN_FIELD");
+                require(y < BN254.FR_MODULUS, "Y_LARGER_THAN_FIELD");
 
-                BN254.G1Point memory eigenDAKZGProof =
-                    BN254.G1Point(uint256(bytes32(kzgProof[288:320])), uint256(bytes32(kzgProof[320:352])));
-            
+                require(
+                    keccak256(abi.encodePacked(kzgProof[224:288], length_u32)) == leafContents,
+                    "BN254_KZG_PROOF_WRONG_HASH"
+                );
+
                 // must be valid proof
-                require(verifyEigenDACommitment(kzgCommitment, eigenDAKZGProof, g2TauMinusG2z, evaluationPoint, expectedOutput), "INVALID_KZG_PROOF");
+                require(
+                    VerifyKzgProofWithG1Equivalence(
+                        kzgCommitment,
+                        y,
+                        proofUint256,
+                        z,
+                        alphaMinusG2
+                    ),
+                    "INVALID_BN254_KZG_PROOF"
+                );
             }
 
             // read the preimage length
             uint256 preimageLength = uint256(bytes32(kzgProof[352:384]));
 
-
             // If preimageOffset is greater than or equal to the blob size, leave extracted empty and call it here.
             if (preimageOffset < preimageLength) {
                 // preimageOffset was required to be 32 byte aligned above
                 uint256 tmp = preimageOffset / 32;
-
                 // First, we get the root of unity of order 2**fieldElementsPerBlob.
                 // We start with a root of unity of order 2**32 and then raise it to
                 // the power of (2**32)/fieldElementsPerBlob to get root of unity we need.
-                uint256 rootOfUnityPower = (1 << 28) / preimageLength * 32;
+                uint256 rootOfUnityPower = ((1 << 28) / preimageLength) * 32;
                 // Then, we raise the root of unity to the power of bitReversedIndex,
                 // to retrieve this word of the KZG commitment.
                 rootOfUnityPower *= tmp;
                 // z is the point the polynomial is evaluated at to retrieve this word of data
-                uint256 z = modExp256(BN_254_PRIMITIVE_ROOT_OF_UNITY, rootOfUnityPower, BN254.FR_MODULUS);
-                require(bytes32(kzgProof[32:64]) == bytes32(z), "KZG_BN254_PROOF_WRONG_Z");
+                uint256 z = modExp256(
+                    BN_254_PRIMITIVE_ROOT_OF_UNITY,
+                    rootOfUnityPower,
+                    BN254.FR_MODULUS
+                );
+                require(bytes32(kzgProof[32:64]) == bytes32(z), "KZG_PROOF_WRONG_Z");
 
                 extracted = kzgProof[64:96];
             }
-
         } else {
             revert("UNKNOWN_PREIMAGE_TYPE");
         }
@@ -721,89 +816,19 @@ contract OneStepProverHostIo is IOneStepProver {
         impl(execCtx, mach, mod, inst, proof);
     }
 
-
     // G2_SRS_1
 
     //note might be useful to give back to the bn library
-    uint256 internal constant G2Taux1 = 21039730876973405969844107393779063362038454413254731404052240341412356318284;
-    uint256 internal constant G2Taux0 = 7912312892787135728292535536655271843828059318189722219035249994421084560563;
-    uint256 internal constant G2Tauy1 = 7586489485579523767759120334904353546627445333297951253230866312564920951171;
-    uint256 internal constant G2Tauy0 = 18697407556011630376420900106252341752488547575648825575049647403852275261247;
+    uint256 internal constant G2Taux1 =
+        21039730876973405969844107393779063362038454413254731404052240341412356318284;
+    uint256 internal constant G2Taux0 =
+        7912312892787135728292535536655271843828059318189722219035249994421084560563;
+    uint256 internal constant G2Tauy1 =
+        7586489485579523767759120334904353546627445333297951253230866312564920951171;
+    uint256 internal constant G2Tauy0 =
+        18697407556011630376420900106252341752488547575648825575049647403852275261247;
 
     function g2Tau() internal view returns (BN254.G2Point memory) {
-        return BN254.G2Point({
-            X: [G2Taux1, G2Taux0],
-            Y: [G2Tauy1, G2Tauy0]
-        });
-    }
-
-    //TODO: move this toa eigenDA utils thing
-    function verifyEigenDACommitment(
-        BN254.G1Point memory _commitment,
-        BN254.G1Point memory _proof,
-        BN254.G2Point memory _g2TauMinusZCommitG2,
-        uint256 _index,
-        uint256 _value
-    ) public view returns (bool) {
-        // need to have each element less than modulus for underlying F_r field
-        require(_commitment.X < BN254.FR_MODULUS, "COMMIT_X_LARGER_THAN_FIELD");
-        require(_commitment.Y < BN254.FR_MODULUS, "COMMIT_Y_LARGER_THAN_FIELD");
-
-        require(_proof.X < BN254.FR_MODULUS, "PROOF_X_LARGER_THAN_FIELD");
-        require(_proof.Y < BN254.FR_MODULUS, "PROOF_Y_LARGER_THAN_FIELD");
-
-        // see: https://github.com/bxue-l2/eigenda/blob/a88ad0662a18f2139f9d288d5e667d00a89e26b9/encoding/utils/openCommitment/open_commitment.go#L63
-        // and https://ethresear.ch/t/a-minimum-viable-kzg-polynomial-commitment-scheme-implementation/7675
-
-        	// var valueG1 bn254.G1Affine
-	        // var valueBig big.Int
-	        // valueG1.ScalarMultiplication(&G1Gen, valueFr.BigInt(&valueBig))
-        BN254.G1Point memory valueG1 = BN254.scalar_mul(BN254.generatorG1(), _value);
-
-	        // var commitMinusValue bn254.G1Affine
-	        // commitMinusValue.Sub(&commitment, &valueG1)
-
-        BN254.G1Point memory commitmentMinusValue = BN254.plus(_commitment, BN254.negate(valueG1));
-
-        //console.log("commitmentMinusValue: %s", commitmentMinusValue);
-
-	        // var zG2 bn254.G2Affine
-	        // zG2.ScalarMultiplication(&G2Gen, zFr.BigInt(&valueBig))
-
-	        // var xMinusZ bn254.G2Affine
-	        // xMinusZ.Sub(&G2tau, &zG2)
-
-        return BN254.pairing(
-            commitmentMinusValue,
-            BN254.generatorG2(),
-            BN254.negate(_proof),
-            _g2TauMinusZCommitG2
-        );
-
-
-
-	    // return PairingsVerify(&commitMinusValue, &G2Gen, &proof, &xMinusZ)
-
-        // BN254.G1Point memory commitmentMinusA = BN254.plus(
-        //     _commitment,
-        //     BN254.negate(
-        //         BN254.scalar_mul(BN254.generatorG1(), _value)
-        //     )
-        // );
-
-        //         // Negate the proof
-        // BN254.G1Point memory negProof = BN254.negate(_proof);
-
-        // // Compute index * proof
-        // BN254.G1Point memory indexMulProof = BN254.scalar_mul(_proof, _index);
-
-        // // Returns true if and only if
-        // // e((index * proof) + (commitment - aCommitment), G2.g) * e(-proof, xCommit) == 1
-        // return BN254.pairing(
-        //     BN254.plus(indexMulProof, commitmentMinusA),
-        //     BN254.generatorG2(),
-        //     negProof,
-        //     g2Tau()
-        // );
+        return BN254.G2Point({X: [G2Taux1, G2Taux0], Y: [G2Tauy1, G2Tauy0]});
     }
 }

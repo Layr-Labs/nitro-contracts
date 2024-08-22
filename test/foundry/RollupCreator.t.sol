@@ -126,22 +126,23 @@ contract RollupCreatorTest is Test {
         address[] memory validators = new address[](2);
         validators[0] = makeAddr("validator1");
         validators[1] = makeAddr("validator2");
-        
+
         address eigenDASvcManager = makeAddr("eigenDASvcManager");
         address eigenDARollupManager = makeAddr("rollupManager");
 
-        RollupCreator.RollupDeploymentParams memory deployParams = RollupCreator.RollupDeploymentParams({
-            config: config,
-            batchPosters: batchPosters,
-            validators: validators,
-            maxDataSize: MAX_DATA_SIZE,
-            nativeToken: address(0),
-            deployFactoriesToL2: true,
-            maxFeePerGasForRetryables: MAX_FEE_PER_GAS,
-            batchPosterManager: batchPosterManager,
-            eigenDARollupManager: eigenDARollupManager
-        });
-        
+        RollupCreator.RollupDeploymentParams memory deployParams = RollupCreator
+            .RollupDeploymentParams({
+                config: config,
+                batchPosters: batchPosters,
+                validators: validators,
+                maxDataSize: MAX_DATA_SIZE,
+                nativeToken: address(0),
+                deployFactoriesToL2: true,
+                maxFeePerGasForRetryables: MAX_FEE_PER_GAS,
+                batchPosterManager: batchPosterManager,
+                eigenDARollupManager: eigenDARollupManager
+            });
+
         address rollupAddress = rollupCreator.createRollup{value: factoryDeploymentFunds}(
             deployParams
         );
