@@ -481,7 +481,10 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         // Verify that the certificate is less than 2 epochs old from the L1 reference block number
         // This is to prevent timing attacks where the sequencer could submit an expired or close to expired
         // certificate which could impact liveness of full nodes as well as the safety of the bridge
-        if ((cert.blobVerificationProof.batchMetadata.confirmationBlockNumber + 64) < block.number) {
+        if (
+            (cert.blobVerificationProof.batchMetadata.batchHeader.referenceBlockNumber + 64) <
+            block.number
+        ) {
             revert ExpiredEigenDACert(
                 block.number,
                 cert.blobVerificationProof.batchMetadata.confirmationBlockNumber + 64
