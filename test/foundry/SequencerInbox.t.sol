@@ -593,13 +593,11 @@ contract SequencerInboxTest is Test {
 
         cert.blobVerificationProof.batchMetadata.batchHeader.referenceBlockNumber = 0;
 
-        bytes memory data = bytes.concat(hex"ed", abi.encode(cert));
-
         uint256 subMessageCount = bridge.sequencerReportedSubMessageCount();
         uint256 sequenceNumber = bridge.sequencerMessageCount();
         uint256 delayedMessagesRead = bridge.delayedMessageCount();
 
-        vm.roll(10000000);
+        vm.roll(65);
         vm.prank(tx.origin);
 
         vm.expectRevert();
@@ -613,7 +611,7 @@ contract SequencerInboxTest is Test {
         );
     }
 
-        function testAddSequencerL2BatchFromEigenDA() public {
+    function testAddSequencerL2BatchFromEigenDA() public {
         DummyEigenDABlobVerifier rollupManagerImpl = new DummyEigenDABlobVerifier();
         (SequencerInbox seqInbox, Bridge bridge) = deployRollup(false);
         // update the dummyEigenDAServiceManager to use the holesky serviceManager contract
@@ -658,7 +656,6 @@ contract SequencerInboxTest is Test {
             subMessageCount + 1
         );
     }
-
 
     // TODO: put these in jsons later
     // create illegal commitment
