@@ -597,7 +597,7 @@ contract SequencerInboxTest is Test {
         uint256 sequenceNumber = bridge.sequencerMessageCount();
         uint256 delayedMessagesRead = bridge.delayedMessageCount();
 
-        vm.roll(65);
+        vm.roll(101);
         vm.prank(tx.origin);
 
         vm.expectRevert();
