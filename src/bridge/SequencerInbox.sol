@@ -89,7 +89,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     // GAS_PER_BLOB from EIP-4844
     uint256 internal constant GAS_PER_BLOB = 1 << 17;
 
-    uint256 internal constant GAS_PER_SYMBOL_EIGENDA = 1;
+    uint256 internal constant MAX_CERTIFICATE_DRIFT = 100;
 
     IOwnable public rollup;
 
@@ -482,12 +482,13 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         // This is to prevent timing attacks where the sequencer could submit an expired or close to expired
         // certificate which could impact liveness of full nodes as well as the safety of the bridge
         if (
-            (cert.blobVerificationProof.batchMetadata.batchHeader.referenceBlockNumber + 64) <
-            block.number
+            (cert.blobVerificationProof.batchMetadata.batchHeader.referenceBlockNumber +
+                MAX_CERTIFICATE_DRIFT) < block.number
         ) {
             revert ExpiredEigenDACert(
                 block.number,
-                cert.blobVerificationProof.batchMetadata.confirmationBlockNumber + 64
+                cert.blobVerificationProof.batchMetadata.confirmationBlockNumber +
+                    MAX_CERTIFICATE_DRIFT
             );
         }
 
