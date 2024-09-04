@@ -21,6 +21,13 @@ interface ISequencerInbox is IDelayedMessageProvider {
         uint256 futureSeconds;
     }
 
+    struct SequenceMetadata {
+        uint256 sequenceNumber;
+        uint256 afterDelayedMessagesRead;
+        uint256 prevMessageCount;
+        uint256 newMessageCount;
+    }
+
     event SequencerBatchDelivered(
         uint256 indexed batchSequenceNumber,
         bytes32 indexed beforeAcc,
@@ -30,6 +37,11 @@ interface ISequencerInbox is IDelayedMessageProvider {
         IBridge.TimeBounds timeBounds,
         IBridge.BatchDataLocation dataLocation
     );
+
+    struct EigenDACert {
+        EigenDARollupUtils.BlobVerificationProof blobVerificationProof;
+        IEigenDAServiceManager.BlobHeader blobHeader;
+    }
 
     event OwnerFunctionCalled(uint256 indexed id);
 
@@ -190,20 +202,14 @@ interface ISequencerInbox is IDelayedMessageProvider {
 
     function addSequencerL2BatchFromEigenDA(
         uint256 sequenceNumber,
-        EigenDARollupUtils.BlobVerificationProof calldata blobVerificationProof,
-        IEigenDAServiceManager.BlobHeader calldata blobHeader,
+        EigenDACert calldata cert,
+        IGasRefunder gasRefunder,
         uint256 afterDelayedMessagesRead,
         uint256 prevMessageCount,
         uint256 newMessageCount
     ) external;
 
     // ---------- onlyRollupOrOwner functions ----------
-
-    /**
-     * @notice Set the eigenda service manager contract
-     * @param newEigenDAServiceManager the new svc manager contract address
-     */
-    function setEigenDAServiceManager(address newEigenDAServiceManager) external;
 
     /**
      * @notice Set the rollup manager contract address
@@ -215,7 +221,6 @@ interface ISequencerInbox is IDelayedMessageProvider {
      * @notice Set the new rollup contract address
      */
     function setRollupAddress() external;
-
 
     /**
      * @notice Set max delay for sequencer inbox
@@ -258,7 +263,6 @@ interface ISequencerInbox is IDelayedMessageProvider {
 
     /// @notice Allows the rollup owner to sync the rollup address
     function updateRollupAddress() external;
-
 
     // ---------- initializer ----------
 

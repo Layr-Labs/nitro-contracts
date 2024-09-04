@@ -1,6 +1,6 @@
 | Name                       | Type                                          | Slot | Offset | Bytes | Contract                             |
 |----------------------------|-----------------------------------------------|------|--------|-------|--------------------------------------|
-| _initialized               | bool                                          | 0    | 0      | 1     | src/rollup/RollupCore.sol:RollupCore |
+| _initialized               | uint8                                         | 0    | 0      | 1     | src/rollup/RollupCore.sol:RollupCore |
 | _initializing              | bool                                          | 0    | 1      | 1     | src/rollup/RollupCore.sol:RollupCore |
 | __gap                      | uint256[50]                                   | 1    | 0      | 1600  | src/rollup/RollupCore.sol:RollupCore |
 | _paused                    | bool                                          | 51   | 0      | 1     | src/rollup/RollupCore.sol:RollupCore |
@@ -35,4 +35,5 @@
 | totalWithdrawableFunds     | uint256                                       | 124  | 0      | 32    | src/rollup/RollupCore.sol:RollupCore |
 | rollupDeploymentBlock      | uint256                                       | 125  | 0      | 32    | src/rollup/RollupCore.sol:RollupCore |
 | validatorWhitelistDisabled | bool                                          | 126  | 0      | 1     | src/rollup/RollupCore.sol:RollupCore |
+| anyTrustFastConfirmer      | address                                       | 126  | 1      | 20    | src/rollup/RollupCore.sol:RollupCore |
 | _nodeCreatedAtArbSysBlock  | mapping(uint64 => uint256)                    | 127  | 0      | 32    | src/rollup/RollupCore.sol:RollupCore |
