@@ -92,10 +92,7 @@ contract ERC20OutboxTest is AbsOutboxTest {
         bytes32 root = outbox.calculateMerkleRoot(proof, index, itemHash);
         // store root
         vm.prank(rollup);
-        outbox.updateSendRoot(
-            root,
-            bytes32(uint256(1))
-        );
+        outbox.updateSendRoot(root, bytes32(uint256(1)));
 
         outbox.executeTransaction({
             proof: proof,
@@ -176,10 +173,7 @@ contract ERC20OutboxTest is AbsOutboxTest {
         bytes32 root = outbox.calculateMerkleRoot(proof, index, itemHash);
         // store root
         vm.prank(rollup);
-        outbox.updateSendRoot(
-            root,
-            bytes32(uint256(1))
-        );
+        outbox.updateSendRoot(root, bytes32(uint256(1)));
 
         vm.expectRevert(abi.encodeWithSelector(CallTargetNotAllowed.selector, invalidTarget));
         outbox.executeTransaction({
@@ -207,7 +201,9 @@ contract ERC20OutboxTest is AbsOutboxTest {
         ERC20 _nativeToken = new ERC20_6Decimals();
 
         IERC20Bridge _bridge = IERC20Bridge(TestUtil.deployProxy(address(new ERC20Bridge())));
-        IERC20Inbox _inbox = IERC20Inbox(TestUtil.deployProxy(address(new ERC20Inbox(MAX_DATA_SIZE))));
+        IERC20Inbox _inbox = IERC20Inbox(
+            TestUtil.deployProxy(address(new ERC20Inbox(MAX_DATA_SIZE)))
+        );
         ERC20Outbox _outbox = ERC20Outbox(TestUtil.deployProxy(address(new ERC20Outbox())));
 
         // init bridge and inbox
@@ -219,7 +215,7 @@ contract ERC20OutboxTest is AbsOutboxTest {
         _bridge.setOutbox(address(_outbox), true);
 
         // fund bridge with some tokens
-        ERC20_6Decimals(address(_nativeToken)).mint(address(_bridge), 1_000_000 * 10 ** decimals);
+        ERC20_6Decimals(address(_nativeToken)).mint(address(_bridge), 1_000_000 * 10**decimals);
 
         // create msg receiver on L1
         ERC20L2ToL1Target target = new ERC20L2ToL1Target();
@@ -233,7 +229,7 @@ contract ERC20OutboxTest is AbsOutboxTest {
         proof[0] = bytes32(0);
 
         uint256 withdrawalAmount = 188_394_098_124_747_940;
-        uint256 expetedAmountToUnlock = withdrawalAmount / (10 ** (18 - decimals));
+        uint256 expetedAmountToUnlock = withdrawalAmount / (10**(18 - decimals));
 
         bytes memory data = abi.encodeWithSignature("receiveHook()");
 
@@ -251,10 +247,7 @@ contract ERC20OutboxTest is AbsOutboxTest {
             bytes32 root = _outbox.calculateMerkleRoot(proof, index, itemHash);
             // store root
             vm.prank(_rollup);
-            _outbox.updateSendRoot(
-                root,
-                bytes32(uint256(1))
-            );
+            _outbox.updateSendRoot(root, bytes32(uint256(1)));
         }
 
         _outbox.executeTransaction({
@@ -315,7 +308,9 @@ contract ERC20OutboxTest is AbsOutboxTest {
         ERC20 _nativeToken = new ERC20_20Decimals();
 
         IERC20Bridge _bridge = IERC20Bridge(TestUtil.deployProxy(address(new ERC20Bridge())));
-        IERC20Inbox _inbox = IERC20Inbox(TestUtil.deployProxy(address(new ERC20Inbox(MAX_DATA_SIZE))));
+        IERC20Inbox _inbox = IERC20Inbox(
+            TestUtil.deployProxy(address(new ERC20Inbox(MAX_DATA_SIZE)))
+        );
         ERC20Outbox _outbox = ERC20Outbox(TestUtil.deployProxy(address(new ERC20Outbox())));
 
         // init bridge and inbox
@@ -327,7 +322,7 @@ contract ERC20OutboxTest is AbsOutboxTest {
         _bridge.setOutbox(address(_outbox), true);
 
         // fund bridge with some tokens
-        ERC20_20Decimals(address(_nativeToken)).mint(address(_bridge), 1_000_000 * 10 ** decimals);
+        ERC20_20Decimals(address(_nativeToken)).mint(address(_bridge), 1_000_000 * 10**decimals);
 
         // create msg receiver on L1
         ERC20L2ToL1Target target = new ERC20L2ToL1Target();
@@ -341,7 +336,7 @@ contract ERC20OutboxTest is AbsOutboxTest {
         proof[0] = bytes32(0);
 
         uint256 withdrawalAmount = 188_394_098_124_747_940;
-        uint256 expetedAmountToUnlock = withdrawalAmount * (10 ** (decimals - 18));
+        uint256 expetedAmountToUnlock = withdrawalAmount * (10**(decimals - 18));
 
         bytes memory data = abi.encodeWithSignature("receiveHook()");
 
@@ -359,10 +354,7 @@ contract ERC20OutboxTest is AbsOutboxTest {
             bytes32 root = _outbox.calculateMerkleRoot(proof, index, itemHash);
             // store root
             vm.prank(_rollup);
-            _outbox.updateSendRoot(
-                root,
-                bytes32(uint256(1))
-            );
+            _outbox.updateSendRoot(root, bytes32(uint256(1)));
         }
 
         _outbox.executeTransaction({
@@ -422,7 +414,9 @@ contract ERC20OutboxTest is AbsOutboxTest {
         ERC20 _nativeToken = new ERC20_36Decimals();
 
         IERC20Bridge _bridge = IERC20Bridge(TestUtil.deployProxy(address(new ERC20Bridge())));
-        IERC20Inbox _inbox = IERC20Inbox(TestUtil.deployProxy(address(new ERC20Inbox(MAX_DATA_SIZE))));
+        IERC20Inbox _inbox = IERC20Inbox(
+            TestUtil.deployProxy(address(new ERC20Inbox(MAX_DATA_SIZE)))
+        );
         ERC20Outbox _outbox = ERC20Outbox(TestUtil.deployProxy(address(new ERC20Outbox())));
 
         // init bridge and inbox
@@ -444,7 +438,7 @@ contract ERC20OutboxTest is AbsOutboxTest {
         bytes32[] memory proof = new bytes32[](1);
         proof[0] = bytes32(0);
 
-        uint256 tooLargeWithdrawalAmount = type(uint256).max / 10 ** 18 + 1;
+        uint256 tooLargeWithdrawalAmount = type(uint256).max / 10**18 + 1;
 
         bytes memory data = abi.encodeWithSignature("receiveHook()");
 
@@ -462,10 +456,7 @@ contract ERC20OutboxTest is AbsOutboxTest {
             bytes32 root = _outbox.calculateMerkleRoot(proof, index, itemHash);
             // store root
             vm.prank(_rollup);
-            _outbox.updateSendRoot(
-                root,
-                bytes32(uint256(1))
-            );
+            _outbox.updateSendRoot(root, bytes32(uint256(1)));
         }
 
         vm.expectRevert(stdError.arithmeticError); // overflow
