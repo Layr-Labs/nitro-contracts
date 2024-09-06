@@ -23,7 +23,7 @@ const solidity = {
         },
       },
     },
-  ]
+  ],
   // overrides: {
   //   'src/rollup/RollupUserLogic.sol': {
   //     version: '0.8.9',
