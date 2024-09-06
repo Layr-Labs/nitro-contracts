@@ -61,7 +61,10 @@ contract OutboxTest is AbsOutboxTest {
         bytes32 root = outbox.calculateMerkleRoot(proof, index, itemHash);
         // store root
         vm.prank(rollup);
-        outbox.updateSendRoot(root, bytes32(uint256(1)));
+        outbox.updateSendRoot(
+            root,
+            bytes32(uint256(1))
+        );
 
         outbox.executeTransaction({
             proof: proof,
@@ -77,16 +80,12 @@ contract OutboxTest is AbsOutboxTest {
 
         uint256 bridgeBalanceAfter = address(bridge).balance;
         assertEq(
-            bridgeBalanceBefore - bridgeBalanceAfter,
-            withdrawalAmount,
-            "Invalid bridge balance"
+            bridgeBalanceBefore - bridgeBalanceAfter, withdrawalAmount, "Invalid bridge balance"
         );
 
         uint256 targetBalanceAfter = address(target).balance;
         assertEq(
-            targetBalanceAfter - targetBalanceBefore,
-            withdrawalAmount,
-            "Invalid target balance"
+            targetBalanceAfter - targetBalanceBefore, withdrawalAmount, "Invalid target balance"
         );
 
         /// check context was properly set during execution
