@@ -63,8 +63,8 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
 
     IBridge public bridge;
 
-    address public eigenDAServiceManager;
-    address public eigenDARollupManager;
+    IEigenDAServiceManager public eigenDAServiceManager;
+    IRollupManager public eigenDARollupManager;
 
     /// @inheritdoc ISequencerInbox
     uint256 public constant HEADER_LENGTH = 40;
@@ -140,6 +140,8 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     constructor(
         uint256 _maxDataSize,
         IReader4844 reader4844_,
+        IEigenDAServiceManager eigenDAServiceManager_,
+        IRollupManager eigenDARollupManager_,
         bool _isUsingFeeToken
     ) {
         maxDataSize = _maxDataSize;
@@ -149,6 +151,8 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
             if (reader4844_ == IReader4844(address(0))) revert InitParamZero("Reader4844");
         }
         reader4844 = reader4844_;
+        eigenDAServiceManager = eigenDAServiceManager_;
+        eigenDARollupManager = eigenDARollupManager_;
         isUsingFeeToken = _isUsingFeeToken;
     }
 
@@ -409,22 +413,19 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
             submitBatchSpendingReport(dataHash, seqMessageIndex, block.basefee, blobGas);
         }
     }
-    
-
 
     function addSequencerL2BatchFromEigenDA(
         uint256 sequenceNumber,
         EigenDARollupUtils.BlobVerificationProof calldata blobVerificationProof,
         IEigenDAServiceManager.BlobHeader calldata blobHeader,
         uint256 afterDelayedMessagesRead,
+        IGasRefunder gasRefunder,
         uint256 prevMessageCount,
         uint256 newMessageCount
     ) external {
         if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
-    
-        // verify that the blob was actually included before continuing
-        IRollupManager(eigenDARollupManager).verifyBlob(blobHeader, IEigenDAServiceManager(eigenDAServiceManager), blobVerificationProof);
 
+        eigenDARollupManager.verifyBlob(blobHeader, eigenDAServiceManager, blobVerificationProof);
 
         // NOTE: to retrieve need the following
         // see: https://github.com/Layr-Labs/eigenda/blob/master/api/docs/retriever.md#blobrequest
@@ -452,14 +453,13 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         }
 
         emit SequencerBatchDelivered(
-            seqMessageIndex,
+            _sequenceNumber,
             beforeAcc,
             afterAcc,
             delayedAcc,
             totalDelayedMessagesRead,
             timeBounds,
             IBridge.BatchDataLocation.EigenDA
-
         );
     }
 
@@ -785,7 +785,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     }
 
         /// @inheritdoc ISequencerInbox
-    function setRollupAddress() external onlyRollupOwner {
+    function updateRollupAddress() external onlyRollupOwner {
         IOwnable newRollup = bridge.rollup();
         if (rollup == newRollup) revert RollupNotChanged();
         rollup = newRollup;
@@ -793,24 +793,15 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     }
 
     /// @inheritdoc ISequencerInbox
-    function setEigenDAServiceManager(address newEigenDAServiceManager) external onlyRollupOwner {
-        eigenDAServiceManager = newEigenDAServiceManager;
-        emit OwnerFunctionCalled(7);
+    function updateEigenDAServiceManager(address newEigenDAServiceManager) external onlyRollupOwner {
+        eigenDAServiceManager = IEigenDAServiceManager(newEigenDAServiceManager);
+        emit OwnerFunctionCalled(31);
     }
 
     /// @inheritdoc ISequencerInbox
-    function setEigenDARollupManager(address newRollupManager) external onlyRollupOwner {
-        eigenDARollupManager = newRollupManager;
-        emit OwnerFunctionCalled(8);
-    }
-
- /// @notice Allows the rollup owner to sync the rollup address
-    function updateRollupAddress() external {
-        if (msg.sender != IOwnable(rollup).owner())
-            revert NotOwner(msg.sender, IOwnable(rollup).owner());
-        IOwnable newRollup = bridge.rollup();
-        if (rollup == newRollup) revert RollupNotChanged();
-        rollup = newRollup;
+    function updateEigenDARollupManager(address newEigenDARollupManager) external onlyRollupOwner {
+        eigenDARollupManager = IRollupManager(newEigenDARollupManager);
+        emit OwnerFunctionCalled(32);
     }
 
     function isValidKeysetHash(bytes32 ksHash) external view returns (bool) {

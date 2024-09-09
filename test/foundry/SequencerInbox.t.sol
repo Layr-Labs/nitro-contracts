@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol"
 
 import {EigenDARollupUtils} from "@eigenda/eigenda-utils/libraries/EigenDARollupUtils.sol";
 import {IEigenDAServiceManager} from "@eigenda/eigenda-utils/interfaces/IEigenDAServiceManager.sol";
-import {IRollupManager, EigenDADummyManager} from "../../src/bridge/RollupManager.sol";
+import {EigenDARollupManager} from "../../src/bridge/RollupManager.sol";
 import {BN254} from "@eigenda/eigenda-utils/libraries/BN254.sol";
 
 contract RollupMock {
@@ -75,6 +75,8 @@ contract SequencerInboxTest is Test {
         SequencerInbox seqInboxImpl = new SequencerInbox(
             maxDataSize,
             isArbHosted ? IReader4844(address(0)) : dummyReader4844,
+            dummyEigenDAServiceManager,
+            rollupManager,
             false
         );
         SequencerInbox seqInbox = SequencerInbox(
@@ -110,7 +112,7 @@ contract SequencerInboxTest is Test {
             abi.encode(uint256(11))
         );
         SequencerInbox seqInboxImpl = new SequencerInbox(
-            maxDataSize, IReader4844(address(0)), true
+            maxDataSize, IReader4844(address(0)), dummyEigenDAServiceManager, rollupManager, true
         );
         SequencerInbox seqInbox = SequencerInbox(
             address(new TransparentUpgradeableProxy(address(seqInboxImpl), proxyAdmin, ""))
@@ -355,7 +357,7 @@ contract SequencerInboxTest is Test {
     /* solhint-disable func-name-mixedcase */
     function testConstructor() public {
         SequencerInbox seqInboxLogic =
-            new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, false);
+            new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, dummyEigenDAServiceManager, rollupManager, false);
         assertEq(seqInboxLogic.maxDataSize(), MAX_DATA_SIZE, "Invalid MAX_DATA_SIZE");
         assertEq(seqInboxLogic.isUsingFeeToken(), false, "Invalid isUsingFeeToken");
 
@@ -364,7 +366,7 @@ contract SequencerInboxTest is Test {
         assertEq(seqInboxProxy.isUsingFeeToken(), false, "Invalid isUsingFeeToken");
 
         SequencerInbox seqInboxLogicFeeToken =
-            new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, true);
+            new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, dummyEigenDAServiceManager, rollupManager, true);
         assertEq(seqInboxLogicFeeToken.maxDataSize(), MAX_DATA_SIZE, "Invalid MAX_DATA_SIZE");
         assertEq(seqInboxLogicFeeToken.isUsingFeeToken(), true, "Invalid isUsingFeeToken");
 
@@ -380,7 +382,7 @@ contract SequencerInboxTest is Test {
         _bridge.initialize(IOwnable(address(new RollupMock(rollupOwner))));
 
         address seqInboxLogic = address(
-            new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, false)
+            new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, dummyEigenDAServiceManager, rollupManager, false)
         );
         SequencerInbox seqInboxProxy = SequencerInbox(TestUtil.deployProxy(seqInboxLogic));
         seqInboxProxy.initialize(IBridge(_bridge), maxTimeVariation);
@@ -398,7 +400,7 @@ contract SequencerInboxTest is Test {
         _bridge.initialize(IOwnable(address(new RollupMock(rollupOwner))), nativeToken);
 
         address seqInboxLogic = address(
-            new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, true)
+            new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, dummyEigenDAServiceManager, rollupManager, true)
         );
         SequencerInbox seqInboxProxy = SequencerInbox(TestUtil.deployProxy(seqInboxLogic));
         seqInboxProxy.initialize(IBridge(_bridge), maxTimeVariation);
@@ -414,7 +416,7 @@ contract SequencerInboxTest is Test {
         _bridge.initialize(IOwnable(address(new RollupMock(rollupOwner))));
 
         address seqInboxLogic = address(
-            new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, true)
+            new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, dummyEigenDAServiceManager, rollupManager, true)
         );
         SequencerInbox seqInboxProxy = SequencerInbox(TestUtil.deployProxy(seqInboxLogic));
 
@@ -430,7 +432,7 @@ contract SequencerInboxTest is Test {
         _bridge.initialize(IOwnable(address(new RollupMock(rollupOwner))), nativeToken);
 
         address seqInboxLogic = address(
-            new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, false)
+            new SequencerInbox(MAX_DATA_SIZE, dummyReader4844, dummyEigenDAServiceManager, rollupManager, false)
         );
         SequencerInbox seqInboxProxy = SequencerInbox(TestUtil.deployProxy(seqInboxLogic));
 
@@ -592,14 +594,14 @@ contract SequencerInboxTest is Test {
 
     function testAddSequencerL2BatchFromEigenDA() public {
 
-        EigenDADummyManager rollupManagerImpl = new EigenDADummyManager();
+        EigenDARollupManager rollupManagerImpl = new EigenDARollupManager();
         (SequencerInbox seqInbox, Bridge bridge) = deployRollup(false);
         // update the dummyEigenDAServiceManager to use the holesky serviceManager contract
         
         vm.startPrank(rollupOwner);
         // deploy rollup
-        seqInbox.setEigenDARollupManager(address(rollupManagerImpl));
-        seqInbox.setEigenDAServiceManager(0xD4A7E1Bd8015057293f0D0A557088c286942e84b);
+        seqInbox.updateEigenDARollupManager(address(rollupManagerImpl));
+        seqInbox.updateEigenDAServiceManager(0xD4A7E1Bd8015057293f0D0A557088c286942e84b);
         vm.stopPrank();
 
         address delayedInboxSender = address(140);
@@ -613,7 +615,7 @@ contract SequencerInboxTest is Test {
 
         // ed is EIGEN_DA_MESSAGE_HEADER_FLAG rest is abi.encodePacked(blobHeader.commitment.X, blobHeader.commitment.Y, blobHeader.dataLength)
         bytes memory data =
-            abi.encodePacked(hex"ed", blobHeader.commitment.X, blobHeader.commitment.Y, blobHeader.dataLength);
+            abi.encodePacked(hex"ed",blobHeader.commitment.X, blobHeader.commitment.Y, blobHeader.dataLength);
 
         uint256 subMessageCount = bridge.sequencerReportedSubMessageCount();
         uint256 sequenceNumber = bridge.sequencerMessageCount();
@@ -628,6 +630,7 @@ contract SequencerInboxTest is Test {
             blobVerificationProof,
             blobHeader,
             delayedMessagesRead,
+            IGasRefunder(address(0)),
             subMessageCount,
             subMessageCount + 1
         );
@@ -699,6 +702,7 @@ contract SequencerInboxTest is Test {
             illegalBlobVerificationProof,
             illegalBlobHeader,
             delayedMessagesRead,
+            IGasRefunder(address(0)),
             subMessageCount,
             subMessageCount + 1
         );
@@ -707,7 +711,7 @@ contract SequencerInboxTest is Test {
     function testPostUpgradeInitAlreadyInit() public returns (SequencerInbox, SequencerInbox) {
         (SequencerInbox seqInbox,) = deployRollup(false);
         SequencerInbox seqInboxImpl =
-            new SequencerInbox(maxDataSize, dummyReader4844, false);
+            new SequencerInbox(maxDataSize, dummyReader4844, dummyEigenDAServiceManager, rollupManager, false);
 
         vm.expectRevert(abi.encodeWithSelector(AlreadyInit.selector));
         vm.prank(proxyAdmin);

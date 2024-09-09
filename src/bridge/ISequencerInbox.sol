@@ -193,29 +193,12 @@ interface ISequencerInbox is IDelayedMessageProvider {
         EigenDARollupUtils.BlobVerificationProof calldata blobVerificationProof,
         IEigenDAServiceManager.BlobHeader calldata blobHeader,
         uint256 afterDelayedMessagesRead,
+        IGasRefunder gasRefunder,
         uint256 prevMessageCount,
         uint256 newMessageCount
     ) external;
 
     // ---------- onlyRollupOrOwner functions ----------
-
-    /**
-     * @notice Set the eigenda service manager contract
-     * @param newEigenDAServiceManager the new svc manager contract address
-     */
-    function setEigenDAServiceManager(address newEigenDAServiceManager) external;
-
-    /**
-     * @notice Set the rollup manager contract address
-     * @param newRollupManager the new rollup manager contract address
-     */
-    function setEigenDARollupManager(address newRollupManager) external;
-
-    /**
-     * @notice Set the new rollup contract address
-     */
-    function setRollupAddress() external;
-
 
     /**
      * @notice Set max delay for sequencer inbox
@@ -259,6 +242,11 @@ interface ISequencerInbox is IDelayedMessageProvider {
     /// @notice Allows the rollup owner to sync the rollup address
     function updateRollupAddress() external;
 
+    /// @notice Allows the rollup owner to update the eigenDAServiceManager address
+    function updateEigenDAServiceManager(address newEigenDAServiceManager) external;
+    
+    /// @notice Allows the rollup owner to update the eigenDARollupManager address
+    function updateEigenDARollupManager(address newEigenDARollupManager) external;
 
     // ---------- initializer ----------
 
