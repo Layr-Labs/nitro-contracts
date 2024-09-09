@@ -23,7 +23,7 @@ const solidity = {
         },
       },
     },
-  ],
+  ]
   // overrides: {
   //   'src/rollup/RollupUserLogic.sol': {
   //     version: '0.8.9',
@@ -200,6 +200,6 @@ module.exports = {
     target: 'ethers-v5',
   },
   contractSizer: {
-    strict: true,
-  },
+    strict: true
+  }
 }

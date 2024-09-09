@@ -5,15 +5,13 @@ import "./AbsRollupEventInbox.t.sol";
 import {TestUtil} from "./util/TestUtil.sol";
 import {ERC20RollupEventInbox} from "../../src/rollup/ERC20RollupEventInbox.sol";
 import {ERC20Bridge, IERC20Bridge, IOwnable} from "../../src/bridge/ERC20Bridge.sol";
-import {
-    ERC20PresetMinterPauser
-} from "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol";
+import {ERC20PresetMinterPauser} from
+    "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol";
 
 contract ERC20RollupEventInboxTest is AbsRollupEventInboxTest {
     function setUp() public {
-        rollupEventInbox = IRollupEventInbox(
-            TestUtil.deployProxy(address(new ERC20RollupEventInbox()))
-        );
+        rollupEventInbox =
+            IRollupEventInbox(TestUtil.deployProxy(address(new ERC20RollupEventInbox())));
         bridge = IBridge(TestUtil.deployProxy(address(new ERC20Bridge())));
         address nativeToken = address(new ERC20PresetMinterPauser("Appchain Token", "App"));
         IERC20Bridge(address(bridge)).initialize(IOwnable(rollup), nativeToken);
@@ -26,9 +24,8 @@ contract ERC20RollupEventInboxTest is AbsRollupEventInboxTest {
 
     /* solhint-disable func-name-mixedcase */
     function test_initialize_revert_ZeroInit() public {
-        ERC20RollupEventInbox rollupEventInbox = ERC20RollupEventInbox(
-            TestUtil.deployProxy(address(new ERC20RollupEventInbox()))
-        );
+        ERC20RollupEventInbox rollupEventInbox =
+            ERC20RollupEventInbox(TestUtil.deployProxy(address(new ERC20RollupEventInbox())));
 
         vm.expectRevert(HadZeroInit.selector);
         rollupEventInbox.initialize(IBridge(address(0)));
@@ -40,12 +37,8 @@ contract ERC20RollupEventInboxTest is AbsRollupEventInboxTest {
 
         uint8 expectedInitMsgVersion = 1;
         uint256 expectedCurrentDataCost = 0;
-        bytes memory expectedInitMsg = abi.encodePacked(
-            chainId,
-            expectedInitMsgVersion,
-            expectedCurrentDataCost,
-            chainConfig
-        );
+        bytes memory expectedInitMsg =
+            abi.encodePacked(chainId, expectedInitMsgVersion, expectedCurrentDataCost, chainConfig);
 
         // expect event
         vm.expectEmit(true, true, true, true);
@@ -80,12 +73,8 @@ contract ERC20RollupEventInboxTest is AbsRollupEventInboxTest {
 
         uint8 expectedInitMsgVersion = 1;
         uint256 expectedCurrentDataCost = 0;
-        bytes memory expectedInitMsg = abi.encodePacked(
-            chainId,
-            expectedInitMsgVersion,
-            expectedCurrentDataCost,
-            chainConfig
-        );
+        bytes memory expectedInitMsg =
+            abi.encodePacked(chainId, expectedInitMsgVersion, expectedCurrentDataCost, chainConfig);
 
         // expect event
         vm.expectEmit(true, true, true, true);

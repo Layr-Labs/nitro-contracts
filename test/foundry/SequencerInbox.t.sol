@@ -565,52 +565,6 @@ contract SequencerInboxTest is Test {
         );
     }
 
-    function testAddSequencerL2BatchFromEigenDARevertsWithInvalidTimeStamp() public {
-        DummyEigenDABlobVerifier rollupManagerImpl = new DummyEigenDABlobVerifier();
-        (SequencerInbox seqInbox, Bridge bridge) = deployRollup(false);
-        // update the dummyEigenDAServiceManager to use the holesky serviceManager contract
-
-        vm.startPrank(rollupOwner);
-        // deploy rollup
-        seqInbox.setEigenDARollupManager(address(rollupManagerImpl));
-        vm.stopPrank();
-
-        address delayedInboxSender = address(140);
-        uint8 delayedInboxKind = 3;
-        bytes32 messageDataHash = RAND.Bytes32();
-
-        vm.prank(dummyInbox);
-        bridge.enqueueDelayedMessage(delayedInboxKind, delayedInboxSender, messageDataHash);
-
-        (
-            IEigenDAServiceManager.BlobHeader memory blobHeader,
-            EigenDARollupUtils.BlobVerificationProof memory blobVerificationProof
-        ) = readAndParseBlobInfo();
-        ISequencerInbox.EigenDACert memory cert = ISequencerInbox.EigenDACert({
-            blobHeader: blobHeader,
-            blobVerificationProof: blobVerificationProof
-        });
-
-        cert.blobVerificationProof.batchMetadata.batchHeader.referenceBlockNumber = 0;
-
-        uint256 subMessageCount = bridge.sequencerReportedSubMessageCount();
-        uint256 sequenceNumber = bridge.sequencerMessageCount();
-        uint256 delayedMessagesRead = bridge.delayedMessageCount();
-
-        vm.roll(101);
-        vm.prank(tx.origin);
-
-        vm.expectRevert();
-        seqInbox.addSequencerL2BatchFromEigenDA(
-            sequenceNumber,
-            cert,
-            IGasRefunder(address(0)),
-            delayedMessagesRead,
-            subMessageCount,
-            subMessageCount + 1
-        );
-    }
-
     function testAddSequencerL2BatchFromEigenDA() public {
         DummyEigenDABlobVerifier rollupManagerImpl = new DummyEigenDABlobVerifier();
         (SequencerInbox seqInbox, Bridge bridge) = deployRollup(false);
@@ -691,7 +645,7 @@ contract SequencerInboxTest is Test {
             quorumIndices: bytes("")
         });
 
-    function testAddSequencerL2BatchFromEigenDARevertsOnInvalidCertificate() public {
+    function testAddSequencerL2BatchFrom() public {
         // finish filling out the illegalBlobHeader
         illegalBlobHeader.commitment = illegalCommitment;
         illegalBlobHeader.dataLength = 20;

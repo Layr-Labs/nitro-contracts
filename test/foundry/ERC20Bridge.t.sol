@@ -60,6 +60,7 @@ contract ERC20BridgeTest is AbsBridgeTest {
         noTokenBridge.initialize(IOwnable(rollup), address(0));
     }
 
+
     function test_initialize_ERC20_LessThan18Decimals() public {
         ERC20 _nativeToken = new ERC20_6Decimals();
         ERC20Bridge _bridge = ERC20Bridge(TestUtil.deployProxy(address(new ERC20Bridge())));
@@ -80,7 +81,7 @@ contract ERC20BridgeTest is AbsBridgeTest {
         ERC20_37Decimals _nativeToken = new ERC20_37Decimals();
         ERC20Bridge _bridge = ERC20Bridge(TestUtil.deployProxy(address(new ERC20Bridge())));
 
-        vm.expectRevert(abi.encodeWithSelector(NativeTokenDecimalsTooLarge.selector, 37));
+        vm.expectRevert(abi.encodeWithSelector(NativeTokenDecimalsTooLarge.selector,37));
         _bridge.initialize(IOwnable(makeAddr("_rollup")), address(_nativeToken));
     }
 
