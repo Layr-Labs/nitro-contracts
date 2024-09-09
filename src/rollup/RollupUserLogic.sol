@@ -159,7 +159,10 @@ abstract contract AbsRollupUserLogic is
      * @param blockHash The block hash at the end of the assertion
      * @param sendRoot The send root at the end of the assertion
      */
-    function confirmNextNode(bytes32 blockHash, bytes32 sendRoot) external onlyValidator {
+    function confirmNextNode(bytes32 blockHash, bytes32 sendRoot)
+        external
+        onlyValidator
+    {
         _confirmNextNode(blockHash, sendRoot, false);
     }
 
