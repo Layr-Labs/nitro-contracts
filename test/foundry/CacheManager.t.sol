@@ -18,7 +18,11 @@ contract CacheManagerTest is Test {
         CacheManager cacheManagerImpl = new CacheManager();
         cacheManager = CacheManager(
             address(
-                new TransparentUpgradeableProxy(address(cacheManagerImpl), address(proxyAdmin), "")
+                new TransparentUpgradeableProxy(
+                    address(cacheManagerImpl),
+                    address(proxyAdmin),
+                    ""
+                )
             )
         );
         uint64 cacheSize = 1_000_000;
@@ -44,11 +48,7 @@ contract CacheManagerTest is Test {
             // Deploy bytes(bytes32(i)) as code to a sample program
             // PUSH32 i PUSH1 0 MSTORE PUSH1 32 PUSH1 0 RETURN
             // at the time of writing this our forge version or config doesn't have PUSH0 support
-            bytes memory bytecode = bytes.concat(
-                hex"7F",
-                abi.encodePacked(i),
-                hex"60005260206000F3"
-            );
+            bytes memory bytecode = bytes.concat(hex"7F", abi.encodePacked(i), hex"60005260206000F3");
             address program;
             assembly {
                 program := create(0, add(bytecode, 32), mload(bytecode))
@@ -65,9 +65,7 @@ contract CacheManagerTest is Test {
         for (uint256 epoch = 0; epoch < 4; epoch++) {
             for (uint256 round = 0; round < 512; round++) {
                 // roll one of 256 random programs
-                address program = programs[
-                    uint256(keccak256(abi.encodePacked("code", epoch, round))) % programs.length
-                ];
+                address program = programs[uint256(keccak256(abi.encodePacked("code", epoch, round))) % programs.length];
                 bytes32 codehash = program.codehash;
 
                 // roll a random bid
@@ -120,7 +118,7 @@ contract CacheManagerTest is Test {
 
                 cacheManager.placeBid{value: pay}(program);
 
-                if (mustCache) {
+                if(mustCache) {
                     require(
                         ARB_WASM_CACHE.codehashIsCached(codehash),
                         "must cache codehash not cached"
