@@ -17,7 +17,6 @@ import {
     IncorrectMessagePreimage,
     NotBatchPoster,
     BadSequencerNumber,
-    ExpiredEigenDACert,
     AlreadyValidDASKeyset,
     NoSuchKeyset,
     NotForked,
@@ -89,7 +88,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     // GAS_PER_BLOB from EIP-4844
     uint256 internal constant GAS_PER_BLOB = 1 << 17;
 
-    uint256 internal constant MAX_CERTIFICATE_DRIFT = 100;
+    uint256 internal constant GAS_PER_SYMBOL_EIGENDA = 1;
 
     IOwnable public rollup;
 
@@ -480,21 +479,6 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
         // Verify that the blob was actually included before continuing
         rollupManager.verifyBlob(cert.blobHeader, cert.blobVerificationProof);
-
-        // Verify that the certificate is less than 2 epochs old from the L1 reference block number
-        // This is to prevent timing attacks where the sequencer could submit an expired or close to expired
-        // certificate which could impact liveness of full nodes as well as the safety of the bridge
-        if (
-            (cert.blobVerificationProof.batchMetadata.batchHeader.referenceBlockNumber +
-                MAX_CERTIFICATE_DRIFT) < block.number
-        ) {
-            revert ExpiredEigenDACert(
-                block.number,
-                cert.blobVerificationProof.batchMetadata.confirmationBlockNumber +
-                    MAX_CERTIFICATE_DRIFT
-            );
-        }
-
         // Form the EigenDA data hash and get the time bounds
         (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) = formEigenDADataHash(
             cert,
