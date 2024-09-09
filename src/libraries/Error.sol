@@ -170,6 +170,9 @@ error NotBatchPoster();
 /// @dev The sequence number provided to this message was inconsistent with the number of batches already included
 error BadSequencerNumber(uint256 stored, uint256 received);
 
+/// @dev The EigenDA certificate provided to the inbox was stale
+error ExpiredEigenDACert(uint256 currentBlock, uint256 l1ReferenceBlock);
+
 /// @dev The sequence message number provided to this message was inconsistent with the previous one
 error BadSequencerMessageNumber(uint256 stored, uint256 received);
 
