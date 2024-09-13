@@ -84,9 +84,10 @@ export async function deployContract(
 }
 
 
-// This function is called for RollupCreator on L1, where EigenDAServiceManager 
-// is needed as a constructor argument
-// The deployed blob verifier is the EigendaRollupManager argument during rollup creation
+// Deploy blob verifier for the EigendaRollupManager 
+// argument for rollup creator deployment on L1
+// TODO: This logic will be deprecated in the future in favor of 
+// embedding verifications into the service manager directl
 export async function deployBlobVerifierL1(
   contractName: string,
   signer: any,
