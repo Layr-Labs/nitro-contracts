@@ -14,6 +14,8 @@ import "./IOneStepProver.sol";
 import "../bridge/Messages.sol";
 import "../bridge/IBridge.sol";
 
+import {BN254} from "@eigenda/eigenda-utils/libraries/BN254.sol";
+
 contract OneStepProverHostIo is IOneStepProver {
     using GlobalStateLib for GlobalState;
     using MachineLib for Machine;
@@ -28,6 +30,82 @@ contract OneStepProverHostIo is IOneStepProver {
     uint256 private constant INBOX_NUM = 2;
     uint64 private constant INBOX_HEADER_LEN = 40;
     uint64 private constant DELAYED_HEADER_LEN = 112 + 1;
+
+    using BN254 for uint256[4];
+    using BN254 for uint256[3];
+    using BN254 for uint256[12];
+
+    // AlphaG1
+    // This is from the SRS points being used.
+    // This is the point at index 1, since index 0 is the generator value of the G1 group.
+    BN254.G1Point private ALPHA_G1 =
+        BN254.G1Point(
+            5421624913032980671919055010798735843841011930764711817607050648427876929258,
+            12995821280260994872112541311010834261076556242291585164372488699033268245381
+        );
+
+    function computeGamma(
+        uint256 z,
+        uint256 y,
+        uint256[2] memory p,
+        uint256[4] memory alpha_minus_z_g2
+    ) internal pure returns (uint256) {
+        // Encode the variables and compute the keccak256 hash
+        bytes32 hash = keccak256(
+            abi.encodePacked(
+                z,
+                y,
+                p[0],
+                p[1],
+                alpha_minus_z_g2[0],
+                alpha_minus_z_g2[1],
+                alpha_minus_z_g2[2],
+                alpha_minus_z_g2[3]
+            )
+        );
+        return uint256(hash) % BN254.FR_MODULUS;
+    }
+
+    // e((P - y) + gamma . (alpha - z), G2) = e((Q + gamma), (alpha - z))
+    // The last term, i.e (alpha - z) is passed into the contract.
+    function VerifyKzgProofWithG1Equivalence(
+        uint256[2] memory commitment,
+        uint256 y,
+        uint256[2] memory proof,
+        uint256 z,
+        uint256[4] memory alpha_minus_z_g2
+    ) public view returns (bool) {
+        BN254.G1Point memory yG1Neg = BN254.negate(BN254.scalar_mul(BN254.generatorG1(), y));
+        BN254.G1Point memory P_minus_y = BN254.plus(
+            BN254.G1Point(commitment[0], commitment[1]),
+            yG1Neg
+        );
+
+        // zG1
+        BN254.G1Point memory zG1Neg = BN254.negate(BN254.scalar_mul(BN254.generatorG1(), z));
+
+        // (alphaG1 - zG1)
+        BN254.G1Point memory alpha_minus_z_g1 = BN254.plus(ALPHA_G1, zG1Neg);
+
+        // gamma
+        uint256 gamma = computeGamma(z, y, commitment, alpha_minus_z_g2);
+
+        // gamma . (alpha - z)G1
+        BN254.G1Point memory gamma_alpha_minus_z_g1 = BN254.scalar_mul(alpha_minus_z_g1, gamma);
+
+        // gammaG1
+        BN254.G1Point memory gammaG1 = BN254.scalar_mul(BN254.generatorG1(), gamma);
+
+        // Q + gamma
+        BN254.G1Point memory q_plus_gamma = BN254.plus(BN254.G1Point(proof[0], proof[1]), gammaG1);
+        BN254.G1Point memory lhsG1 = BN254.plus(P_minus_y, gamma_alpha_minus_z_g1);
+        // The order is switched in the arbitrator already. It is passed as x_c1, x_c0, y_c1, y_c0
+        BN254.G2Point memory alpha_minus_z_g22 = BN254.G2Point(
+            [alpha_minus_z_g2[0], alpha_minus_z_g2[1]],
+            [alpha_minus_z_g2[2], alpha_minus_z_g2[3]]
+        );
+        return BN254.pairing(lhsG1, BN254.negGeneratorG2(), q_plus_gamma, alpha_minus_z_g22);
+    }
 
     function setLeafByte(
         bytes32 oldLeaf,
@@ -124,6 +202,9 @@ contract OneStepProverHostIo is IOneStepProver {
         require(modExpOutput.length == 32, "MODEXP_WRONG_LENGTH");
         return uint256(bytes32(modExpOutput));
     }
+
+    uint256 internal constant BN_254_PRIMITIVE_ROOT_OF_UNITY =
+        19103219067921713944291392827692070036145651957329286315305642004821462161904;
 
     function executeReadPreImage(
         ExecutionContext calldata,
@@ -232,6 +313,94 @@ contract OneStepProverHostIo is IOneStepProver {
                 rootOfUnityPower *= bitReversedIndex;
                 // z is the point the polynomial is evaluated at to retrieve this word of data
                 uint256 z = modExp256(PRIMITIVE_ROOT_OF_UNITY, rootOfUnityPower, blsModulus);
+                require(bytes32(kzgProof[32:64]) == bytes32(z), "KZG_PROOF_WRONG_Z");
+
+                extracted = kzgProof[64:96];
+            }
+        } else if (inst.argumentData == 3) {
+            // The machine is asking for a EigenDA versioned hash preimage
+
+            require(proofType == 0, "UNKNOWN_EIGENDA_PREIMAGE_PROOF");
+
+            bytes calldata kzgProof = proof[proofOffset:];
+
+            // NOTE we are expecting the following layout for our proof data, similar
+            // to that expected for the point evaluation precompile
+            // [:32] - hash (eigenlayer) (not versioned like 4844)
+            // [32:64] - evaluation point
+            // [64:96] - expected output
+            // [96:224] - g2TauMinusG2z
+            // [224:288] - kzg commitment (g1 point)
+            // [288:352] - proof (g1 point)
+            // [352:385] - preimage length
+
+            {
+                uint256[2] memory kzgCommitment = [
+                    uint256(bytes32(kzgProof[224:256])),
+                    uint256(bytes32(kzgProof[256:288]))
+                ];
+                uint256[4] memory alphaMinusG2 = [
+                    uint256(bytes32(kzgProof[96:128])),
+                    uint256(bytes32(kzgProof[128:160])),
+                    uint256(bytes32(kzgProof[160:192])),
+                    uint256(bytes32(kzgProof[192:224]))
+                ];
+                uint256[2] memory proofUint256 = [
+                    uint256(bytes32(kzgProof[288:320])),
+                    uint256(bytes32(kzgProof[320:352]))
+                ];
+                uint256 z = uint256(bytes32(kzgProof[32:64]));
+                uint256 y = uint256(bytes32(kzgProof[64:96]));
+                uint256 length = uint32(uint256(bytes32(kzgProof[352:384])));
+                uint32 length_u32 = uint32(length);
+
+                require(kzgCommitment[0] < BN254.FP_MODULUS, "COMMIT_X_LARGER_THAN_FIELD");
+                require(kzgCommitment[1] < BN254.FP_MODULUS, "COMMIT_Y_LARGER_THAN_FIELD");
+
+                require(proofUint256[0] < BN254.FP_MODULUS, "PROOF_X_LARGER_THAN_FIELD");
+                require(proofUint256[1] < BN254.FP_MODULUS, "PROOF_Y_LARGER_THAN_FIELD");
+
+                require(z < BN254.FR_MODULUS, "Z_LARGER_THAN_FIELD");
+                require(y < BN254.FR_MODULUS, "Y_LARGER_THAN_FIELD");
+
+                require(
+                    keccak256(abi.encodePacked(kzgProof[224:288], length_u32)) == leafContents,
+                    "BN254_KZG_PROOF_WRONG_HASH"
+                );
+
+                // must be valid proof
+                require(
+                    VerifyKzgProofWithG1Equivalence(
+                        kzgCommitment,
+                        y,
+                        proofUint256,
+                        z,
+                        alphaMinusG2
+                    ),
+                    "INVALID_BN254_KZG_PROOF"
+                );
+            }
+
+            // read the preimage length
+            uint256 preimageLength = uint256(bytes32(kzgProof[352:384]));
+
+            // If preimageOffset is greater than or equal to the blob size, leave extracted empty and call it here.
+            if (preimageOffset < preimageLength) {
+                // preimageOffset was required to be 32 byte aligned above
+                uint256 tmp = preimageOffset / 32;
+                // First, we get the root of unity of order 2**fieldElementsPerBlob.
+                // We start with a root of unity of order 2**32 and then raise it to
+                // the power of (2**32)/fieldElementsPerBlob to get root of unity we need.
+                uint256 rootOfUnityPower = ((1 << 28) / preimageLength) * 32;
+                // Then, we raise the root of unity to the power of bitReversedIndex,
+                // to retrieve this word of the KZG commitment.
+                rootOfUnityPower *= tmp;
+                // z is the point the polynomial is evaluated at to retrieve this word of data
+                uint256 z = modExp256(
+                    BN_254_PRIMITIVE_ROOT_OF_UNITY,
+                    rootOfUnityPower,
+                    BN254.FR_MODULUS
+                );
                 require(bytes32(kzgProof[32:64]) == bytes32(z), "KZG_PROOF_WRONG_Z");
 
                 extracted = kzgProof[64:96];
@@ -645,5 +814,21 @@ contract OneStepProverHostIo is IOneStepProver {
         }
 
         impl(execCtx, mach, mod, inst, proof);
+    }
+
+    // G2_SRS_1
+
+    //note might be useful to give back to the bn library
+    uint256 internal constant G2Taux1 =
+        21039730876973405969844107393779063362038454413254731404052240341412356318284;
+    uint256 internal constant G2Taux0 =
+        7912312892787135728292535536655271843828059318189722219035249994421084560563;
+    uint256 internal constant G2Tauy1 =
+        7586489485579523767759120334904353546627445333297951253230866312564920951171;
+    uint256 internal constant G2Tauy0 =
+        18697407556011630376420900106252341752488547575648825575049647403852275261247;
+
+    function g2Tau() internal view returns (BN254.G2Point memory) {
+        return BN254.G2Point({X: [G2Taux1, G2Taux0], Y: [G2Tauy1, G2Tauy0]});
     }
 }

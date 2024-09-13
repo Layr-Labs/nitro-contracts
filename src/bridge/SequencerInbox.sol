@@ -47,6 +47,8 @@ import {GasRefundEnabled} from "../libraries/GasRefundEnabled.sol";
 import "../libraries/ArbitrumChecker.sol";
 import {IERC20Bridge} from "./IERC20Bridge.sol";
 
+import "./IRollupManager.sol";
+
 /**
  * @title  Accepts batches from the sequencer and adds them to the rollup inbox.
  * @notice Contains the inbox accumulator which is the ordering of all data and transactions to be processed by the rollup.
@@ -80,8 +82,13 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     /// @inheritdoc ISequencerInbox
     bytes1 public constant ZERO_HEAVY_MESSAGE_HEADER_FLAG = 0x20;
 
+    /// @inheritdoc ISequencerInbox
+    bytes1 public constant EIGENDA_MESSAGE_HEADER_FLAG = 0xed;
+
     // GAS_PER_BLOB from EIP-4844
     uint256 internal constant GAS_PER_BLOB = 1 << 17;
+
+    uint256 internal constant GAS_PER_SYMBOL_EIGENDA = 1;
 
     IOwnable public rollup;
 
@@ -92,6 +99,8 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     ISequencerInbox.MaxTimeVariation private __LEGACY_MAX_TIME_VARIATION;
 
     mapping(bytes32 => DasKeySetInfo) public dasKeySetInfo;
+
+    IRollupManager public rollupManager;
 
     modifier onlyRollupOwner() {
         if (msg.sender != rollup.owner()) revert NotOwner(msg.sender, rollup.owner());
@@ -199,15 +208,6 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         rollup = bridge_.rollup();
 
         _setMaxTimeVariation(maxTimeVariation_);
-    }
-
-    /// @notice Allows the rollup owner to sync the rollup address
-    function updateRollupAddress() external {
-        if (msg.sender != IOwnable(rollup).owner())
-            revert NotOwner(msg.sender, IOwnable(rollup).owner());
-        IOwnable newRollup = bridge.rollup();
-        if (rollup == newRollup) revert RollupNotChanged();
-        rollup = newRollup;
     }
 
     function getTimeBounds() internal view virtual returns (IBridge.TimeBounds memory) {
@@ -465,6 +465,69 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         }
     }
 
+    function addSequencerL2BatchFromEigenDA(
+        uint256 sequenceNumber,
+        EigenDACert calldata cert,
+        IGasRefunder gasRefunder,
+        uint256 afterDelayedMessagesRead,
+        uint256 prevMessageCount,
+        uint256 newMessageCount
+    ) external refundsGas(gasRefunder, IReader4844(address(0))) {
+        if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
+        // Verify that the blob was actually included before continuing
+        rollupManager.verifyBlob(cert.blobHeader, cert.blobVerificationProof);
+        // Form the EigenDA data hash and get the time bounds
+        (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) = formEigenDADataHash(
+            cert,
+            afterDelayedMessagesRead
+        );
+
+        ISequencerInbox.SequenceMetadata memory metadata = ISequencerInbox.SequenceMetadata({
+            sequenceNumber: sequenceNumber,
+            afterDelayedMessagesRead: afterDelayedMessagesRead,
+            prevMessageCount: prevMessageCount,
+            newMessageCount: newMessageCount
+        });
+
+        // Call a helper function to add the sequencer L2 batch
+        _addSequencerL2Batch(metadata, dataHash, timeBounds);
+    }
+
+    function _addSequencerL2Batch(
+        ISequencerInbox.SequenceMetadata memory sequenceMetadata,
+        bytes32 dataHash,
+        IBridge.TimeBounds memory timeBounds
+    ) internal {
+        (
+            uint256 seqMessageIndex,
+            bytes32 beforeAcc,
+            bytes32 delayedAcc,
+            bytes32 afterAcc
+        ) = addSequencerL2BatchImpl(
+                dataHash,
+                sequenceMetadata.afterDelayedMessagesRead,
+                0,
+                sequenceMetadata.prevMessageCount,
+                sequenceMetadata.newMessageCount
+            );
+
+        uint256 sequenceNumber = sequenceMetadata.sequenceNumber;
+        // Check the sequence number
+        if (seqMessageIndex != sequenceNumber && sequenceNumber != ~uint256(0)) {
+            revert BadSequencerNumber(seqMessageIndex, sequenceNumber);
+        }
+
+        emit SequencerBatchDelivered(
+            seqMessageIndex,
+            beforeAcc,
+            afterAcc,
+            delayedAcc,
+            totalDelayedMessagesRead,
+            timeBounds,
+            IBridge.BatchDataLocation.EigenDA
+        );
+    }
+
     function addSequencerL2Batch(
         uint256 sequenceNumber,
         bytes calldata data,
@@ -588,11 +651,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
             // would allow the supplier of the data to spoof an incorrect 4844 data batch
             if (!isValidCallDataFlag(data[0])) revert InvalidHeaderFlag(data[0]);
 
-            // the first byte is used to identify the type of batch data
-            // das batches expect to have the type byte set, followed by the keyset (so they should have at least 33 bytes)
-            // if invalid data is supplied here the state transition function will process it as an empty block
-            // however we can provide a nice additional check here for the batch poster
-            if (data[0] & DAS_MESSAGE_HEADER_FLAG != 0 && data.length >= 33) {
+            if ((data[0] & DAS_MESSAGE_HEADER_FLAG != 0) && data.length >= 33) {
                 // we skip the first byte, then read the next 32 bytes for the keyset
                 bytes32 dasKeysetHash = bytes32(data[1:33]);
                 if (!dasKeySetInfo[dasKeysetHash].isValidKeyset) revert NoSuchKeyset(dasKeysetHash);
@@ -627,6 +686,24 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
             keccak256(bytes.concat(header, DATA_BLOB_HEADER_FLAG, abi.encodePacked(dataHashes))),
             timeBounds,
             block.basefee > 0 ? blobCost / block.basefee : 0
+        );
+    }
+
+    /// @dev    Form a hash of the eigenDA certificate
+    /// @param  afterDelayedMessagesRead The delayed messages count read up to
+    /// @return The data hash
+    /// @return The timebounds within which the message should be processed
+    function formEigenDADataHash(
+        ISequencerInbox.EigenDACert calldata cert,
+        uint256 afterDelayedMessagesRead
+    ) internal view returns (bytes32, IBridge.TimeBounds memory) {
+        (bytes memory header, IBridge.TimeBounds memory timeBounds) = packHeader(
+            afterDelayedMessagesRead
+        );
+
+        return (
+            keccak256(bytes.concat(header, EIGENDA_MESSAGE_HEADER_FLAG, abi.encode(cert))),
+            timeBounds
         );
     }
 
@@ -790,6 +867,28 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     function setBatchPosterManager(address newBatchPosterManager) external onlyRollupOwner {
         batchPosterManager = newBatchPosterManager;
         emit OwnerFunctionCalled(5);
+    }
+
+    /// @inheritdoc ISequencerInbox
+    function setRollupAddress() external onlyRollupOwner {
+        IOwnable newRollup = bridge.rollup();
+        if (rollup == newRollup) revert RollupNotChanged();
+        rollup = newRollup;
+        emit OwnerFunctionCalled(6);
+    }
+
+    function setEigenDARollupManager(address newRollupManager) external onlyRollupOwner {
+        rollupManager = IRollupManager(newRollupManager);
+        emit OwnerFunctionCalled(7);
+    }
+
+    /// @notice Allows the rollup owner to sync the rollup address
+    function updateRollupAddress() external {
+        if (msg.sender != IOwnable(rollup).owner())
+            revert NotOwner(msg.sender, IOwnable(rollup).owner());
+        IOwnable newRollup = bridge.rollup();
+        if (rollup == newRollup) revert RollupNotChanged();
+        rollup = newRollup;
     }
 
     function isValidKeysetHash(bytes32 ksHash) external view returns (bool) {

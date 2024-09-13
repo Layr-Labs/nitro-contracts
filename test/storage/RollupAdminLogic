@@ -1,6 +1,6 @@
 | Name                       | Type                                          | Slot | Offset | Bytes | Contract                                         |
 |----------------------------|-----------------------------------------------|------|--------|-------|--------------------------------------------------|
-| _initialized               | bool                                          | 0    | 0      | 1     | src/rollup/RollupAdminLogic.sol:RollupAdminLogic |
+| _initialized               | uint8                                         | 0    | 0      | 1     | src/rollup/RollupAdminLogic.sol:RollupAdminLogic |
 | _initializing              | bool                                          | 0    | 1      | 1     | src/rollup/RollupAdminLogic.sol:RollupAdminLogic |
 | __gap                      | uint256[50]                                   | 1    | 0      | 1600  | src/rollup/RollupAdminLogic.sol:RollupAdminLogic |
 | _paused                    | bool                                          | 51   | 0      | 1     | src/rollup/RollupAdminLogic.sol:RollupAdminLogic |

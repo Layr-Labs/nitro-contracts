@@ -10,12 +10,22 @@ import "../libraries/IGasRefunder.sol";
 import "./IDelayedMessageProvider.sol";
 import "./IBridge.sol";
 
+import {EigenDARollupUtils} from "@eigenda/eigenda-utils/libraries/EigenDARollupUtils.sol";
+import {IEigenDAServiceManager} from "@eigenda/eigenda-utils/interfaces/IEigenDAServiceManager.sol";
+
 interface ISequencerInbox is IDelayedMessageProvider {
     struct MaxTimeVariation {
         uint256 delayBlocks;
         uint256 futureBlocks;
         uint256 delaySeconds;
         uint256 futureSeconds;
+    }
+
+    struct SequenceMetadata {
+        uint256 sequenceNumber;
+        uint256 afterDelayedMessagesRead;
+        uint256 prevMessageCount;
+        uint256 newMessageCount;
     }
 
     event SequencerBatchDelivered(
@@ -27,6 +37,11 @@ interface ISequencerInbox is IDelayedMessageProvider {
         IBridge.TimeBounds timeBounds,
         IBridge.BatchDataLocation dataLocation
     );
+
+    struct EigenDACert {
+        EigenDARollupUtils.BlobVerificationProof blobVerificationProof;
+        IEigenDAServiceManager.BlobHeader blobHeader;
+    }
 
     event OwnerFunctionCalled(uint256 indexed id);
 
@@ -82,6 +97,12 @@ interface ISequencerInbox is IDelayedMessageProvider {
     ///      See: https://github.com/OffchainLabs/nitro/blob/69de0603abf6f900a4128cab7933df60cad54ded/arbstate/das_reader.go
     // solhint-disable-next-line func-name-mixedcase
     function ZERO_HEAVY_MESSAGE_HEADER_FLAG() external view returns (bytes1);
+
+    /// @dev If the first data byte after the header has this bit set,
+    ///      then the batch data is an eigenDA message
+    ///      See: https://github.com/Layr-Labs/nitro/blob/2ad088cb5943ec50ed8b521c4681561817a602c5/das/eigenda/eigenda.go
+    // solhint-disable-next-line func-name-mixedcase
+    function EIGENDA_MESSAGE_HEADER_FLAG() external view returns (bytes1);
 
     function rollup() external view returns (IOwnable);
 
@@ -179,7 +200,27 @@ interface ISequencerInbox is IDelayedMessageProvider {
         uint256 newMessageCount
     ) external;
 
+    function addSequencerL2BatchFromEigenDA(
+        uint256 sequenceNumber,
+        EigenDACert calldata cert,
+        IGasRefunder gasRefunder,
+        uint256 afterDelayedMessagesRead,
+        uint256 prevMessageCount,
+        uint256 newMessageCount
+    ) external;
+
     // ---------- onlyRollupOrOwner functions ----------
+
+    /**
+     * @notice Set the rollup manager contract address
+     * @param newRollupManager the new rollup manager contract address
+     */
+    function setEigenDARollupManager(address newRollupManager) external;
+
+    /**
+     * @notice Set the new rollup contract address
+     */
+    function setRollupAddress() external;
 
     /**
      * @notice Set max delay for sequencer inbox

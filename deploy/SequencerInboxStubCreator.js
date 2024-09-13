@@ -15,6 +15,7 @@ module.exports = async hre => {
     delaySeconds: 10000,
     futureSeconds: 10000,
   }
+
   await deploy('SequencerInboxStub', {
     from: deployer,
     args: [

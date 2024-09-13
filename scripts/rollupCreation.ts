@@ -61,7 +61,8 @@ export async function createRollup(
   signer: Signer,
   isDevDeployment: boolean,
   rollupCreatorAddress: string,
-  feeToken: string
+  feeToken: string,
+  eigenDARollupManager: string
 ): Promise<{
   rollupCreationResult: RollupCreationResult
   chainInfo: ChainInfo
@@ -101,7 +102,11 @@ export async function createRollup(
     // Call the createRollup function
     console.log('Calling createRollup to generate a new rollup ...')
     const deployParams = isDevDeployment
-      ? await _getDevRollupConfig(feeToken, validatorWalletCreator)
+      ? await _getDevRollupConfig(
+          eigenDARollupManager,
+          feeToken,
+          validatorWalletCreator
+        )
       : {
           config: config.rollupConfig,
           validators: config.validators,
@@ -111,6 +116,7 @@ export async function createRollup(
           maxFeePerGasForRetryables: MAX_FER_PER_GAS,
           batchPosters: config.batchPosters,
           batchPosterManager: config.batchPosterManager,
+          eigenDARollupManager: eigenDARollupManager,
         }
 
     const createRollupTx = await rollupCreator.createRollup(deployParams, {
@@ -229,6 +235,7 @@ export async function createRollup(
 }
 
 async function _getDevRollupConfig(
+  rollupManager: string,
   feeToken: string,
   validatorWalletCreator: string
 ) {
@@ -329,6 +336,7 @@ async function _getDevRollupConfig(
     maxFeePerGasForRetryables: MAX_FER_PER_GAS,
     batchPosters: batchPosters,
     batchPosterManager: batchPosterManager,
+    eigenDARollupManager: rollupManager,
   }
 
   function _createValidatorAddress(

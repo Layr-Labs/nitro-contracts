@@ -15,7 +15,7 @@ dotenv.config()
 const solidity = {
   compilers: [
     {
-      version: '0.8.9',
+      version: '0.8.12',
       settings: {
         optimizer: {
           enabled: true,
@@ -23,18 +23,18 @@ const solidity = {
         },
       },
     },
-  ],
-  overrides: {
-    'src/rollup/RollupUserLogic.sol': {
-      version: '0.8.9',
-      settings: {
-        optimizer: {
-          enabled: true,
-          runs: 0,
-        },
-      },
-    },
-  },
+  ]
+  // overrides: {
+  //   'src/rollup/RollupUserLogic.sol': {
+  //     version: '0.8.9',
+  //     settings: {
+  //       optimizer: {
+  //         enabled: true,
+  //         runs: 0,
+  //       },
+  //     },
+  //   },
+  // },
 }
 
 if (process.env['INTERFACE_TESTER_SOLC_VERSION']) {
@@ -110,6 +110,12 @@ module.exports = {
         ? [process.env['DEVNET_PRIVKEY']]
         : [],
     },
+    holesky: {
+      url: 'https://holesky.infura.io/v3/' + process.env['INFURA_KEY'],
+      accounts: process.env['DEVNET_PRIVKEY']
+        ? [process.env['DEVNET_PRIVKEY']]
+        : [],
+    },
     rinkeby: {
       url: 'https://rinkeby.infura.io/v3/' + process.env['INFURA_KEY'],
       accounts: process.env['DEVNET_PRIVKEY']
@@ -155,6 +161,7 @@ module.exports = {
       mainnet: process.env['ETHERSCAN_API_KEY'],
       goerli: process.env['ETHERSCAN_API_KEY'],
       sepolia: process.env['ETHERSCAN_API_KEY'],
+      holesky: process.env['ETHERSCAN_API_KEY'],
       rinkeby: process.env['ETHERSCAN_API_KEY'],
       arbitrumOne: process.env['ARBISCAN_API_KEY'],
       arbitrumTestnet: process.env['ARBISCAN_API_KEY'],

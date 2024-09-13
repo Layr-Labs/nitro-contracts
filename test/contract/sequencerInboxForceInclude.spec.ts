@@ -230,9 +230,16 @@ describe('SequencerInboxForceInclude', async () => {
     )) as RollupMock__factory
     const rollup = await rollupMockFac.deploy(await rollupOwner.getAddress())
 
+    const EigenDABlobVerifierL2 = await ethers.getContractFactory(
+      'EigenDABlobVerifierL2'
+    )
+    const eigenDAblobVerifierL2 = await EigenDABlobVerifierL2.deploy()
+    await eigenDAblobVerifierL2.deployed()
+
     const reader4844 = await Toolkit4844.deployReader4844(admin)
     const sequencerInboxFac = (await ethers.getContractFactory(
-      'SequencerInbox'
+      'SequencerInbox',
+      {}
     )) as SequencerInbox__factory
     const seqInboxTemplate = await sequencerInboxFac.deploy(
       117964,
@@ -274,6 +281,8 @@ describe('SequencerInboxForceInclude', async () => {
       .attach(sequencerInboxProxy.address)
       .connect(user)
     await bridge.initialize(rollup.address)
+
+    // await sequencerInbox.setEigenDARollupManager(eigenDAblobVerifierL2.address)
 
     await sequencerInbox.initialize(bridgeProxy.address, {
       delayBlocks: maxDelayBlocks,

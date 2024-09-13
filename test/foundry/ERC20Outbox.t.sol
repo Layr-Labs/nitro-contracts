@@ -17,7 +17,18 @@ contract ERC20OutboxTest is AbsOutboxTest {
 
     function setUp() public {
         // deploy token, bridge and outbox
-        nativeToken = new ERC20PresetFixedSupply("Appchain Token", "App", 1_000_000, address(this));
+
+        // hardcoded proof in tests assume that this contract is deployed at the repsective address
+        IERC20 nativeTokenCode = new ERC20PresetFixedSupply(
+            "Appchain Token",
+            "App",
+            1_000_000,
+            address(this)
+        );
+        nativeToken = IERC20(0xFEfC6BAF87cF3684058D62Da40Ff3A795946Ab06);
+        vm.etch(address(nativeToken), address(nativeTokenCode).code);
+        deal(address(nativeToken), address(this), 1_000_000);
+
         bridge = IBridge(TestUtil.deployProxy(address(new ERC20Bridge())));
         erc20Bridge = ERC20Bridge(address(bridge));
         outbox = IOutbox(TestUtil.deployProxy(address(new ERC20Outbox())));
@@ -52,7 +63,10 @@ contract ERC20OutboxTest is AbsOutboxTest {
         vm.stopPrank();
 
         // create msg receiver on L1
-        ERC20L2ToL1Target target = new ERC20L2ToL1Target();
+        // hardcoded proof in tests assume that this contract is deployed at the repsective address
+        ERC20L2ToL1Target targetCode = new ERC20L2ToL1Target();
+        ERC20L2ToL1Target target = ERC20L2ToL1Target(0x87B2d08110B7D50861141D7bBDd49326af3Ecb31);
+        vm.etch(address(target), address(targetCode).code);
         target.setOutbox(address(outbox));
 
         //// execute transaction

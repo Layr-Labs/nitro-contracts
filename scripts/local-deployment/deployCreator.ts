@@ -1,9 +1,10 @@
 import { ethers } from 'hardhat'
 import '@nomiclabs/hardhat-ethers'
-import { deployAllContracts } from '../deploymentUtils'
+import { deployAllContracts, deployBlobVerifierL1 } from '../deploymentUtils'
 import { createRollup } from '../rollupCreation'
 import { promises as fs } from 'fs'
 import { BigNumber } from 'ethers'
+import { RollupAdminLogic__factory } from '../../build/types'
 
 async function main() {
   /// read env vars needed for deployment
@@ -41,9 +42,11 @@ async function main() {
   if (!feeToken) {
     feeToken = ethers.constants.AddressZero
   }
+  console.log('Fee token address:', feeToken)
 
-  /// deploy templates and rollup creator
+  // deploy templates and rollup creator
   console.log('Deploy RollupCreator')
+
   const contracts = await deployAllContracts(deployerWallet, maxDataSize, false)
 
   console.log('Set templates on the Rollup Creator')
@@ -62,49 +65,17 @@ async function main() {
     )
   ).wait()
 
-  /// Create rollup
-  const chainId = (await deployerWallet.provider.getNetwork()).chainId
-  console.log(
-    'Create rollup on top of chain',
-    chainId,
-    'using RollupCreator',
-    contracts.rollupCreator.address
-  )
-  const result = await createRollup(
-    deployerWallet,
-    true,
-    contracts.rollupCreator.address,
-    feeToken,
-    contracts.eigenDARollupManager.address
-  )
-
-  if (!result) {
-    throw new Error('Rollup creation failed')
-  }
-
-  const { rollupCreationResult, chainInfo } = result
+  console.log('Rollup creator is ready for rollup creation')
 
   /// store deployment address
   // chain deployment info
   const chainDeploymentInfo =
     process.env.CHAIN_DEPLOYMENT_INFO !== undefined
       ? process.env.CHAIN_DEPLOYMENT_INFO
-      : 'deploy.json'
+      : 'rollupCreatorContracts.json'
   await fs.writeFile(
     chainDeploymentInfo,
-    JSON.stringify(rollupCreationResult, null, 2),
-    'utf8'
-  )
-
-  // child chain info
-  chainInfo['chain-name'] = childChainName
-  const childChainInfo =
-    process.env.CHILD_CHAIN_INFO !== undefined
-      ? process.env.CHILD_CHAIN_INFO
-      : 'l2_chain_info.json'
-  await fs.writeFile(
-    childChainInfo,
-    JSON.stringify([chainInfo], null, 2),
+    JSON.stringify(contracts, null, 2),
     'utf8'
   )
 }

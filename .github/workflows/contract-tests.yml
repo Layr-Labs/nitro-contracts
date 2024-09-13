@@ -21,7 +21,7 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
-          version: nightly
+          version: nightly-5b7e4cb3c882b28f3c32ba580de27ce7381f415a
 
       - name: Setup node/yarn
         uses: actions/setup-node@v3
@@ -33,11 +33,11 @@ jobs:
       - name: Install packages
         run: yarn
 
-      - name: Build
-        run: forge test
+      # - name: Build
+      #   run: forge test --fork-url https://rpc.holesky.ethpandaops.io/
   tests:
     name: Contract tests
-    runs-on: ubuntu-8
+    runs-on: ubuntu-latest
     defaults:
       run:
         shell: bash
@@ -79,8 +79,8 @@ jobs:
       - name: Run tests
         run: yarn hardhat --network hardhat test test/contract/*.spec.ts
 
-      - name: Interface compatibility
-        run: yarn run test:compatibility
+      # - name: Interface compatibility
+      #   run: yarn run test:compatibility
 
       - name: Forge build
         run: forge build

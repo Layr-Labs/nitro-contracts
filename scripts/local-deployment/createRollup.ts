@@ -1,9 +1,10 @@
 import { ethers } from 'hardhat'
 import '@nomiclabs/hardhat-ethers'
-import { deployAllContracts } from '../deploymentUtils'
+import { deployAllContracts, deployBlobVerifierL1 } from '../deploymentUtils'
 import { createRollup } from '../rollupCreation'
 import { promises as fs } from 'fs'
 import { BigNumber } from 'ethers'
+import { RollupAdminLogic__factory } from '../../build/types'
 
 async function main() {
   /// read env vars needed for deployment
@@ -31,36 +32,24 @@ async function main() {
     new ethers.providers.JsonRpcProvider(parentChainRpc)
   )
 
-  const maxDataSize =
-    process.env.MAX_DATA_SIZE !== undefined
-      ? ethers.BigNumber.from(process.env.MAX_DATA_SIZE)
-      : ethers.BigNumber.from(117964)
-
   /// get fee token address, if undefined use address(0) to have ETH as fee token
   let feeToken = process.env.FEE_TOKEN_ADDRESS as string
   if (!feeToken) {
     feeToken = ethers.constants.AddressZero
   }
+  console.log('Fee token address:', feeToken)
 
-  /// deploy templates and rollup creator
-  console.log('Deploy RollupCreator')
-  const contracts = await deployAllContracts(deployerWallet, maxDataSize, false)
+  const rollupCreatorAddress = process.env.ROLLUP_CREATOR as string
+  if (!rollupCreatorAddress) {
+    throw new Error('ROLLUP_CREATOR not set')
+  }
+  const rollupCreatorFac = await ethers.getContractFactory('RollupCreator')
+  const rollupCreator = rollupCreatorFac.attach(rollupCreatorAddress)
 
-  console.log('Set templates on the Rollup Creator')
-  await (
-    await contracts.rollupCreator.setTemplates(
-      contracts.bridgeCreator.address,
-      contracts.osp.address,
-      contracts.challengeManager.address,
-      contracts.rollupAdmin.address,
-      contracts.rollupUser.address,
-      contracts.upgradeExecutor.address,
-      contracts.validatorUtils.address,
-      contracts.validatorWalletCreator.address,
-      contracts.deployHelper.address,
-      { gasLimit: BigNumber.from('300000') }
-    )
-  ).wait()
+  const eigenDARollupManager = process.env.EIGENDA_ROLLUP_MANAGER as string
+  if (!eigenDARollupManager) {
+    throw new Error('EIGENDA_ROLLUP_MANAGER not set')
+  }
 
   /// Create rollup
   const chainId = (await deployerWallet.provider.getNetwork()).chainId
@@ -68,14 +57,14 @@ async function main() {
     'Create rollup on top of chain',
     chainId,
     'using RollupCreator',
-    contracts.rollupCreator.address
+    rollupCreator.address
   )
   const result = await createRollup(
     deployerWallet,
     true,
-    contracts.rollupCreator.address,
+    rollupCreator.address,
     feeToken,
-    contracts.eigenDARollupManager.address
+    eigenDARollupManager,
   )
 
   if (!result) {
