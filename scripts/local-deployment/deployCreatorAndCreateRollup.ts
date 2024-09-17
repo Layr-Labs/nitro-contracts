@@ -45,6 +45,17 @@ async function main() {
   /// deploy templates and rollup creator
   console.log('Deploy RollupCreator')
   const contracts = await deployAllContracts(deployerWallet, maxDataSize, false)
+  /// store deployment address
+  // chain deployment info
+  const rollupCreatorContracts =
+    process.env.ROLLUP_CREATOR_CONTRACTS_INFO !== undefined
+      ? process.env.ROLLUP_CREATOR_CONTRACTS_INFO
+      : 'rollup_creator_contracts.json'
+  await fs.writeFile(
+    rollupCreatorContracts,
+    JSON.stringify(contracts, null, 2),
+    'utf8'
+  )
 
   console.log('Set templates on the Rollup Creator')
   await (
@@ -58,7 +69,7 @@ async function main() {
       contracts.validatorUtils.address,
       contracts.validatorWalletCreator.address,
       contracts.deployHelper.address,
-      { gasLimit: BigNumber.from('300000') }
+      { gasLimit: BigNumber.from('3000000') }
     )
   ).wait()
 
