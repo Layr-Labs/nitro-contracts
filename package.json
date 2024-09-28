@@ -46,17 +46,13 @@
     "deploy-factory": "hardhat run scripts/deployment.ts",
     "deploy-eth-rollup": "hardhat run scripts/createEthRollup.ts",
     "deploy-erc20-rollup": "hardhat run scripts/createERC20Rollup.ts",
-    "create-rollup-testnode": "hardhat run scripts/local-deployment/deployCreatorAndCreateRollup.ts"
+    "create-rollup-testnode": "hardhat run scripts/local-deployment/deployCreatorAndCreateRollup.ts",
+    "deploy-cachemanager-testnode": "hardhat run scripts/local-deployment/deployCacheManager.ts"
   },
   "dependencies": {
-    "@eigenda/eigenda-utils": "2.0.0",
-    "@grpc/grpc-js": "^1.8.22",
-    "@grpc/proto-loader": "^0.7.13",
     "@offchainlabs/upgrade-executor": "1.1.0-beta.0",
-    "@openzeppelin-upgrades/contracts": "npm:@openzeppelin/contracts-upgradeable@4.7",
-    "@openzeppelin/contracts": "4.7",
-    "@openzeppelin/contracts-upgradeable": "4.7",
-    "google-protobuf": "^3.21.2",
+    "@openzeppelin/contracts": "4.5.0",
+    "@openzeppelin/contracts-upgradeable": "4.5.2",
     "patch-package": "^6.4.7",
     "solady": "0.0.182"
   },
@@ -71,7 +67,6 @@
     "@typechain/ethers-v5": "^10.0.0",
     "@typechain/hardhat": "^6.0.0",
     "@types/chai": "^4.3.0",
-    "@types/google-protobuf": "^3.15.12",
     "@types/mocha": "^9.0.0",
     "@types/node": "^17.0.5",
     "@typescript-eslint/eslint-plugin": "^5.14.0",
