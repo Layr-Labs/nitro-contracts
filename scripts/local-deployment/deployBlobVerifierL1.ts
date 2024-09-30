@@ -3,7 +3,6 @@ import '@nomiclabs/hardhat-ethers'
 import { deployBlobVerifierL1 } from '../deploymentUtils'
 import { promises as fs } from 'fs'
 
-
 async function main() {
   /// read env vars needed for deployment
   let childChainName = process.env.CHILD_CHAIN_NAME as string
@@ -21,7 +20,8 @@ async function main() {
     throw new Error('PARENT_CHAIN_RPC not set')
   }
 
-  let eigenDAServiceManagerAddress = process.env.EIGENDA_SERVICE_MANAGER_ADDRESS as string
+  let eigenDAServiceManagerAddress = process.env
+    .EIGENDA_SERVICE_MANAGER_ADDRESS as string
   if (!eigenDAServiceManagerAddress) {
     throw new Error('EIGENDA_SERVICE_MANAGER_ADDRESS not set')
   }
@@ -36,7 +36,12 @@ async function main() {
   )
 
   // deploy templates and rollup creator
-  const blobVerifierL1 = await deployBlobVerifierL1('EigenDABlobVerifierL1', deployerWallet, [eigenDAServiceManagerAddress], true)
+  const blobVerifierL1 = await deployBlobVerifierL1(
+    'EigenDABlobVerifierL1',
+    deployerWallet,
+    [eigenDAServiceManagerAddress],
+    true
+  )
   console.log('BlobVerifierL1 deployed at', blobVerifierL1.address)
 
   /// store deployment address

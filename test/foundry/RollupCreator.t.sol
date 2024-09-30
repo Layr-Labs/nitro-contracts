@@ -289,7 +289,6 @@ contract RollupCreatorTest is Test {
         validators[1] = makeAddr("validator2");
         address eigenDARollupManager = makeAddr("rollupManager");
 
-
         RollupCreator.RollupDeploymentParams memory deployParams = RollupCreator
             .RollupDeploymentParams({
                 config: config,
@@ -444,7 +443,6 @@ contract RollupCreatorTest is Test {
         validators[0] = makeAddr("validator1");
         validators[1] = makeAddr("validator2");
         address eigenDARollupManager = makeAddr("rollupManager");
-
 
         RollupCreator.RollupDeploymentParams memory deployParams = RollupCreator
             .RollupDeploymentParams({

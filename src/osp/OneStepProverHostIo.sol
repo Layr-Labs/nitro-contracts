@@ -388,7 +388,7 @@ contract OneStepProverHostIo is IOneStepProver {
             if (preimageOffset < preimageLength) {
                 // preimageOffset was required to be 32 byte aligned above
                 uint256 tmp = preimageOffset / 32;
-                uint256 rootOfUnityPower = (1 << 28) / preimageLength * 32;
+                uint256 rootOfUnityPower = ((1 << 28) / preimageLength) * 32;
                 // Then, we raise the root of unity to the power.
                 rootOfUnityPower *= tmp;
                 // z is the point the polynomial is evaluated at to retrieve this word of data
