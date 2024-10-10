@@ -46,6 +46,11 @@
   dependencies:
     "@jridgewell/trace-mapping" "0.3.9"
 
+"@eigenda/eigenda-utils@2.0.0":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@eigenda/eigenda-utils/-/eigenda-utils-2.0.0.tgz#4a2b179d2b41cc7d4ccfbff4aef210b5fa23d1ca"
+  integrity sha512-aijRWVPZWw3WA7sZHu1lmYRwQxWqK51YcZPq/QkyyfVsVqHJQdW3zUpuyKLesH1jVkfcQ3f1LdFPZTonvj8oIg==
+
 "@eslint-community/eslint-utils@^4.2.0":
   version "4.4.0"
   resolved "https://registry.yarnpkg.com/@eslint-community/eslint-utils/-/eslint-utils-4.4.0.tgz#a23514e8fb9af1269d5f7788aa556798d61c6b59"

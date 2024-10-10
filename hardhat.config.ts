@@ -15,7 +15,7 @@ dotenv.config()
 const solidity = {
   compilers: [
     {
-      version: '0.8.9',
+      version: '0.8.12',
       settings: {
         optimizer: {
           enabled: true,
@@ -26,7 +26,7 @@ const solidity = {
   ],
   overrides: {
     'src/rollup/RollupUserLogic.sol': {
-      version: '0.8.9',
+      version: '0.8.12',
       settings: {
         optimizer: {
           enabled: true,
@@ -144,6 +144,12 @@ module.exports = {
         ? [process.env['DEVNET_PRIVKEY']]
         : [],
     },
+    holesky: {
+      url: 'https://holesky.infura.io/v3/' + process.env['INFURA_KEY'],
+      accounts: process.env['DEVNET_PRIVKEY']
+        ? [process.env['DEVNET_PRIVKEY']]
+        : [],
+    },
     sepolia: {
       url: 'https://sepolia.infura.io/v3/' + process.env['INFURA_KEY'],
       accounts: process.env['DEVNET_PRIVKEY']
@@ -208,6 +214,7 @@ module.exports = {
       goerli: process.env['ETHERSCAN_API_KEY'],
       sepolia: process.env['ETHERSCAN_API_KEY'],
       holesky: process.env['ETHERSCAN_API_KEY'],
+      rinkeby: process.env['ETHERSCAN_API_KEY'],
       arbitrumOne: process.env['ARBISCAN_API_KEY'],
       arbitrumTestnet: process.env['ARBISCAN_API_KEY'],
       nova: process.env['NOVA_ARBISCAN_API_KEY'],

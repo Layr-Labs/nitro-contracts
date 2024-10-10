@@ -127,7 +127,7 @@ jobs:
         with:
           version: nightly
 
-      - uses: OffchainLabs/actions/run-nitro-test-node@main
+      - uses: Layr-Labs/arbitrum-actions/run-nitro-test-node@main
         with:
           args: --pos
           no-token-bridge: true
@@ -155,7 +155,7 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: OffchainLabs/actions/run-nitro-test-node@main
+      - uses: Layr-Labs/arbitrum-actions/run-nitro-test-node@main
         with:
           l3-node: true
           no-token-bridge: true
@@ -185,7 +185,7 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: OffchainLabs/actions/run-nitro-test-node@main
+      - uses: Layr-Labs/arbitrum-actions/run-nitro-test-node@main
         with:
           l3-node: true
           args: --l3-fee-token
@@ -216,7 +216,7 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: OffchainLabs/actions/run-nitro-test-node@main
+      - uses: Layr-Labs/arbitrum-actions/run-nitro-test-node@main
         with:
           l3-node: true
           args: --l3-fee-token --l3-fee-token-decimals 6
