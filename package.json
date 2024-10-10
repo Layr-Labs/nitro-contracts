@@ -6,7 +6,7 @@
   "license": "BUSL-1.1",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/offchainlabs/nitro-contracts.git"
+    "url": "git+https://github.com/layr-labs/nitro-contracts.git"
   },
   "files": [
     "src/",
@@ -15,7 +15,7 @@
     "out/yul/Reader4844.yul/Reader4844.json"
   ],
   "bugs": {
-    "url": "https://github.com/offchainlabs/nitro-contracts/issues"
+    "url": "https://github.com/layr-labs/nitro-contracts/issues"
   },
   "scripts": {
     "audit:ci": "audit-ci --config ./audit-ci.jsonc",
@@ -33,9 +33,10 @@
     "format": "prettier './**/*.{js,json,ts,yml,sol}' --write && yarn run lint:test --fix",
     "build:0.6": "INTERFACE_TESTER_SOLC_VERSION=0.6.9 yarn run build",
     "build:0.7": "INTERFACE_TESTER_SOLC_VERSION=0.7.0 yarn run build",
+    "build:0.8.12": "INTERFACE_TESTER_SOLC_VERSION=0.8.12 yarn run build",
     "test": "DISABLE_GAS_REPORTER=true hardhat --network hardhat test test/contract/*.spec.ts",
     "test:4844": "DISABLE_GAS_REPORTER=true hardhat --network hardhat test test/contract/*.spec.4844.ts",
-    "test:compatibility": "yarn run build:0.6 && yarn run build:0.7",
+    "test:compatibility": "yarn run build:0.8.12",
     "test:storage": "./test/storage/test.bash",
     "test:signatures": "./test/signatures/test-sigs.bash",
     "test:e2e": "hardhat test test/e2e/*.ts",
@@ -48,14 +49,16 @@
   },
   "dependencies": {
     "@offchainlabs/upgrade-executor": "1.1.0-beta.0",
-    "@openzeppelin/contracts": "4.5.0",
-    "@openzeppelin/contracts-upgradeable": "4.5.2",
+    "@openzeppelin-upgrades/contracts": "npm:@openzeppelin/contracts-upgradeable@4.7",
+    "@openzeppelin/contracts": "4.7",
+    "@openzeppelin/contracts-upgradeable": "4.7",
     "patch-package": "^6.4.7",
     "solady": "0.0.182"
   },
   "private": false,
   "devDependencies": {
     "@arbitrum/sdk": "^3.4.1",
+    "@eigenda/eigenda-utils": "2.0.0",
     "@ethersproject/providers": "^5.7.2",
     "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers@^0.3.0-beta.13",
     "@nomiclabs/hardhat-etherscan": "^3.1.0",

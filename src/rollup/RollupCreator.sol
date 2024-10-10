@@ -43,6 +43,7 @@ contract RollupCreator is Ownable {
         //// @dev The address of the batch poster, not used when set to zero address
         address[] batchPosters;
         address batchPosterManager;
+        address eigenDARollupManager;
     }
 
     BridgeCreator public bridgeCreator;
@@ -195,6 +196,9 @@ contract RollupCreator is Ownable {
         if (deployParams.batchPosterManager != address(0)) {
             bridgeContracts.sequencerInbox.setBatchPosterManager(deployParams.batchPosterManager);
         }
+
+        // Setting EigenDARollupManager
+        bridgeContracts.sequencerInbox.setEigenDARollupManager(deployParams.eigenDARollupManager);
 
         // Call setValidator on the newly created rollup contract just if validator set is not empty
         if (deployParams.validators.length != 0) {

@@ -46,6 +46,7 @@ import {IGasRefunder} from "../libraries/IGasRefunder.sol";
 import {GasRefundEnabled} from "../libraries/GasRefundEnabled.sol";
 import "../libraries/ArbitrumChecker.sol";
 import {IERC20Bridge} from "./IERC20Bridge.sol";
+import "./IRollupManager.sol";
 
 /**
  * @title  Accepts batches from the sequencer and adds them to the rollup inbox.
@@ -92,6 +93,11 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     ISequencerInbox.MaxTimeVariation private __LEGACY_MAX_TIME_VARIATION;
 
     mapping(bytes32 => DasKeySetInfo) public dasKeySetInfo;
+
+    /// @inheritdoc ISequencerInbox
+    bytes1 public constant EIGENDA_MESSAGE_HEADER_FLAG = 0xed;
+    
+    IRollupManager public eigenDARollupManager;
 
     modifier onlyRollupOwner() {
         if (msg.sender != rollup.owner()) revert NotOwner(msg.sender, rollup.owner());
@@ -465,6 +471,69 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         }
     }
 
+    function addSequencerL2BatchFromEigenDA(
+        uint256 sequenceNumber,
+        EigenDACert calldata cert,
+        IGasRefunder gasRefunder,
+        uint256 afterDelayedMessagesRead,
+        uint256 prevMessageCount,
+        uint256 newMessageCount
+    ) external refundsGas(gasRefunder, IReader4844(address(0))) {
+        if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
+        // Verify that the blob was actually included before continuing
+        eigenDARollupManager.verifyBlob(cert.blobHeader, cert.blobVerificationProof);
+        // Form the EigenDA data hash and get the time bounds
+        (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) = formEigenDADataHash(
+            cert,
+            afterDelayedMessagesRead
+        );
+
+        ISequencerInbox.SequenceMetadata memory metadata = ISequencerInbox.SequenceMetadata({
+            sequenceNumber: sequenceNumber,
+            afterDelayedMessagesRead: afterDelayedMessagesRead,
+            prevMessageCount: prevMessageCount,
+            newMessageCount: newMessageCount
+        });
+
+        // Call a helper function to add the sequencer L2 batch
+        _addSequencerL2Batch(metadata, dataHash, timeBounds);
+    }
+
+    function _addSequencerL2Batch(
+        ISequencerInbox.SequenceMetadata memory sequenceMetadata,
+        bytes32 dataHash,
+        IBridge.TimeBounds memory timeBounds
+    ) internal {
+        (
+            uint256 seqMessageIndex,
+            bytes32 beforeAcc,
+            bytes32 delayedAcc,
+            bytes32 afterAcc
+        ) = addSequencerL2BatchImpl(
+                dataHash,
+                sequenceMetadata.afterDelayedMessagesRead,
+                0,
+                sequenceMetadata.prevMessageCount,
+                sequenceMetadata.newMessageCount
+            );
+
+        uint256 sequenceNumber = sequenceMetadata.sequenceNumber;
+        // Check the sequence number
+        if (seqMessageIndex != sequenceNumber && sequenceNumber != ~uint256(0)) {
+            revert BadSequencerNumber(seqMessageIndex, sequenceNumber);
+        }
+
+        emit SequencerBatchDelivered(
+            seqMessageIndex,
+            beforeAcc,
+            afterAcc,
+            delayedAcc,
+            totalDelayedMessagesRead,
+            timeBounds,
+            IBridge.BatchDataLocation.EigenDA
+        );
+    }
+
     function addSequencerL2Batch(
         uint256 sequenceNumber,
         bytes calldata data,
@@ -630,6 +699,24 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         );
     }
 
+    /// @dev    Form a hash of the eigenDA certificate
+    /// @param  afterDelayedMessagesRead The delayed messages count read up to
+    /// @return The data hash
+    /// @return The timebounds within which the message should be processed
+    function formEigenDADataHash(
+        ISequencerInbox.EigenDACert calldata cert,
+        uint256 afterDelayedMessagesRead
+    ) internal view returns (bytes32, IBridge.TimeBounds memory) {
+        (bytes memory header, IBridge.TimeBounds memory timeBounds) = packHeader(
+            afterDelayedMessagesRead
+        );
+
+        return (
+            keccak256(bytes.concat(header, EIGENDA_MESSAGE_HEADER_FLAG, abi.encode(cert))),
+            timeBounds
+        );
+    }
+
     /// @dev   Submit a batch spending report message so that the batch poster can be reimbursed on the rollup
     ///        This function expect msg.sender is tx.origin, and will always record tx.origin as the spender
     /// @param dataHash The hash of the message the spending report is being submitted for
@@ -790,6 +877,11 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     function setBatchPosterManager(address newBatchPosterManager) external onlyRollupOwner {
         batchPosterManager = newBatchPosterManager;
         emit OwnerFunctionCalled(5);
+    }
+
+    function setEigenDARollupManager(address newRollupManager) external onlyRollupOwner {
+        eigenDARollupManager = IRollupManager(newRollupManager);
+        emit OwnerFunctionCalled(10);
     }
 
     function isValidKeysetHash(bytes32 ksHash) external view returns (bool) {

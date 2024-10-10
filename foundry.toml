@@ -7,11 +7,13 @@ cache_path  = 'forge-cache/sol'
 optimizer = true
 optimizer_runs = 100
 via_ir = false
-solc_version = '0.8.9'
+solc_version = '0.8.12'
 remappings = ['ds-test/=lib/forge-std/lib/ds-test/src/',
               'forge-std/=lib/forge-std/src/',
               '@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/',
               '@openzeppelin/contracts-upgradeable/=node_modules/@openzeppelin/contracts-upgradeable/']
+
+fs_permissions = [{ access = "read", path = "./test/foundry/blob_info"}]
 
 [profile.yul]
 src = 'yul'
