@@ -881,7 +881,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
 
     function setEigenDARollupManager(address newRollupManager) external onlyRollupOwner {
         eigenDARollupManager = IRollupManager(newRollupManager);
-        emit OwnerFunctionCalled(10);
+        emit OwnerFunctionCalled(6);
     }
 
     function isValidKeysetHash(bytes32 ksHash) external view returns (bool) {
