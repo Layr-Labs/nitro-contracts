@@ -50,7 +50,7 @@ contract OneStepProverHostIo is IOneStepProver {
         uint256[2] memory p,
         uint256[4] memory alpha_minus_z_g2,
         uint256[2] memory proof,
-        uint256[2] memory alpha_minus_z_g1,
+        uint256[2] memory alpha_minus_z_g1
     ) internal pure returns (uint256) {
         // Encode the variables and compute the keccak256 hash
         bytes32 hash = keccak256(
