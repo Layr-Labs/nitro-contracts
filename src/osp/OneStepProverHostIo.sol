@@ -78,7 +78,7 @@ contract OneStepProverHostIo is IOneStepProver {
         uint256 y,
         uint256[2] memory proof,
         uint256 z,
-        uint256[4] memory alpha_minus_z_g2,
+        uint256[4] memory alpha_minus_z_g2
     ) public view returns (bool) {
         BN254.G1Point memory yG1Neg = BN254.negate(BN254.scalar_mul(BN254.generatorG1(), y));
         BN254.G1Point memory P_minus_y = BN254.plus(
