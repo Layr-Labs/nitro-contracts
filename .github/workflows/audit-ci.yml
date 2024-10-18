@@ -12,7 +12,7 @@ on:
 jobs:
   install:
     name: 'Install'
-    runs-on: ubuntu-latest
+    runs-on: linux-2xl
     strategy:
       matrix:
         node-version: [18, 20]
@@ -30,7 +30,7 @@ jobs:
 
   yarn-audit:
     name: Audit
-    runs-on: ubuntu-latest
+    runs-on: linux-2xl
     needs: install
     steps:
       - name: Checkout
