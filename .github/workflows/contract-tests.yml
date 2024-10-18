@@ -12,7 +12,7 @@ on:
 jobs:
   test-unit:
     name: Test unit
-    runs-on: ubuntu-latest
+    runs-on: linux-2xl
     steps:
       - uses: actions/checkout@v3
         with:
@@ -112,7 +112,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
   test-4844:
     name: 4844 tests
-    runs-on: ubuntu-latest
+    runs-on: linux-2xl
     steps:
       - uses: actions/checkout@v3
         with:
@@ -123,7 +123,7 @@ jobs:
         with:
           version: nightly
 
-      - uses: Layr-Labs/arbitrum-actions/run-nitro-test-node@main
+      - uses: OffchainLabs/actions/run-nitro-test-node@main
         with:
           nitro-testnode-ref: deneb-integration
           args: --pos
@@ -146,13 +146,13 @@ jobs:
         run: yarn test:4844
   test-e2e:
     name: Test e2e
-    runs-on: ubuntu-latest
+    runs-on: linux-2xl
     steps:
       - uses: actions/checkout@v3
         with:
           submodules: recursive
 
-      - uses: Layr-Labs/arbitrum-actions/run-nitro-test-node@main
+      - uses: OffchainLabs/actions/run-nitro-test-node@main
         with:
           l3-node: true
           no-token-bridge: true
@@ -176,13 +176,13 @@ jobs:
         run: yarn test:e2e
   test-e2e-custom-fee-token:
     name: Test e2e custom fee token
-    runs-on: ubuntu-latest
+    runs-on: linux-2xl
     steps:
       - uses: actions/checkout@v3
         with:
           submodules: recursive
 
-      - uses: Layr-Labs/arbitrum-actions/run-nitro-test-node@main
+      - uses: OffchainLabs/actions/run-nitro-test-node@main
         with:
           l3-node: true
           args: --l3-fee-token
@@ -207,13 +207,13 @@ jobs:
         run: yarn test:e2e
   test-e2e-fee-token-6-decimals:
     name: Test e2e fee token with 6 decimals
-    runs-on: ubuntu-latest
+    runs-on: linux-2xl
     steps:
       - uses: actions/checkout@v3
         with:
           submodules: recursive
 
-      - uses: Layr-Labs/arbitrum-actions/run-nitro-test-node@main
+      - uses: OffchainLabs/actions/run-nitro-test-node@main
         with:
           l3-node: true
           args: --l3-fee-token --l3-fee-token-decimals 6
