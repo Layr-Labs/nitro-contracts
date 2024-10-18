@@ -158,6 +158,9 @@ error IncorrectMessagePreimage();
 /// @dev This can only be called by the batch poster
 error NotBatchPoster();
 
+/// @dev This can only be called by an EOA account without EIP-7702 enabled
+error NotEOA();
+
 /// @dev The sequence number provided to this message was inconsistent with the number of batches already included
 error BadSequencerNumber(uint256 stored, uint256 received);
 
