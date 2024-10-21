@@ -48,7 +48,9 @@ contract OneStepProverHostIo is IOneStepProver {
         uint256 z,
         uint256 y,
         uint256[2] memory p,
-        uint256[4] memory alpha_minus_z_g2
+        uint256[4] memory alpha_minus_z_g2,
+        uint256[2] memory proof,
+        BN254.G1Point memory alpha_minus_z_g1
     ) internal pure returns (uint256) {
         // Encode the variables and compute the keccak256 hash
         bytes32 hash = keccak256(
@@ -60,7 +62,11 @@ contract OneStepProverHostIo is IOneStepProver {
                 alpha_minus_z_g2[0],
                 alpha_minus_z_g2[1],
                 alpha_minus_z_g2[2],
-                alpha_minus_z_g2[3]
+                alpha_minus_z_g2[3],
+                proof[0],
+                proof[1],
+                alpha_minus_z_g1.X,
+                alpha_minus_z_g1.Y
             )
         );
         return uint256(hash) % BN254.FR_MODULUS;
@@ -87,7 +93,7 @@ contract OneStepProverHostIo is IOneStepProver {
         BN254.G1Point memory alpha_minus_z_g1 = BN254.plus(ALPHA_G1, zG1Neg);
 
         // gamma
-        uint256 gamma = computeGamma(z, y, commitment, alpha_minus_z_g2);
+        uint256 gamma = computeGamma(z, y, commitment, alpha_minus_z_g2, proof, alpha_minus_z_g1);
 
         // gamma . (alpha - z)G1
         BN254.G1Point memory gamma_alpha_minus_z_g1 = BN254.scalar_mul(alpha_minus_z_g1, gamma);
@@ -99,11 +105,11 @@ contract OneStepProverHostIo is IOneStepProver {
         BN254.G1Point memory q_plus_gamma = BN254.plus(BN254.G1Point(proof[0], proof[1]), gammaG1);
         BN254.G1Point memory lhsG1 = BN254.plus(P_minus_y, gamma_alpha_minus_z_g1);
         // The order is switched in the arbitrator already. It is passed as x_c1, x_c0, y_c1, y_c0
-        BN254.G2Point memory alpha_minus_z_g22 = BN254.G2Point(
+        BN254.G2Point memory alpha_minus_z_g2_point = BN254.G2Point(
             [alpha_minus_z_g2[0], alpha_minus_z_g2[1]],
             [alpha_minus_z_g2[2], alpha_minus_z_g2[3]]
         );
-        return BN254.pairing(lhsG1, BN254.negGeneratorG2(), q_plus_gamma, alpha_minus_z_g22);
+        return BN254.pairing(lhsG1, BN254.negGeneratorG2(), q_plus_gamma, alpha_minus_z_g2_point);
     }
 
     function setLeafByte(
