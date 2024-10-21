@@ -95,11 +95,6 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
 
     mapping(bytes32 => DasKeySetInfo) public dasKeySetInfo;
 
-    /// @inheritdoc ISequencerInbox
-    bytes1 public constant EIGENDA_MESSAGE_HEADER_FLAG = 0xed;
-    
-    IRollupManager public eigenDARollupManager;
-
     modifier onlyRollupOwner() {
         if (msg.sender != rollup.owner()) revert NotOwner(msg.sender, rollup.owner());
         _;
@@ -131,6 +126,11 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     bool internal immutable hostChainIsArbitrum = ArbitrumChecker.runningOnArbitrum();
     // True if the chain this SequencerInbox is deployed on uses custom fee token
     bool public immutable isUsingFeeToken;
+
+    /// @inheritdoc ISequencerInbox
+    bytes1 public constant EIGENDA_MESSAGE_HEADER_FLAG = 0xed;
+    
+    IRollupManager public eigenDARollupManager;
 
     constructor(
         uint256 _maxDataSize,
