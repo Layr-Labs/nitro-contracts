@@ -334,34 +334,32 @@ contract OneStepProverHostIo is IOneStepProver {
 
             // NOTE we are expecting the following layout for our proof data, similar
             // to that expected for the point evaluation precompile
-            // [:32] - hash (eigenlayer) (not versioned like 4844)
-            // [32:64] - evaluation point
-            // [64:96] - expected output
-            // [96:224] - g2TauMinusG2z
-            // [224:288] - kzg commitment (g1 point)
-            // [288:352] - proof (g1 point)
-            // [352:385] - preimage length
+            // [0:32] - evaluation point
+            // [32:64] - expected output
+            // [64:192] - g2TauMinusG2z
+            // [192:256] - kzg commitment (g1 point)
+            // [256:320] - proof (g1 point)
+            // [320:352] - preimage length
 
             {
                 uint256[2] memory kzgCommitment = [
-                    uint256(bytes32(kzgProof[224:256])),
-                    uint256(bytes32(kzgProof[256:288]))
+                    uint256(bytes32(kzgProof[192:224])),
+                    uint256(bytes32(kzgProof[224:256]))
                 ];
                 uint256[4] memory alphaMinusG2 = [
+                    uint256(bytes32(kzgProof[64:96])),
                     uint256(bytes32(kzgProof[96:128])),
                     uint256(bytes32(kzgProof[128:160])),
-                    uint256(bytes32(kzgProof[160:192])),
-                    uint256(bytes32(kzgProof[192:224]))
+                    uint256(bytes32(kzgProof[160:192]))
                 ];
                 uint256[2] memory proofUint256 = [
-                    uint256(bytes32(kzgProof[288:320])),
-                    uint256(bytes32(kzgProof[320:352]))
+                    uint256(bytes32(kzgProof[256:288])),
+                    uint256(bytes32(kzgProof[288:320]))
                 ];
-                uint256 z = uint256(bytes32(kzgProof[32:64]));
-                uint256 y = uint256(bytes32(kzgProof[64:96]));
-                uint256 length = uint32(uint256(bytes32(kzgProof[352:384])));
-                uint32 length_u32 = uint32(length);
-
+                uint256 z = uint256(bytes32(kzgProof[0:32]));
+                uint256 y = uint256(bytes32(kzgProof[32:64]));
+                uint32 length_u32 = uint32(uint256(bytes32(kzgProof[320:352])));
+                
                 require(kzgCommitment[0] < BN254.FP_MODULUS, "COMMIT_X_LARGER_THAN_FIELD");
                 require(kzgCommitment[1] < BN254.FP_MODULUS, "COMMIT_Y_LARGER_THAN_FIELD");
 
@@ -372,7 +370,7 @@ contract OneStepProverHostIo is IOneStepProver {
                 require(y < BN254.FR_MODULUS, "Y_LARGER_THAN_FIELD");
 
                 require(
-                    keccak256(abi.encodePacked(kzgProof[224:288], length_u32)) == leafContents,
+                    keccak256(abi.encodePacked(kzgProof[192:256], length_u32)) == leafContents,
                     "BN254_KZG_PROOF_WRONG_HASH"
                 );
 
@@ -390,16 +388,16 @@ contract OneStepProverHostIo is IOneStepProver {
             }
 
             // read the preimage length
-            uint256 preimageLength = uint256(bytes32(kzgProof[352:384]));
+            uint32 preimage_length = uint32(uint256(bytes32(kzgProof[320:352])));
 
             // If preimageOffset is greater than or equal to the blob size, leave extracted empty and call it here.
-            if (preimageOffset < preimageLength) {
+            if (preimageOffset < preimage_length) {
                 // preimageOffset was required to be 32 byte aligned above
                 uint256 tmp = preimageOffset / 32;
                 // First, we get the root of unity of order 2**fieldElementsPerBlob.
                 // We start with a root of unity of order 2**32 and then raise it to
                 // the power of (2**32)/fieldElementsPerBlob to get root of unity we need.
-                uint256 rootOfUnityPower = ((1 << 28) / preimageLength) * 32;
+                uint256 rootOfUnityPower = ((1 << 28) / preimage_length) * 32;
                 // Then, we raise the root of unity to the power of bitReversedIndex,
                 // to retrieve this word of the KZG commitment.
                 rootOfUnityPower *= tmp;
@@ -409,9 +407,9 @@ contract OneStepProverHostIo is IOneStepProver {
                     rootOfUnityPower,
                     BN254.FR_MODULUS
                 );
-                require(bytes32(kzgProof[32:64]) == bytes32(z), "KZG_PROOF_WRONG_Z");
+                require(bytes32(kzgProof[0:32]) == bytes32(z), "KZG_PROOF_WRONG_Z");
 
-                extracted = kzgProof[64:96];
+                extracted = kzgProof[32:64];
             }
         } else {
             revert("UNKNOWN_PREIMAGE_TYPE");
