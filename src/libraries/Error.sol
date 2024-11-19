@@ -170,6 +170,9 @@ error BadSequencerMessageNumber(uint256 stored, uint256 received);
 /// @dev Tried to create an already valid Data Availability Service keyset
 error AlreadyValidDASKeyset(bytes32);
 
+/// @dev The EigenDA certificate provided to the inbox was stale
+error ExpiredEigenDACert(uint256 currentBlock, uint256 l1ReferenceBlock);
+
 /// @dev Tried to use or invalidate an already invalid Data Availability Service keyset
 error NoSuchKeyset(bytes32);
 
