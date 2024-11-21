@@ -4,7 +4,7 @@ import { run } from 'hardhat'
 import { abi as rollupCreatorAbi } from '../build/contracts/src/rollup/RollupCreator.sol/RollupCreator.json'
 import { config, maxDataSize } from './config'
 import { BigNumber, Signer } from 'ethers'
-import { ERC20, ERC20__factory, IERC20__factory } from '../build/types'
+import { IERC20__factory } from '../build/types'
 import { sleep } from './testSetup'
 import { promises as fs } from 'fs'
 import { _isRunningOnArbitrum, verifyContract } from './deploymentUtils'
@@ -61,7 +61,8 @@ export async function createRollup(
   signer: Signer,
   isDevDeployment: boolean,
   rollupCreatorAddress: string,
-  feeToken: string
+  feeToken: string,
+  eigenDARollupManager: string
 ): Promise<{
   rollupCreationResult: RollupCreationResult
   chainInfo: ChainInfo
@@ -101,7 +102,11 @@ export async function createRollup(
     // Call the createRollup function
     console.log('Calling createRollup to generate a new rollup ...')
     const deployParams = isDevDeployment
-      ? await _getDevRollupConfig(feeToken, validatorWalletCreator)
+      ? await _getDevRollupConfig(
+          eigenDARollupManager,
+          feeToken,
+          validatorWalletCreator
+        )
       : {
           config: config.rollupConfig,
           validators: config.validators,
@@ -111,6 +116,7 @@ export async function createRollup(
           maxFeePerGasForRetryables: MAX_FER_PER_GAS,
           batchPosters: config.batchPosters,
           batchPosterManager: config.batchPosterManager,
+          eigenDARollupManager: eigenDARollupManager,
         }
 
     const createRollupTx = await rollupCreator.createRollup(deployParams, {
@@ -221,6 +227,7 @@ export async function createRollup(
 }
 
 async function _getDevRollupConfig(
+  rollupManager: string,
   feeToken: string,
   validatorWalletCreator: string
 ) {
@@ -321,6 +328,7 @@ async function _getDevRollupConfig(
     maxFeePerGasForRetryables: MAX_FER_PER_GAS,
     batchPosters: batchPosters,
     batchPosterManager: batchPosterManager,
+    eigenDARollupManager: rollupManager,
   }
 
   function _createValidatorAddress(
@@ -333,26 +341,4 @@ async function _getDevRollupConfig(
       nonce: nonceHex,
     })
   }
-}
-
-async function _getPrescaledAmount(
-  nativeToken: ERC20,
-  amount: BigNumber
-): Promise<BigNumber> {
-  const decimals = BigNumber.from(await nativeToken.decimals())
-  if (decimals.lt(BigNumber.from(18))) {
-    const scalingFactor = BigNumber.from(10).pow(
-      BigNumber.from(18).sub(decimals)
-    )
-    let prescaledAmount = amount.div(scalingFactor)
-    // round up if needed
-    if (prescaledAmount.mul(scalingFactor).lt(amount)) {
-      prescaledAmount = prescaledAmount.add(BigNumber.from(1))
-    }
-    return prescaledAmount
-  } else if (decimals.gt(BigNumber.from(18))) {
-    return amount.mul(BigNumber.from(10).pow(decimals.sub(BigNumber.from(18))))
-  }
-
-  return amount
 }

@@ -74,7 +74,8 @@ async function main() {
     deployerWallet,
     true,
     contracts.rollupCreator.address,
-    feeToken
+    feeToken,
+    contracts.eigenDARollupManager.address,
   )
 
   if (!result) {
