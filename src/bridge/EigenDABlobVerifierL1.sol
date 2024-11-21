@@ -19,7 +19,7 @@ contract EigenDABlobVerifierL1 is IRollupManager {
         EigenDARollupUtils.BlobVerificationProof calldata blobVerificationProof
     ) external view {
         /*
-            Verify that the certificate is less than 2 epochs old from the L1 reference block number
+            Verify that the certificate is less than 2 epochs old from the L1 confirmation block number
             This is to prevent timing attacks where the sequencer could submit an expired or close to expired
             certificate which could impact liveness of full nodes as well as the safety of the bridge
         */
