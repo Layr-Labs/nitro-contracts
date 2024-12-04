@@ -56,7 +56,6 @@ contract RollupCreatorTest is Test {
     function setUp() public {
         //// deploy rollup creator and set templates
         vm.startPrank(deployer);
-        rollupCreator = new RollupCreator();
         deployHelper = new DeployHelper();
 
         // deploy BridgeCreators
@@ -75,7 +74,7 @@ contract RollupCreatorTest is Test {
         rollupUser = _rollupUser;
 
         //// deploy creator and set logic
-        rollupCreator.setTemplates(
+        rollupCreator = new RollupCreator(
             bridgeCreator,
             ospEntry,
             challengeManager,
@@ -84,7 +83,9 @@ contract RollupCreatorTest is Test {
             upgradeExecutorLogic,
             address(new ValidatorUtils()),
             address(new ValidatorWalletCreator()),
-            deployHelper
+            deployHelper,
+            deployer,
+            "4.2.0"
         );
 
         vm.stopPrank();
