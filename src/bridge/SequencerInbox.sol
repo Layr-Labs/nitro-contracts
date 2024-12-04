@@ -130,6 +130,8 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     /// @inheritdoc ISequencerInbox
     bytes1 public constant EIGENDA_MESSAGE_HEADER_FLAG = 0xed;
     
+    // gap used to ensure seamless upgradibility in the future
+    uint256[50] __gap;
     IRollupManager public eigenDARollupManager;
 
     constructor(
