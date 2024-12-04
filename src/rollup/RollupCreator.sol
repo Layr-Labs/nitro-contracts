@@ -45,7 +45,7 @@ contract RollupCreator is Ownable {
     }
 
     modifier onlyUnfrozen() {
-        require(!deploymentFrozen, "Deployment no longer permitted from this creator");
+        require(!deploymentFrozen, "Deployment no longer permitted from this RollupCreator");
         _;
     }
 

@@ -487,6 +487,67 @@ contract RollupCreatorTest is Test {
         assertEq(_getImpl(inbox), address(newLogicImpl));
     }
 
+    function test_freeze() public {
+        vm.startPrank(deployer);
+
+        rollupCreator.freezeDeployment();
+        assertTrue(rollupCreator.deploymentFrozen(), "rollupCreator not frozen");
+
+        ISequencerInbox.MaxTimeVariation memory timeVars = ISequencerInbox.MaxTimeVariation(
+            ((60 * 60 * 24) / 15),
+            12,
+            60 * 60 * 24,
+            60 * 60
+        );
+        Config memory config = Config({
+            confirmPeriodBlocks: 20,
+            extraChallengeTimeBlocks: 200,
+            stakeToken: address(0),
+            baseStake: 1000,
+            wasmModuleRoot: keccak256("wasm"),
+            owner: rollupOwner,
+            loserStakeEscrow: address(200),
+            chainId: 1337,
+            chainConfig: "abc",
+            genesisBlockNum: 15_000_000,
+            sequencerInboxMaxTimeVariation: timeVars
+        });
+
+        // prepare funds
+        uint256 factoryDeploymentFunds = 1 ether;
+        vm.deal(deployer, factoryDeploymentFunds);
+
+        /// deploy rollup
+        address[] memory batchPosters = new address[](1);
+        batchPosters[0] = makeAddr("batch poster 1");
+        address batchPosterManager = makeAddr("batch poster manager");
+        address[] memory validators = new address[](2);
+        validators[0] = makeAddr("validator1");
+        validators[1] = makeAddr("validator2");
+
+        address eigenDARollupManager = makeAddr("rollupManager");
+
+        RollupCreator.RollupDeploymentParams memory deployParams = RollupCreator
+            .RollupDeploymentParams({
+                config: config,
+                batchPosters: batchPosters,
+                validators: validators,
+                maxDataSize: MAX_DATA_SIZE,
+                nativeToken: address(0),
+                deployFactoriesToL2: true,
+                maxFeePerGasForRetryables: MAX_FEE_PER_GAS,
+                batchPosterManager: batchPosterManager,
+                eigenDARollupManager: eigenDARollupManager
+            });
+
+        vm.expectRevert("Deployment no longer permitted from this RollupCreator");
+        rollupCreator.createRollup{value: factoryDeploymentFunds}(
+            deployParams
+        );
+        
+        vm.stopPrank();
+    }
+
     function _prepareRollupDeployment()
         internal
         returns (
