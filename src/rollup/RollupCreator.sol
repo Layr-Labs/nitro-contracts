@@ -31,6 +31,7 @@ contract RollupCreator is Ownable {
         address validatorUtils,
         address validatorWalletCreator
     );
+    event TemplatesUpdated();
 
     struct RollupDeploymentParams {
         Config config;
@@ -49,22 +50,32 @@ contract RollupCreator is Ownable {
         _;
     }
 
-    BridgeCreator public immutable bridgeCreator;
-    IOneStepProofEntry public immutable osp;
-    IChallengeManager public immutable challengeManagerTemplate;
-    IRollupAdmin public immutable rollupAdminLogic;
-    IRollupUser public immutable rollupUserLogic;
-    IUpgradeExecutor public immutable upgradeExecutorLogic;
+    modifier onlyOnce() {
+        require(!templatesSet, "Templates already set");
+        _;
+    }
 
-    address public immutable validatorUtils;
-    address public immutable validatorWalletCreator;
+    BridgeCreator public bridgeCreator;
+    IOneStepProofEntry public osp;
+    IChallengeManager public challengeManagerTemplate;
+    IRollupAdmin public rollupAdminLogic;
+    IRollupUser public rollupUserLogic;
+    IUpgradeExecutor public upgradeExecutorLogic;
 
-    DeployHelper public immutable l2FactoriesDeployer;
+    address public validatorUtils;
+    address public validatorWalletCreator;
 
+    DeployHelper public l2FactoriesDeployer;
+
+    bool public templatesSet;
     bool public deploymentFrozen;
-    string public version;
 
-    constructor(
+    constructor() Ownable() {}
+
+    // creator receives back excess fees (for deploying L2 factories) so it can refund the caller
+    receive() external payable {}
+
+    function setTemplates(
         BridgeCreator _bridgeCreator,
         IOneStepProofEntry _osp,
         IChallengeManager _challengeManagerLogic,
@@ -73,10 +84,8 @@ contract RollupCreator is Ownable {
         IUpgradeExecutor _upgradeExecutorLogic,
         address _validatorUtils,
         address _validatorWalletCreator,
-        DeployHelper _l2FactoriesDeployer,
-        address _creatorOwner,
-        string memory _version
-    ) Ownable() {
+        DeployHelper _l2FactoriesDeployer
+    ) external onlyOwner onlyOnce {
         bridgeCreator = _bridgeCreator;
         osp = _osp;
         challengeManagerTemplate = _challengeManagerLogic;
@@ -87,15 +96,8 @@ contract RollupCreator is Ownable {
         validatorWalletCreator = _validatorWalletCreator;
         l2FactoriesDeployer = _l2FactoriesDeployer;
 
-        _transferOwnership(_creatorOwner);
-        version = _version;
-    }
-
-    // creator receives back excess fees (for deploying L2 factories) so it can refund the caller
-    receive() external payable {}
-
-    function freezeDeployment() external onlyOwner {
-        deploymentFrozen = true;
+        templatesSet = true;
+        emit TemplatesUpdated();
     }
 
     /**
@@ -248,6 +250,10 @@ contract RollupCreator is Ownable {
             address(validatorWalletCreator)
         );
         return address(rollup);
+    }
+
+    function freezeDeployment() external onlyOwner {
+        deploymentFrozen = true;
     }
 
     function _deployUpgradeExecutor(address rollupOwner, ProxyAdmin proxyAdmin)
