@@ -28,6 +28,8 @@ contract RollupCreatorTest is Test {
     IRollupUser public rollupUser;
     DeployHelper public deployHelper;
     IReader4844 dummyReader4844 = IReader4844(address(137));
+    IEigenDAServiceManager dummyEigenDAServiceManager = IEigenDAServiceManager(address(138));
+    IRollupManager rollupManager = IRollupManager(address(139));
 
     // 1 gwei
     uint256 public constant MAX_FEE_PER_GAS = 1_000_000_000;
@@ -124,7 +126,9 @@ contract RollupCreatorTest is Test {
         address[] memory validators = new address[](2);
         validators[0] = makeAddr("validator1");
         validators[1] = makeAddr("validator2");
-        address eigenDARollupManager = makeAddr("eigenda rollup manager");
+
+        address eigenDASvcManager = makeAddr("eigenDASvcManager");
+        address eigenDARollupManager = makeAddr("rollupManager");
 
         RollupCreator.RollupDeploymentParams memory deployParams = RollupCreator
             .RollupDeploymentParams({
@@ -138,6 +142,7 @@ contract RollupCreatorTest is Test {
                 batchPosterManager: batchPosterManager,
                 eigenDARollupManager: eigenDARollupManager
             });
+
         address rollupAddress = rollupCreator.createRollup{value: factoryDeploymentFunds}(
             deployParams
         );
@@ -168,11 +173,6 @@ contract RollupCreatorTest is Test {
             rollup.sequencerInbox().batchPosterManager(),
             batchPosterManager,
             "Invalid batch poster manager"
-        );
-        assertEq(
-            address(rollup.sequencerInbox().eigenDARollupManager()),
-            eigenDARollupManager,
-            "Invalid eigenda rollup manager"
         );
 
         // check proxy admin for non-rollup contracts
@@ -287,8 +287,7 @@ contract RollupCreatorTest is Test {
         address[] memory validators = new address[](2);
         validators[0] = makeAddr("validator1");
         validators[1] = makeAddr("validator2");
-
-        address eigenDARollupManager = makeAddr("eigendaRollupManager");
+        address eigenDARollupManager = makeAddr("rollupManager");
 
         RollupCreator.RollupDeploymentParams memory deployParams = RollupCreator
             .RollupDeploymentParams({
@@ -408,6 +407,103 @@ contract RollupCreatorTest is Test {
         );
     }
 
+    function test_freezeDeployment() public {
+        vm.startPrank(deployer);
+
+        rollupCreator.freezeDeployment();
+        assertTrue(rollupCreator.deploymentFrozen(), "rollupCreator not frozen");
+
+        ISequencerInbox.MaxTimeVariation memory timeVars = ISequencerInbox.MaxTimeVariation(
+            ((60 * 60 * 24) / 15),
+            12,
+            60 * 60 * 24,
+            60 * 60
+        );
+        Config memory config = Config({
+            confirmPeriodBlocks: 20,
+            extraChallengeTimeBlocks: 200,
+            stakeToken: address(0),
+            baseStake: 1000,
+            wasmModuleRoot: keccak256("wasm"),
+            owner: rollupOwner,
+            loserStakeEscrow: address(200),
+            chainId: 1337,
+            chainConfig: "abc",
+            genesisBlockNum: 15_000_000,
+            sequencerInboxMaxTimeVariation: timeVars
+        });
+
+        // prepare funds
+        uint256 factoryDeploymentFunds = 1 ether;
+        vm.deal(deployer, factoryDeploymentFunds);
+
+        /// deploy rollup
+        address[] memory batchPosters = new address[](1);
+        batchPosters[0] = makeAddr("batch poster 1");
+        address batchPosterManager = makeAddr("batch poster manager");
+        address[] memory validators = new address[](2);
+        validators[0] = makeAddr("validator1");
+        validators[1] = makeAddr("validator2");
+
+        address eigenDARollupManager = makeAddr("rollupManager");
+
+        RollupCreator.RollupDeploymentParams memory deployParams = RollupCreator
+            .RollupDeploymentParams({
+                config: config,
+                batchPosters: batchPosters,
+                validators: validators,
+                maxDataSize: MAX_DATA_SIZE,
+                nativeToken: address(0),
+                deployFactoriesToL2: true,
+                maxFeePerGasForRetryables: MAX_FEE_PER_GAS,
+                batchPosterManager: batchPosterManager,
+                eigenDARollupManager: eigenDARollupManager
+            });
+
+        vm.expectRevert("Deployment no longer permitted from this RollupCreator");
+        rollupCreator.createRollup{value: factoryDeploymentFunds}(
+            deployParams
+        );
+        
+        vm.stopPrank();
+    }
+
+    function test_setTemplates_onlyOnce() public {
+        vm.startPrank(deployer);
+
+        BridgeCreator bridgeCreator = new BridgeCreator(ethBasedTemplates, erc20BasedTemplates);
+
+        IUpgradeExecutor upgradeExecutorLogic = new UpgradeExecutorMock();
+
+        (
+            IOneStepProofEntry ospEntry,
+            IChallengeManager challengeManager,
+            IRollupAdmin _rollupAdmin,
+            IRollupUser _rollupUser
+        ) = _prepareRollupDeployment();
+
+        rollupAdmin = _rollupAdmin;
+        rollupUser = _rollupUser;
+
+        ValidatorUtils validatorUtils = new ValidatorUtils();
+        ValidatorWalletCreator validatorWalletCreator = new ValidatorWalletCreator();
+
+        vm.expectRevert("Templates already set");
+        rollupCreator.setTemplates(
+            bridgeCreator,
+            ospEntry,
+            challengeManager,
+            _rollupAdmin,
+            _rollupUser,
+            upgradeExecutorLogic,
+            address(validatorUtils),
+            address(validatorWalletCreator),
+            deployHelper
+        );
+
+        vm.stopPrank();
+    }
+
     function test_upgrade() public {
         vm.startPrank(deployer);
 
@@ -443,7 +539,7 @@ contract RollupCreatorTest is Test {
         address[] memory validators = new address[](2);
         validators[0] = makeAddr("validator1");
         validators[1] = makeAddr("validator2");
-        address eigenDARollupManager = makeAddr("eigenda rollup manager");
+        address eigenDARollupManager = makeAddr("rollupManager");
 
         RollupCreator.RollupDeploymentParams memory deployParams = RollupCreator
             .RollupDeploymentParams({

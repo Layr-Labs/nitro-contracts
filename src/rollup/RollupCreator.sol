@@ -45,6 +45,16 @@ contract RollupCreator is Ownable {
         address eigenDARollupManager;
     }
 
+    modifier onlyUnfrozen() {
+        require(!deploymentFrozen, "Deployment no longer permitted from this RollupCreator");
+        _;
+    }
+
+    modifier onlyOnce() {
+        require(!templatesSet, "Templates already set");
+        _;
+    }
+
     BridgeCreator public bridgeCreator;
     IOneStepProofEntry public osp;
     IChallengeManager public challengeManagerTemplate;
@@ -56,6 +66,9 @@ contract RollupCreator is Ownable {
     address public validatorWalletCreator;
 
     DeployHelper public l2FactoriesDeployer;
+
+    bool public templatesSet;
+    bool public deploymentFrozen;
 
     constructor() Ownable() {}
 
@@ -72,7 +85,7 @@ contract RollupCreator is Ownable {
         address _validatorUtils,
         address _validatorWalletCreator,
         DeployHelper _l2FactoriesDeployer
-    ) external onlyOwner {
+    ) external onlyOwner onlyOnce {
         bridgeCreator = _bridgeCreator;
         osp = _osp;
         challengeManagerTemplate = _challengeManagerLogic;
@@ -82,6 +95,8 @@ contract RollupCreator is Ownable {
         validatorUtils = _validatorUtils;
         validatorWalletCreator = _validatorWalletCreator;
         l2FactoriesDeployer = _l2FactoriesDeployer;
+
+        templatesSet = true;
         emit TemplatesUpdated();
     }
 
@@ -106,11 +121,13 @@ contract RollupCreator is Ownable {
      *          - maxFeePerGasForRetryables price bid for L2 execution.
      *          - batchPosters  The list of batch poster addresses, not used when set to empty list
      *          - batchPosterManager The address which has the ability to rotate batch poster keys
+     *          - eigenDARollupManager The address of the EigenDABlobVerifier    contract
      * @return The address of the newly created rollup
      */
     function createRollup(RollupDeploymentParams memory deployParams)
         public
         payable
+        onlyUnfrozen
         returns (address)
     {
         {
@@ -197,7 +214,7 @@ contract RollupCreator is Ownable {
             bridgeContracts.sequencerInbox.setBatchPosterManager(deployParams.batchPosterManager);
         }
 
-        // Setting EigenDARollupManager
+        // Setting EigenDAServiceManager and EigenDARollupManager
         bridgeContracts.sequencerInbox.setEigenDARollupManager(deployParams.eigenDARollupManager);
 
         // Call setValidator on the newly created rollup contract just if validator set is not empty
@@ -234,6 +251,10 @@ contract RollupCreator is Ownable {
             address(validatorWalletCreator)
         );
         return address(rollup);
+    }
+
+    function freezeDeployment() external onlyOwner {
+        deploymentFrozen = true;
     }
 
     function _deployUpgradeExecutor(address rollupOwner, ProxyAdmin proxyAdmin)
