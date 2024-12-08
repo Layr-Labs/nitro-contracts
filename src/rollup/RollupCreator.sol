@@ -45,16 +45,6 @@ contract RollupCreator is Ownable {
         address eigenDARollupManager;
     }
 
-    modifier onlyUnfrozen() {
-        require(!deploymentFrozen, "Deployment no longer permitted from this RollupCreator");
-        _;
-    }
-
-    modifier onlyOnce() {
-        require(!templatesSet, "Templates already set");
-        _;
-    }
-
     BridgeCreator public bridgeCreator;
     IOneStepProofEntry public osp;
     IChallengeManager public challengeManagerTemplate;
@@ -66,9 +56,6 @@ contract RollupCreator is Ownable {
     address public validatorWalletCreator;
 
     DeployHelper public l2FactoriesDeployer;
-
-    bool public templatesSet;
-    bool public deploymentFrozen;
 
     constructor() Ownable() {}
 
@@ -85,7 +72,7 @@ contract RollupCreator is Ownable {
         address _validatorUtils,
         address _validatorWalletCreator,
         DeployHelper _l2FactoriesDeployer
-    ) external onlyOwner onlyOnce {
+    ) external onlyOwner {
         bridgeCreator = _bridgeCreator;
         osp = _osp;
         challengeManagerTemplate = _challengeManagerLogic;
@@ -95,8 +82,6 @@ contract RollupCreator is Ownable {
         validatorUtils = _validatorUtils;
         validatorWalletCreator = _validatorWalletCreator;
         l2FactoriesDeployer = _l2FactoriesDeployer;
-
-        templatesSet = true;
         emit TemplatesUpdated();
     }
 
@@ -126,7 +111,6 @@ contract RollupCreator is Ownable {
     function createRollup(RollupDeploymentParams memory deployParams)
         public
         payable
-        onlyUnfrozen
         returns (address)
     {
         {
@@ -250,10 +234,6 @@ contract RollupCreator is Ownable {
             address(validatorWalletCreator)
         );
         return address(rollup);
-    }
-
-    function freezeDeployment() external onlyOwner {
-        deploymentFrozen = true;
     }
 
     function _deployUpgradeExecutor(address rollupOwner, ProxyAdmin proxyAdmin)
