@@ -1,6 +1,6 @@
 {
   "name": "@eigenda/nitro-contracts",
-  "version": "2.1.0-pr-1",
+  "version": "2.1.0-production",
   "description": "Layer 2 precompiles and rollup for Arbitrum Nitro x EigenDA",
   "author": "Offchain Labs, Inc.",
   "license": "BUSL-1.1",
