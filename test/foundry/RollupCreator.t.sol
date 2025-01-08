@@ -461,10 +461,8 @@ contract RollupCreatorTest is Test {
             });
 
         vm.expectRevert("Deployment no longer permitted from this RollupCreator");
-        rollupCreator.createRollup{value: factoryDeploymentFunds}(
-            deployParams
-        );
-        
+        rollupCreator.createRollup{value: factoryDeploymentFunds}(deployParams);
+
         vm.stopPrank();
     }
 

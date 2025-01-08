@@ -75,7 +75,7 @@ async function main() {
     true,
     contracts.rollupCreator.address,
     feeToken,
-    contracts.eigenDARollupManager.address,
+    contracts.eigenDARollupManager.address
   )
 
   if (!result) {

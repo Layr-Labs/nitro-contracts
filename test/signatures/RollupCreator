@@ -1,7 +1,9 @@
 {
   "bridgeCreator()": "f860cefa",
   "challengeManagerTemplate()": "9c683d10",
-  "createRollup(((uint64,uint64,address,uint256,bytes32,address,address,uint256,string,uint64,(uint256,uint256,uint256,uint256)),address[],uint256,address,bool,uint256,address[],address))": "331f9b0b",
+  "createRollup(((uint64,uint64,address,uint256,bytes32,address,address,uint256,string,uint64,(uint256,uint256,uint256,uint256)),address[],uint256,address,bool,uint256,address[],address,address))": "d1e1d36a",
+  "deploymentFrozen()": "e7fb6dea",
+  "freezeDeployment()": "d7c0a724",
   "l2FactoriesDeployer()": "ac0425bc",
   "osp()": "f26a62c6",
   "owner()": "8da5cb5b",
@@ -9,6 +11,7 @@
   "rollupAdminLogic()": "9dba3241",
   "rollupUserLogic()": "9d4798e3",
   "setTemplates(address,address,address,address,address,address,address,address,address)": "ac9a97b4",
+  "templatesSet()": "843d7b1a",
   "transferOwnership(address)": "f2fde38b",
   "upgradeExecutorLogic()": "030cb85e",
   "validatorUtils()": "014cc92c",

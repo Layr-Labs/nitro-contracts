@@ -83,10 +83,9 @@ export async function deployContract(
   return contract
 }
 
-
-// Deploy blob verifier for the EigendaRollupManager 
+// Deploy blob verifier for the EigendaRollupManager
 // argument for rollup creator deployment on L1
-// TODO: This logic will be deprecated in the future in favor of 
+// TODO: This logic will be deprecated in the future in favor of
 // embedding verifications into the service manager directl
 export async function deployBlobVerifierL1(
   contractName: string,
@@ -95,17 +94,23 @@ export async function deployBlobVerifierL1(
   verify: boolean = true,
   overrides?: Overrides
 ): Promise<Contract> {
-  console.log("Deploying contract EigenDA x Arbitrum", contractName)
-  const eigenDARollupUtils = await deployContract('EigenDARollupUtils', signer, [], verify)
-  console.log("EigenDARollupUtils deployed at", eigenDARollupUtils.address)
+  console.log('Deploying contract EigenDA x Arbitrum', contractName)
+  const eigenDARollupUtils = await deployContract(
+    'EigenDARollupUtils',
+    signer,
+    [],
+    verify
+  )
+  console.log('EigenDARollupUtils deployed at', eigenDARollupUtils.address)
 
-  const eigenda_blob_verifier = await ethers.getContractFactory(contractName, {
+  const eigenda_blob_verifier = (await ethers.getContractFactory(contractName, {
     libraries: {
-        EigenDARollupUtils: eigenDARollupUtils.address
-    }
-  }) as EigenDABlobVerifierL1__factory
+      EigenDARollupUtils: eigenDARollupUtils.address,
+    },
+  })) as EigenDABlobVerifierL1__factory
 
-  const connectedFactory: ContractFactory = eigenda_blob_verifier.connect(signer)
+  const connectedFactory: ContractFactory =
+    eigenda_blob_verifier.connect(signer)
 
   let deploymentArgs = [...constructorArgs]
   if (overrides) {
@@ -124,7 +129,7 @@ export async function deployBlobVerifierL1(
 
 // Deploy upgrade executor from imported bytecode
 export async function deployUpgradeExecutor(signer: any): Promise<Contract> {
-  console.log("Deploying contract EigenDA x Arbitrum UpgradeExecutor")
+  console.log('Deploying contract EigenDA x Arbitrum UpgradeExecutor')
   const upgradeExecutorFac = await ethers.getContractFactory(
     UpgradeExecutorABI,
     UpgradeExecutorBytecode
@@ -132,14 +137,14 @@ export async function deployUpgradeExecutor(signer: any): Promise<Contract> {
   const connectedFactory: ContractFactory = upgradeExecutorFac.connect(signer)
   const upgradeExecutor = await connectedFactory.deploy()
   await upgradeExecutor.deployTransaction.wait()
-  console.log("Upgrade executor deployed at", upgradeExecutor.address)
+  console.log('Upgrade executor deployed at', upgradeExecutor.address)
   return upgradeExecutor
 }
 
 const L1ServiceManagers = {
-  1: "0x870679E138bCdf293b7Ff14dD44b70FC97e12fc0", // Ethereum
-  5: "0xa3b1689Ab85409B15e07d2ED50A6EA9905074Ee5", // Goerli
-  17000: "0xD4A7E1Bd8015057293f0D0A557088c286942e84b", // Holesky (testnet)
+  1: '0x870679E138bCdf293b7Ff14dD44b70FC97e12fc0', // Ethereum
+  5: '0xa3b1689Ab85409B15e07d2ED50A6EA9905074Ee5', // Goerli
+  17000: '0xD4A7E1Bd8015057293f0D0A557088c286942e84b', // Holesky (testnet)
 }
 
 // Function to handle all deployments of core contracts using deployContract function
@@ -153,8 +158,14 @@ export async function deployAllContracts(
 
   // If signer is on L1, deploy EigenDABlobVerifierL1 with EigenDAServiceManager as constructor argument
   // If signer is on L2, deploy EigenDABlobVerifierL2; blob verifier is used as eigenDARollupManager as part of rollup creation
-  const eigenDARollupManager = (L1ServiceManagers.hasOwnProperty(chainId)) ? 
-    await deployBlobVerifierL1('EigenDABlobVerifierL1', signer, [L1ServiceManagers[chainId as keyof typeof L1ServiceManagers]], verify) : await deployContract('EigenDABlobVerifierL2', signer, [], verify)
+  const eigenDARollupManager = L1ServiceManagers.hasOwnProperty(chainId)
+    ? await deployBlobVerifierL1(
+        'EigenDABlobVerifierL1',
+        signer,
+        [L1ServiceManagers[chainId as keyof typeof L1ServiceManagers]],
+        verify
+      )
+    : await deployContract('EigenDABlobVerifierL2', signer, [], verify)
 
   const ethBridge = await deployContract('Bridge', signer, [], verify)
   const reader4844 = isOnArb

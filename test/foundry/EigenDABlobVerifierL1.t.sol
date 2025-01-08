@@ -8,10 +8,8 @@ import {EigenDARollupUtils} from "@eigenda/eigenda-utils/libraries/EigenDARollup
 import {IEigenDAServiceManager} from "@eigenda/eigenda-utils/interfaces/IEigenDAServiceManager.sol";
 import {BN254} from "@eigenda/eigenda-utils/libraries/BN254.sol";
 import {SequencerInboxTest} from "./SequencerInbox.t.sol";
-import {
-    ExpiredEigenDACert
-} from "../../src/libraries/Error.sol";
- 
+import {ExpiredEigenDACert} from "../../src/libraries/Error.sol";
+
 contract EigenDABlobVerifierL1Test is Test {
     EigenDABlobVerifierL1 public verifier;
     IEigenDAServiceManager dummyEigenDAServiceManager = IEigenDAServiceManager(address(138));
@@ -33,35 +31,23 @@ contract EigenDABlobVerifierL1Test is Test {
         blobVerificationProof.batchMetadata.confirmationBlockNumber = 0;
 
         vm.roll(101);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                ExpiredEigenDACert.selector, 
-                block.number,
-                100
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(ExpiredEigenDACert.selector, block.number, 100));
 
-        verifier.verifyBlob(
-            blobHeader,
-            blobVerificationProof
-        );
+        verifier.verifyBlob(blobHeader, blobVerificationProof);
     }
 
     function testCertificateWithinSafetyBound() public {
-    (
-        IEigenDAServiceManager.BlobHeader memory blobHeader,
-        EigenDARollupUtils.BlobVerificationProof memory blobVerificationProof
-    ) = inboxTest.readAndParseBlobInfo();
+        (
+            IEigenDAServiceManager.BlobHeader memory blobHeader,
+            EigenDARollupUtils.BlobVerificationProof memory blobVerificationProof
+        ) = inboxTest.readAndParseBlobInfo();
 
-    // Set the confirmation block number to be MAX_CERTIFICATE_DRIFT + 1
-    blobVerificationProof.batchMetadata.confirmationBlockNumber = 100;
+        // Set the confirmation block number to be MAX_CERTIFICATE_DRIFT + 1
+        blobVerificationProof.batchMetadata.confirmationBlockNumber = 100;
 
-    vm.roll(101);
-    vm.expectRevert(bytes(""));
+        vm.roll(101);
+        vm.expectRevert(bytes(""));
 
-    verifier.verifyBlob(
-        blobHeader,
-        blobVerificationProof
-    );
+        verifier.verifyBlob(blobHeader, blobVerificationProof);
     }
 }

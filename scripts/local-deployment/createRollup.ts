@@ -64,7 +64,7 @@ async function main() {
     true,
     rollupCreator.address,
     feeToken,
-    eigenDARollupManager,
+    eigenDARollupManager
   )
 
   if (!result) {

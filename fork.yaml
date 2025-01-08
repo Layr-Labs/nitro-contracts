@@ -1,0 +1,107 @@
+title: "layr-labs/nitro-contracts"  # Define the HTML page title
+logo: "logo.png"
+footer: |  # define the footer with markdown
+  [Nitro](https://github.com/Layr-Labs/nitro) fork overview &middot created with [Forkdiff](https://github.com/protolambda/forkdiff)
+base:
+  name: OffchainLabs/nitro-contracts
+  url: https://github.com/OffchainLabs/nitro-contracts
+  hash:  c60b18dc7cf7d1809616d737e9061f3ecc9f28a6
+fork:
+  name: Layr-Labs/nitro-contracts
+  url: https://github.com/Layr-Labs/nitro-contracts
+  ref: refs/heads/eigenda
+def:
+    title: "EigenDA x Arbitrum Nitro Contracts fork diff"
+    description: | # description in markdown
+      The original nitro codebase can be found at [`github.com/OffchainLabs/nitro-contracts`](https://github.com/OffchainLabs/nitro).
+      And the fork at [`github.com/Layr-Labs/nitro-contracts`](https://github.com/Layr-Labs/nitro).
+  
+    sub:
+      - title: "Sequencer Inbox"
+        description: | 
+          Added an `addSequencerL2BatchFromEigenDA` function which process an EigenDA certificate within the inbox. 
+          Certificates are verified within the inbox by calling `verifyBlob` against the `EigenDARollupManager` contract 
+          to remove a trust assumption on the Arbitrum sequencer.
+        globs:
+          - "src/bridge/SequencerInbox.sol"
+          - "src/bridge/ISequencerInbox.sol"
+          - "src/bridge/IBridge.sol"
+          - "src/libraries/Error.sol"
+          - "test/foundry/blob_info/blob_info.json"
+          - "test/storage/SequencerInbox"
+          - "test/foundry/SequencerInbox.t.sol"
+          - "src/mocks/SequencerInboxStub.sol"
+
+      - title:  Blob Verification
+        description: |
+          Introduce two new dependency contracts:
+
+          * `EigenDABlobVerifierL1`: verifies blobs when the rollup parent chain is Ethereum. 
+
+          * `EigenDABlobVerifierL2`: "verifies" blobs when the rollup parent chain isn't Ethereum. This is effectively
+          a noop since EigenDA blobs can only be verified on Ethereum given required access to the `EigenDAServiceManager`.
+
+          Both of these contracts implement the `IRollupManager` interface which is referenced via the `SequencerInbox`.
+        
+        globs:
+          - "src/bridge/EigenDABlobVerifierL1.sol"
+          - "src/bridge/EigenDABlobVerifierL2.sol"
+          - "test/foundry/EigenDABlobVerifierL1.t.sol"
+          - "src/bridge/IRollupManager.sol"
+          - "scripts/local-deployment/deployBlobVerifierL1.ts"
+
+
+      - title: Rollup Creator
+        description: |
+          Updated rollup creator to:
+          
+          *  support a `freezing` access modifier which permanently pauses contract functionality and prohibits users
+          from deploying subsequent parent chain system contracts. This is done to prevent users from utilizing older rollup creators mapped to 
+          outdated system contracts.
+
+          * handle the `EigenDARollupManager` contract address as a constructor argument
+
+          Also extended deployment scripts to deploy blob verifier contract based on parent chain context and 
+          wire the contract via deployment parameters.
+        
+        globs:
+          - "src/rollup/RollupCreator.sol"
+          - "test/foundry/RollupCreator.t.sol"
+          - "scripts/local-deployment/deployCreator.ts"
+          - "scripts/local-deployment/deployCreatorAndCreateRollup.ts"
+          - "scripts/rollupCreation.ts"
+          - "scripts/local-deployment/createRollup.ts"
+          - "scripts/deploymentUtils.ts"
+      
+      - title: One Step Proving
+        description: |
+          Extended the one step prover HostIO to process a polynomial opening proof for an EigenDA preimage type using the BN254 curve.
+          Since the pairing requires points on BN254's G2 group, which are inaccessible on-chain, we introduce a new value (`gamma`) which is
+          a hash generated off-chain. 
+
+        globs:
+          - "src/osp/OneStepProverHostIo.sol"
+          - "test/foundry/Bn254KZG.t.sol"
+
+      - title: Package management
+        description: |
+          Updated to latest to solidity (`v8.12.0`) to ensure compatibility with `[@eigenda-utils](https://www.npmjs.com/package/@eigenda/eigenda-utils)` library.
+          Also changed repo NPM package namespace to that of EigenDA.
+
+        globs: 
+          - "yarn.lock"
+          - "foundry.toml"
+          - "hardhat.config.ts"
+
+
+
+ignore:
+  - "slither.db.json"
+  - "test/foundry/ChallengeManager.t.sol"
+  - "test/foundry/CacheManager.t.sol"
+  - "test/foundry/ERC20Inbox.t.sol"
+  - "test/foundry/ERC20Outbox.t.sol"
+  - "test/foundry/ERC20RollupEventInbox.t.sol"
+  - "test/foundry/RollupEventInbox.t.sol"
+  - "test/foundry/Outbox.t.sol"
+  - "test/foundry/ERC20Bridge.t.sol"

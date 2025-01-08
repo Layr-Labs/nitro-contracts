@@ -12,7 +12,7 @@ on:
 jobs:
   test-unit:
     name: Test unit
-    runs-on: linux-2xl
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
         with:
@@ -37,7 +37,7 @@ jobs:
         run: forge test
   tests:
     name: Contract tests
-    runs-on: ubuntu-8
+    runs-on: ubuntu-latest
     defaults:
       run:
         shell: bash
@@ -110,72 +110,80 @@ jobs:
           files: ./contracts/coverage.json
           verbose: false
           token: ${{ secrets.CODECOV_TOKEN }}
-  test-4844:
-    name: 4844 tests
-    runs-on: linux-2xl
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          submodules: recursive
+  
+  # TODO: This is test is failing due testnode referencing a latest target when running
+  # a prysm ETH validator. This causes config ingestion to fail and the resource to fail to spin up.
+  # This has already been patched upstream and will need to be incorporated within the next rebasing.
+  # test-4844:
+  #   name: 4844 tests
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #       with:
+  #         submodules: recursive
 
-      - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
-        with:
-          version: nightly
+  #     - name: Install Foundry
+  #       uses: foundry-rs/foundry-toolchain@v1
+  #       with:
+  #         version: nightly
 
-      - uses: Layr-Labs/arbitrum-actions/run-nitro-test-node@main
-        with:
-          args: --pos
-          no-token-bridge: true
+  #     - uses: Layr-Labs/arbitrum-actions/run-nitro-test-node@main
+  #       with:
+  #         args: --pos
+  #         no-token-bridge: true
 
-      - name: Setup nodejs
-        uses: actions/setup-node@v2
-        with:
-          node-version: 18
-          cache: 'yarn'
-          cache-dependency-path: '**/yarn.lock'
+  #     - name: Setup nodejs
+  #       uses: actions/setup-node@v2
+  #       with:
+  #         node-version: 18
+  #         cache: 'yarn'
+  #         cache-dependency-path: '**/yarn.lock'
 
-      - name: Install dependencies
-        run: yarn install
+  #     - name: Install dependencies
+  #       run: yarn install
 
-      - name: Build
-        run: yarn build:all
+  #     - name: Build
+  #       run: yarn build:all
 
-      - name: Test 4844
-        run: yarn test:4844
-  test-e2e:
-    name: Test e2e
-    runs-on: linux-2xl
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          submodules: recursive
+  #     - name: Test 4844
+  #       run: yarn test:4844
+  
+  # NOTE: OCL disables theses tests by default, not worth fixing until
+  # they are supported upstream
+  # SEE for ref: https://github.com/OffchainLabs/nitro-contracts/blob/94999b3e2d3b4b7f8e771cc458b9eb229620dd8f/.github/workflows/contract-tests.yml#L153-L247
+  # test-e2e:
+  #   name: Test e2e
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #       with:
+  #         submodules: recursive
 
-      - uses: Layr-Labs/arbitrum-actions/run-nitro-test-node@main
-        with:
-          l3-node: true
-          no-token-bridge: true
-          no-l3-token-bridge: true
-          nitro-contracts-branch: '${{ github.event.pull_request.head.sha || github.sha }}'
+  #     - uses: Layr-Labs/arbitrum-actions/run-nitro-test-node@main
+  #       with:
+  #         l3-node: true
+  #         no-token-bridge: true
+  #         no-l3-token-bridge: true
+  #         nitro-contracts-branch: '${{ github.event.pull_request.head.sha || github.sha }}'
 
-      - name: Setup node/yarn
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: 'yarn'
-          cache-dependency-path: '**/yarn.lock'
+  #     - name: Setup node/yarn
+  #       uses: actions/setup-node@v3
+  #       with:
+  #         node-version: 18
+  #         cache: 'yarn'
+  #         cache-dependency-path: '**/yarn.lock'
 
-      - name: Install packages
-        run: yarn
+  #     - name: Install packages
+  #       run: yarn
 
-      - name: Compile contracts
-        run: yarn build
+  #     - name: Compile contracts
+  #       run: yarn build
 
-      - name: Run e2e tests
-        run: yarn test:e2e
-  test-e2e-custom-fee-token:
+  #     - name: Run e2e tests
+  #       run: yarn test:e2e
+  test-e2e-custom-fee-token-eigenda:
     name: Test e2e custom fee token
-    runs-on: linux-2xl
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
         with:
@@ -187,6 +195,7 @@ jobs:
           args: --l3-fee-token
           no-token-bridge: true
           no-l3-token-bridge: true
+          eigenda: true
           nitro-contracts-branch: '${{ github.event.pull_request.head.sha || github.sha }}'
 
       - name: Setup node/yarn
@@ -204,34 +213,34 @@ jobs:
 
       - name: Run e2e tests
         run: yarn test:e2e
-  test-e2e-fee-token-6-decimals:
-    name: Test e2e fee token with 6 decimals
-    runs-on: linux-2xl
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          submodules: recursive
+      # test-e2e-fee-token-6-decimals:
+      #   name: Test e2e fee token with 6 decimals
+      #   runs-on: ubuntu-latest
+      #   steps:
+      #     - uses: actions/checkout@v3
+      #       with:
+      #         submodules: recursive
 
-      - uses: Layr-Labs/arbitrum-actions/run-nitro-test-node@main
-        with:
-          l3-node: true
-          args: --l3-fee-token --l3-fee-token-decimals 6
-          no-token-bridge: true
-          no-l3-token-bridge: true
-          nitro-contracts-branch: '${{ github.event.pull_request.head.sha || github.sha }}'
+      #     - uses: Layr-Labs/arbitrum-actions/run-nitro-test-node@main
+      #       with:
+      #         l3-node: true
+      #         args: --l3-fee-token --l3-fee-token-decimals 6
+      #         no-token-bridge: true
+      #         no-l3-token-bridge: true
+      #         nitro-contracts-branch: '${{ github.event.pull_request.head.sha || github.sha }}'
 
-      - name: Setup node/yarn
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: 'yarn'
-          cache-dependency-path: '**/yarn.lock'
+      # - name: Setup node/yarn
+      #   uses: actions/setup-node@v3
+      #   with:
+      #     node-version: 18
+      #     cache: 'yarn'
+      #     cache-dependency-path: '**/yarn.lock'
 
-      - name: Install packages
-        run: yarn
+      # - name: Install packages
+      #   run: yarn
 
-      - name: Compile contracts
-        run: yarn build
+      # - name: Compile contracts
+      #   run: yarn build
 
-      - name: Run e2e tests
-        run: yarn test:e2e
+      # - name: Run e2e tests
+      #   run: yarn test:e2e

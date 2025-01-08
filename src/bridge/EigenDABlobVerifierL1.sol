@@ -2,13 +2,11 @@
 pragma solidity ^0.8.9;
 
 import "./IRollupManager.sol";
-import {
-    ExpiredEigenDACert
-} from "../libraries/Error.sol";
+import {ExpiredEigenDACert} from "../libraries/Error.sol";
 
 contract EigenDABlobVerifierL1 is IRollupManager {
     IEigenDAServiceManager public immutable EIGEN_DA_SERVICE_MANAGER;
-    uint256 internal constant MAX_CERTIFICATE_DRIFT = 100; 
+    uint256 internal constant MAX_CERTIFICATE_DRIFT = 100;
 
     constructor(address _eigenDAServiceManager) {
         EIGEN_DA_SERVICE_MANAGER = IEigenDAServiceManager(_eigenDAServiceManager);
@@ -24,16 +22,14 @@ contract EigenDABlobVerifierL1 is IRollupManager {
             certificate which could impact liveness of full nodes as well as the safety of the bridge
         */
         if (
-            (blobVerificationProof.batchMetadata.confirmationBlockNumber +
-                MAX_CERTIFICATE_DRIFT) < block.number
+            (blobVerificationProof.batchMetadata.confirmationBlockNumber + MAX_CERTIFICATE_DRIFT) <
+            block.number
         ) {
             revert ExpiredEigenDACert(
                 block.number,
-                blobVerificationProof.batchMetadata.confirmationBlockNumber +
-                    MAX_CERTIFICATE_DRIFT
+                blobVerificationProof.batchMetadata.confirmationBlockNumber + MAX_CERTIFICATE_DRIFT
             );
         }
-
 
         EigenDARollupUtils.verifyBlob(blobHeader, EIGEN_DA_SERVICE_MANAGER, blobVerificationProof);
     }

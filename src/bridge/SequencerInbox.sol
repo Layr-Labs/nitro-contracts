@@ -129,7 +129,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
 
     /// @inheritdoc ISequencerInbox
     bytes1 public constant EIGENDA_MESSAGE_HEADER_FLAG = 0xed;
-    
+
     // gap used to ensure forward compatiblity with newly introduced storage variables
     // from upstream offchainlabs/nitro-contracts. Any newly introduced storage vars
     // made in subsequent releases should result in decrementing the gap counter
@@ -484,7 +484,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         uint256 prevMessageCount,
         uint256 newMessageCount
     ) external refundsGas(gasRefunder, IReader4844(address(0))) {
-        if(msg.sender != tx.origin) revert NotOrigin();
+        if (msg.sender != tx.origin) revert NotOrigin();
         if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
         if (address(msg.sender).code.length > 0) revert NotEOA();
         // Verify that the blob was actually included before continuing
