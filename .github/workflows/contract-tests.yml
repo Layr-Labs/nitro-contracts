@@ -110,7 +110,7 @@ jobs:
           files: ./contracts/coverage.json
           verbose: false
           token: ${{ secrets.CODECOV_TOKEN }}
-  
+
   # TODO: This is test is failing due testnode referencing a latest target when running
   # a prysm ETH validator. This causes config ingestion to fail and the resource to fail to spin up.
   # This has already been patched upstream and will need to be incorporated within the next rebasing.
@@ -147,7 +147,7 @@ jobs:
 
   #     - name: Test 4844
   #       run: yarn test:4844
-  
+
   # NOTE: OCL disables theses tests by default, not worth fixing until
   # they are supported upstream
   # SEE for ref: https://github.com/OffchainLabs/nitro-contracts/blob/94999b3e2d3b4b7f8e771cc458b9eb229620dd8f/.github/workflows/contract-tests.yml#L153-L247

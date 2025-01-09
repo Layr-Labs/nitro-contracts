@@ -92,6 +92,18 @@ module.exports = {
         enabled: process.env['SHOULD_FORK'] === '1',
       },
     },
+    base: {
+      url: '' + process.env['BASE_MAINNET_RPC'],
+      accounts: process.env['MAINNET_PRIVKEY']
+        ? [process.env['MAINNET_PRIVKEY']]
+        : [],
+    },
+    baseSepolia: {
+      url: '' + process.env['BASE_SEPOLIA_RPC'],
+      accounts: process.env['DEVNET_PRIVKEY']
+        ? [process.env['DEVNET_PRIVKEY']]
+        : [],
+    },
     mainnet: {
       url: 'https://mainnet.infura.io/v3/' + process.env['INFURA_KEY'],
       accounts: process.env['MAINNET_PRIVKEY']
