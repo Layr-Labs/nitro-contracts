@@ -77,16 +77,12 @@ contract OutboxTest is AbsOutboxTest {
 
         uint256 bridgeBalanceAfter = address(bridge).balance;
         assertEq(
-            bridgeBalanceBefore - bridgeBalanceAfter,
-            withdrawalAmount,
-            "Invalid bridge balance"
+            bridgeBalanceBefore - bridgeBalanceAfter, withdrawalAmount, "Invalid bridge balance"
         );
 
         uint256 targetBalanceAfter = address(target).balance;
         assertEq(
-            targetBalanceAfter - targetBalanceBefore,
-            withdrawalAmount,
-            "Invalid target balance"
+            targetBalanceAfter - targetBalanceBefore, withdrawalAmount, "Invalid target balance"
         );
 
         /// check context was properly set during execution
@@ -134,7 +130,9 @@ contract L2ToL1Target {
         withdrawalAmount = msg.value;
     }
 
-    function setOutbox(address _outbox) external {
+    function setOutbox(
+        address _outbox
+    ) external {
         outbox = _outbox;
     }
 }

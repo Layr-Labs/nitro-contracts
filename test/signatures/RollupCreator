@@ -1,7 +1,7 @@
 {
   "bridgeCreator()": "f860cefa",
   "challengeManagerTemplate()": "9c683d10",
-  "createRollup(((uint64,uint64,address,uint256,bytes32,address,address,uint256,string,uint64,(uint256,uint256,uint256,uint256)),address[],uint256,address,bool,uint256,address[],address,address))": "d1e1d36a",
+  "createRollup(((uint64,address,uint256,bytes32,address,address,uint256,string,uint256,uint64,uint256[],(uint256,uint256,uint256,uint256),uint256,uint256,uint256,((bytes32[2],uint64[2]),uint8,bytes32),uint256,address,uint8,uint64,(uint64,uint64,uint64)),address[],uint256,address,bool,uint256,address[],address,address))": "9ba742fd",
   "deploymentFrozen()": "e7fb6dea",
   "freezeDeployment()": "d7c0a724",
   "l2FactoriesDeployer()": "ac0425bc",
@@ -10,10 +10,9 @@
   "renounceOwnership()": "715018a6",
   "rollupAdminLogic()": "9dba3241",
   "rollupUserLogic()": "9d4798e3",
-  "setTemplates(address,address,address,address,address,address,address,address,address)": "ac9a97b4",
+  "setTemplates(address,address,address,address,address,address,address,address)": "f0dae494",
   "templatesSet()": "843d7b1a",
   "transferOwnership(address)": "f2fde38b",
   "upgradeExecutorLogic()": "030cb85e",
-  "validatorUtils()": "014cc92c",
   "validatorWalletCreator()": "bc45e0ae"
 }

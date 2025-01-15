@@ -38,11 +38,10 @@ contract OneStepProverHostIo is IOneStepProver {
     // AlphaG1
     // This is from the SRS points being used.
     // This is the point at index 1, since index 0 is the generator value of the G1 group.
-    BN254.G1Point private ALPHA_G1 =
-        BN254.G1Point(
-            5421624913032980671919055010798735843841011930764711817607050648427876929258,
-            12995821280260994872112541311010834261076556242291585164372488699033268245381
-        );
+    BN254.G1Point private ALPHA_G1 = BN254.G1Point(
+        5421624913032980671919055010798735843841011930764711817607050648427876929258,
+        12995821280260994872112541311010834261076556242291585164372488699033268245381
+    );
 
     function computeGamma(
         uint256 z,
@@ -81,10 +80,8 @@ contract OneStepProverHostIo is IOneStepProver {
         uint256[4] memory alpha_minus_z_g2
     ) public view returns (bool) {
         BN254.G1Point memory yG1Neg = BN254.negate(BN254.scalar_mul(BN254.generatorG1(), y));
-        BN254.G1Point memory P_minus_y = BN254.plus(
-            BN254.G1Point(commitment[0], commitment[1]),
-            yG1Neg
-        );
+        BN254.G1Point memory P_minus_y =
+            BN254.plus(BN254.G1Point(commitment[0], commitment[1]), yG1Neg);
 
         // zG1
         BN254.G1Point memory zG1Neg = BN254.negate(BN254.scalar_mul(BN254.generatorG1(), z));
@@ -106,17 +103,12 @@ contract OneStepProverHostIo is IOneStepProver {
         BN254.G1Point memory lhsG1 = BN254.plus(P_minus_y, gamma_alpha_minus_z_g1);
         // The order is switched in the arbitrator already. It is passed as x_c1, x_c0, y_c1, y_c0
         BN254.G2Point memory alpha_minus_z_g2_point = BN254.G2Point(
-            [alpha_minus_z_g2[0], alpha_minus_z_g2[1]],
-            [alpha_minus_z_g2[2], alpha_minus_z_g2[3]]
+            [alpha_minus_z_g2[0], alpha_minus_z_g2[1]], [alpha_minus_z_g2[2], alpha_minus_z_g2[3]]
         );
         return BN254.pairing(lhsG1, BN254.negGeneratorG2(), q_plus_gamma, alpha_minus_z_g2_point);
     }
 
-    function setLeafByte(
-        bytes32 oldLeaf,
-        uint256 idx,
-        uint8 val
-    ) internal pure returns (bytes32) {
+    function setLeafByte(bytes32 oldLeaf, uint256 idx, uint8 val) internal pure returns (bytes32) {
         require(idx < LEAF_SIZE, "BAD_SET_LEAF_BYTE_IDX");
         // Take into account that we are casting the leaf to a big-endian integer
         uint256 leafShift = (LEAF_SIZE - 1 - idx) * 8;
@@ -149,17 +141,12 @@ contract OneStepProverHostIo is IOneStepProver {
         uint256 proofOffset = 0;
         bytes32 startLeafContents;
         MerkleProof memory merkleProof;
-        (startLeafContents, proofOffset, merkleProof) = mod.moduleMemory.proveLeaf(
-            leafIdx,
-            proof,
-            proofOffset
-        );
+        (startLeafContents, proofOffset, merkleProof) =
+            mod.moduleMemory.proveLeaf(leafIdx, proof, proofOffset);
 
         if (inst.opcode == Instructions.GET_GLOBAL_STATE_BYTES32) {
-            mod.moduleMemory.merkleRoot = merkleProof.computeRootFromMemory(
-                leafIdx,
-                state.bytes32Vals[idx]
-            );
+            mod.moduleMemory.merkleRoot =
+                merkleProof.computeRootFromMemory(leafIdx, state.bytes32Vals[idx]);
         } else if (inst.opcode == Instructions.SET_GLOBAL_STATE_BYTES32) {
             state.bytes32Vals[idx] = startLeafContents;
         } else {
@@ -196,11 +183,7 @@ contract OneStepProverHostIo is IOneStepProver {
 
     // Computes b**e % m
     // Really pure but the Solidity compiler sees the staticcall and requires view
-    function modExp256(
-        uint256 b,
-        uint256 e,
-        uint256 m
-    ) internal view returns (uint256) {
+    function modExp256(uint256 b, uint256 e, uint256 m) internal view returns (uint256) {
         bytes memory modExpInput = abi.encode(32, 32, 32, b, e, m);
         (bool modexpSuccess, bytes memory modExpOutput) = address(0x05).staticcall(modExpInput);
         require(modexpSuccess, "MODEXP_FAILED");
@@ -232,11 +215,8 @@ contract OneStepProverHostIo is IOneStepProver {
         uint256 proofOffset = 0;
         bytes32 leafContents;
         MerkleProof memory merkleProof;
-        (leafContents, proofOffset, merkleProof) = mod.moduleMemory.proveLeaf(
-            leafIdx,
-            proof,
-            proofOffset
-        );
+        (leafContents, proofOffset, merkleProof) =
+            mod.moduleMemory.proveLeaf(leafIdx, proof, proofOffset);
 
         bytes memory extracted;
         uint8 proofType = uint8(proof[proofOffset]);
@@ -342,20 +322,16 @@ contract OneStepProverHostIo is IOneStepProver {
             // [320:352] - preimage length
 
             {
-                uint256[2] memory kzgCommitment = [
-                    uint256(bytes32(kzgProof[192:224])),
-                    uint256(bytes32(kzgProof[224:256]))
-                ];
+                uint256[2] memory kzgCommitment =
+                    [uint256(bytes32(kzgProof[192:224])), uint256(bytes32(kzgProof[224:256]))];
                 uint256[4] memory alphaMinusG2 = [
                     uint256(bytes32(kzgProof[64:96])),
                     uint256(bytes32(kzgProof[96:128])),
                     uint256(bytes32(kzgProof[128:160])),
                     uint256(bytes32(kzgProof[160:192]))
                 ];
-                uint256[2] memory proofUint256 = [
-                    uint256(bytes32(kzgProof[256:288])),
-                    uint256(bytes32(kzgProof[288:320]))
-                ];
+                uint256[2] memory proofUint256 =
+                    [uint256(bytes32(kzgProof[256:288])), uint256(bytes32(kzgProof[288:320]))];
                 uint256 z = uint256(bytes32(kzgProof[0:32]));
                 uint256 y = uint256(bytes32(kzgProof[32:64]));
                 uint32 length_u32 = uint32(uint256(bytes32(kzgProof[320:352])));
@@ -376,13 +352,7 @@ contract OneStepProverHostIo is IOneStepProver {
 
                 // must be valid proof
                 require(
-                    VerifyKzgProofWithG1Equivalence(
-                        kzgCommitment,
-                        y,
-                        proofUint256,
-                        z,
-                        alphaMinusG2
-                    ),
+                    VerifyKzgProofWithG1Equivalence(kzgCommitment, y, proofUint256, z, alphaMinusG2),
                     "INVALID_BN254_KZG_PROOF"
                 );
             }
@@ -402,11 +372,8 @@ contract OneStepProverHostIo is IOneStepProver {
                 // to retrieve this word of the KZG commitment.
                 rootOfUnityPower *= tmp;
                 // z is the point the polynomial is evaluated at to retrieve this word of data
-                uint256 z = modExp256(
-                    BN_254_PRIMITIVE_ROOT_OF_UNITY,
-                    rootOfUnityPower,
-                    BN254.FR_MODULUS
-                );
+                uint256 z =
+                    modExp256(BN_254_PRIMITIVE_ROOT_OF_UNITY, rootOfUnityPower, BN254.FR_MODULUS);
                 require(bytes32(kzgProof[0:32]) == bytes32(z), "KZG_PROOF_WRONG_Z");
 
                 extracted = kzgProof[32:64];
@@ -432,7 +399,7 @@ contract OneStepProverHostIo is IOneStepProver {
         require(message.length >= INBOX_HEADER_LEN, "BAD_SEQINBOX_PROOF");
 
         uint64 afterDelayedMsg;
-        (afterDelayedMsg, ) = Deserialize.u64(message, 32);
+        (afterDelayedMsg,) = Deserialize.u64(message, 32);
         bytes32 messageHash = keccak256(message);
         bytes32 beforeAcc;
         bytes32 delayedAcc;
@@ -464,7 +431,7 @@ contract OneStepProverHostIo is IOneStepProver {
         bytes32 messageDataHash = keccak256(message[DELAYED_HEADER_LEN:]);
         bytes1 kind = message[0];
         uint256 sender;
-        (sender, ) = Deserialize.u256(message, 1);
+        (sender,) = Deserialize.u256(message, 1);
 
         bytes32 messageHash = keccak256(
             abi.encodePacked(kind, uint160(sender), message[33:DELAYED_HEADER_LEN], messageDataHash)
@@ -486,10 +453,10 @@ contract OneStepProverHostIo is IOneStepProver {
         uint256 ptr = mach.valueStack.pop().assumeI32();
         uint256 msgIndex = mach.valueStack.pop().assumeI64();
         if (
-            inst.argumentData == Instructions.INBOX_INDEX_SEQUENCER &&
-            msgIndex >= execCtx.maxInboxMessagesRead
+            inst.argumentData == Instructions.INBOX_INDEX_SEQUENCER
+                && msgIndex >= execCtx.maxInboxMessagesRead
         ) {
-            mach.status = MachineStatus.TOO_FAR;
+            mach.status = MachineStatus.ERRORED;
             return;
         }
 
@@ -502,11 +469,8 @@ contract OneStepProverHostIo is IOneStepProver {
         uint256 proofOffset = 0;
         bytes32 leafContents;
         MerkleProof memory merkleProof;
-        (leafContents, proofOffset, merkleProof) = mod.moduleMemory.proveLeaf(
-            leafIdx,
-            proof,
-            proofOffset
-        );
+        (leafContents, proofOffset, merkleProof) =
+            mod.moduleMemory.proveLeaf(leafIdx, proof, proofOffset);
 
         {
             // TODO: support proving via an authenticated contract
@@ -539,11 +503,8 @@ contract OneStepProverHostIo is IOneStepProver {
 
         uint32 i = 0;
         for (; i < 32 && messageOffset + i < messageLength; i++) {
-            leafContents = setLeafByte(
-                leafContents,
-                i,
-                uint8(proof[proofOffset + messageOffset + i])
-            );
+            leafContents =
+                setLeafByte(leafContents, i, uint8(proof[proofOffset + messageOffset + i]));
         }
 
         mod.moduleMemory.merkleRoot = merkleProof.computeRootFromMemory(leafIdx, leafContents);
@@ -560,7 +521,9 @@ contract OneStepProverHostIo is IOneStepProver {
         mach.status = MachineStatus.FINISHED;
     }
 
-    function isPowerOfTwo(uint256 value) internal pure returns (bool) {
+    function isPowerOfTwo(
+        uint256 value
+    ) internal pure returns (bool) {
         return value != 0 && (value & (value - 1) == 0);
     }
 
@@ -571,11 +534,7 @@ contract OneStepProverHostIo is IOneStepProver {
     )
         internal
         pure
-        returns (
-            uint256 leaf,
-            MerkleProof memory leafProof,
-            MerkleProof memory zeroProof
-        )
+        returns (uint256 leaf, MerkleProof memory leafProof, MerkleProof memory zeroProof)
     {
         string memory prefix = "Module merkle tree:";
         bytes32 root = mach.modulesRoot;
@@ -620,13 +579,10 @@ contract OneStepProverHostIo is IOneStepProver {
             mach.status = MachineStatus.ERRORED;
             return;
         }
-        (bytes32 userMod, uint256 offset, ) = mod.moduleMemory.proveLeaf(
-            pointer / LEAF_SIZE,
-            proof,
-            0
-        );
+        (bytes32 userMod, uint256 offset,) =
+            mod.moduleMemory.proveLeaf(pointer / LEAF_SIZE, proof, 0);
 
-        (uint256 leaf, , MerkleProof memory zeroProof) = proveLastLeaf(mach, offset, proof);
+        (uint256 leaf,, MerkleProof memory zeroProof) = proveLastLeaf(mach, offset, proof);
 
         bool balanced = isPowerOfTwo(leaf + 1);
         if (balanced) {
@@ -647,7 +603,7 @@ contract OneStepProverHostIo is IOneStepProver {
     ) internal pure {
         string memory prefix = "Module merkle tree:";
 
-        (uint256 leaf, MerkleProof memory leafProof, ) = proveLastLeaf(mach, 0, proof);
+        (uint256 leaf, MerkleProof memory leafProof,) = proveLastLeaf(mach, 0, proof);
 
         bool shrink = isPowerOfTwo(leaf);
         if (shrink) {
@@ -672,8 +628,8 @@ contract OneStepProverHostIo is IOneStepProver {
         require(state.hash() == mach.globalStateHash, "BAD_GLOBAL_STATE");
 
         if (
-            opcode == Instructions.GET_GLOBAL_STATE_BYTES32 ||
-            opcode == Instructions.SET_GLOBAL_STATE_BYTES32
+            opcode == Instructions.GET_GLOBAL_STATE_BYTES32
+                || opcode == Instructions.SET_GLOBAL_STATE_BYTES32
         ) {
             executeGetOrSetBytes32(mach, mod, state, inst, proof[proofOffset:]);
         } else if (opcode == Instructions.GET_GLOBAL_STATE_U64) {
@@ -714,8 +670,8 @@ contract OneStepProverHostIo is IOneStepProver {
             require(multi.remainingHash == bytes32(0), "WRONG_COTHREAD_EMPTY");
         } else {
             require(
-                keccak256(abi.encodePacked("cothread:", newInactiveCoThread, newRemaining)) ==
-                    multi.remainingHash,
+                keccak256(abi.encodePacked("cothread:", newInactiveCoThread, newRemaining))
+                    == multi.remainingHash,
                 "WRONG_COTHREAD_POP"
             );
         }
@@ -795,8 +751,8 @@ contract OneStepProverHostIo is IOneStepProver {
         ) internal view impl;
 
         if (
-            opcode >= Instructions.GET_GLOBAL_STATE_BYTES32 &&
-            opcode <= Instructions.SET_GLOBAL_STATE_U64
+            opcode >= Instructions.GET_GLOBAL_STATE_BYTES32
+                && opcode <= Instructions.SET_GLOBAL_STATE_U64
         ) {
             impl = executeGlobalStateAccess;
         } else if (opcode == Instructions.READ_PRE_IMAGE) {

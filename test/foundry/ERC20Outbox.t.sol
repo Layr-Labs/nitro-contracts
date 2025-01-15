@@ -6,7 +6,7 @@ import "./ERC20Bridge.t.sol";
 import "../../src/bridge/ERC20Bridge.sol";
 import "../../src/bridge/ERC20Outbox.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetFixedSupply.sol";
+import {NoZeroTransferToken} from "./util/NoZeroTransferToken.sol";
 
 contract ERC20OutboxTest is AbsOutboxTest {
     ERC20Outbox public erc20Outbox;
@@ -17,7 +17,7 @@ contract ERC20OutboxTest is AbsOutboxTest {
 
     function setUp() public {
         // deploy token, bridge and outbox
-        nativeToken = new ERC20PresetFixedSupply("Appchain Token", "App", 1_000_000, address(this));
+        nativeToken = new NoZeroTransferToken("Appchain Token", "App", 1_000_000, address(this));
         bridge = IBridge(TestUtil.deployProxy(address(new ERC20Bridge())));
         erc20Bridge = ERC20Bridge(address(bridge));
         outbox = IOutbox(TestUtil.deployProxy(address(new ERC20Outbox())));
@@ -45,87 +45,11 @@ contract ERC20OutboxTest is AbsOutboxTest {
     }
 
     function test_executeTransaction() public {
-        // fund bridge with some tokens
-        vm.startPrank(user);
-        nativeToken.approve(address(bridge), 100);
-        nativeToken.transfer(address(bridge), 100);
-        vm.stopPrank();
+        _happyExecTx(15);
+    }
 
-        // create msg receiver on L1
-        ERC20L2ToL1Target target = new ERC20L2ToL1Target();
-        target.setOutbox(address(outbox));
-
-        //// execute transaction
-        uint256 bridgeTokenBalanceBefore = nativeToken.balanceOf(address(bridge));
-        uint256 targetTokenBalanceBefore = nativeToken.balanceOf(address(target));
-
-        bytes32[] memory proof = new bytes32[](1);
-        proof[0] = bytes32(0);
-
-        uint256 withdrawalAmount = 15;
-        bytes memory data = abi.encodeWithSignature("receiveHook()");
-
-        uint256 index = 1;
-        bytes32 itemHash = outbox.calculateItemHash({
-            l2Sender: user,
-            to: address(target),
-            l2Block: 300,
-            l1Block: 20,
-            l2Timestamp: 1234,
-            value: withdrawalAmount,
-            data: data
-        });
-        bytes32 root = outbox.calculateMerkleRoot(proof, index, itemHash);
-        // store root
-        vm.prank(rollup);
-        outbox.updateSendRoot(root, bytes32(uint256(1)));
-
-        outbox.executeTransaction({
-            proof: proof,
-            index: index,
-            l2Sender: user,
-            to: address(target),
-            l2Block: 300,
-            l1Block: 20,
-            l2Timestamp: 1234,
-            value: withdrawalAmount,
-            data: data
-        });
-
-        uint256 bridgeTokenBalanceAfter = nativeToken.balanceOf(address(bridge));
-        assertEq(
-            bridgeTokenBalanceBefore - bridgeTokenBalanceAfter,
-            withdrawalAmount,
-            "Invalid bridge token balance"
-        );
-
-        uint256 targetTokenBalanceAfter = nativeToken.balanceOf(address(target));
-        assertEq(
-            targetTokenBalanceAfter - targetTokenBalanceBefore,
-            withdrawalAmount,
-            "Invalid target token balance"
-        );
-
-        /// check context was properly set during execution
-        assertEq(uint256(target.l2Block()), 300, "Invalid l2Block");
-        assertEq(uint256(target.timestamp()), 1234, "Invalid timestamp");
-        assertEq(uint256(target.outputId()), index, "Invalid outputId");
-        assertEq(target.sender(), user, "Invalid sender");
-        assertEq(uint256(target.l1Block()), 20, "Invalid l1Block");
-        assertEq(uint256(target.withdrawalAmount()), withdrawalAmount, "Invalid withdrawalAmount");
-
-        vm.expectRevert(abi.encodeWithSignature("AlreadySpent(uint256)", index));
-        outbox.executeTransaction({
-            proof: proof,
-            index: index,
-            l2Sender: user,
-            to: address(target),
-            l2Block: 300,
-            l1Block: 20,
-            l2Timestamp: 1234,
-            value: withdrawalAmount,
-            data: data
-        });
+    function test_executeTransactionZeroValue() public {
+        _happyExecTx(0);
     }
 
     function test_executeTransaction_revert_CallTargetNotAllowed() public {
@@ -187,9 +111,8 @@ contract ERC20OutboxTest is AbsOutboxTest {
         ERC20 _nativeToken = new ERC20_6Decimals();
 
         IERC20Bridge _bridge = IERC20Bridge(TestUtil.deployProxy(address(new ERC20Bridge())));
-        IERC20Inbox _inbox = IERC20Inbox(
-            TestUtil.deployProxy(address(new ERC20Inbox(MAX_DATA_SIZE)))
-        );
+        IERC20Inbox _inbox =
+            IERC20Inbox(TestUtil.deployProxy(address(new ERC20Inbox(MAX_DATA_SIZE))));
         ERC20Outbox _outbox = ERC20Outbox(TestUtil.deployProxy(address(new ERC20Outbox())));
 
         // init bridge and inbox
@@ -201,7 +124,7 @@ contract ERC20OutboxTest is AbsOutboxTest {
         _bridge.setOutbox(address(_outbox), true);
 
         // fund bridge with some tokens
-        ERC20_6Decimals(address(_nativeToken)).mint(address(_bridge), 1_000_000 * 10**decimals);
+        ERC20_6Decimals(address(_nativeToken)).mint(address(_bridge), 1_000_000 * 10 ** decimals);
 
         // create msg receiver on L1
         ERC20L2ToL1Target target = new ERC20L2ToL1Target();
@@ -215,7 +138,7 @@ contract ERC20OutboxTest is AbsOutboxTest {
         proof[0] = bytes32(0);
 
         uint256 withdrawalAmount = 188_394_098_124_747_940;
-        uint256 expetedAmountToUnlock = withdrawalAmount / (10**(18 - decimals));
+        uint256 expetedAmountToUnlock = withdrawalAmount / (10 ** (18 - decimals));
 
         bytes memory data = abi.encodeWithSignature("receiveHook()");
 
@@ -294,9 +217,8 @@ contract ERC20OutboxTest is AbsOutboxTest {
         ERC20 _nativeToken = new ERC20_20Decimals();
 
         IERC20Bridge _bridge = IERC20Bridge(TestUtil.deployProxy(address(new ERC20Bridge())));
-        IERC20Inbox _inbox = IERC20Inbox(
-            TestUtil.deployProxy(address(new ERC20Inbox(MAX_DATA_SIZE)))
-        );
+        IERC20Inbox _inbox =
+            IERC20Inbox(TestUtil.deployProxy(address(new ERC20Inbox(MAX_DATA_SIZE))));
         ERC20Outbox _outbox = ERC20Outbox(TestUtil.deployProxy(address(new ERC20Outbox())));
 
         // init bridge and inbox
@@ -308,7 +230,7 @@ contract ERC20OutboxTest is AbsOutboxTest {
         _bridge.setOutbox(address(_outbox), true);
 
         // fund bridge with some tokens
-        ERC20_20Decimals(address(_nativeToken)).mint(address(_bridge), 1_000_000 * 10**decimals);
+        ERC20_20Decimals(address(_nativeToken)).mint(address(_bridge), 1_000_000 * 10 ** decimals);
 
         // create msg receiver on L1
         ERC20L2ToL1Target target = new ERC20L2ToL1Target();
@@ -322,7 +244,7 @@ contract ERC20OutboxTest is AbsOutboxTest {
         proof[0] = bytes32(0);
 
         uint256 withdrawalAmount = 188_394_098_124_747_940;
-        uint256 expetedAmountToUnlock = withdrawalAmount * (10**(decimals - 18));
+        uint256 expetedAmountToUnlock = withdrawalAmount * (10 ** (decimals - 18));
 
         bytes memory data = abi.encodeWithSignature("receiveHook()");
 
@@ -400,9 +322,8 @@ contract ERC20OutboxTest is AbsOutboxTest {
         ERC20 _nativeToken = new ERC20_36Decimals();
 
         IERC20Bridge _bridge = IERC20Bridge(TestUtil.deployProxy(address(new ERC20Bridge())));
-        IERC20Inbox _inbox = IERC20Inbox(
-            TestUtil.deployProxy(address(new ERC20Inbox(MAX_DATA_SIZE)))
-        );
+        IERC20Inbox _inbox =
+            IERC20Inbox(TestUtil.deployProxy(address(new ERC20Inbox(MAX_DATA_SIZE))));
         ERC20Outbox _outbox = ERC20Outbox(TestUtil.deployProxy(address(new ERC20Outbox())));
 
         // init bridge and inbox
@@ -424,7 +345,7 @@ contract ERC20OutboxTest is AbsOutboxTest {
         bytes32[] memory proof = new bytes32[](1);
         proof[0] = bytes32(0);
 
-        uint256 tooLargeWithdrawalAmount = type(uint256).max / 10**18 + 1;
+        uint256 tooLargeWithdrawalAmount = type(uint256).max / 10 ** 18 + 1;
 
         bytes memory data = abi.encodeWithSignature("receiveHook()");
 
@@ -458,6 +379,103 @@ contract ERC20OutboxTest is AbsOutboxTest {
             data: data
         });
     }
+
+    struct HappyExecTxStackVars {
+        uint256 bridgeTokenBalanceBefore;
+        uint256 targetTokenBalanceBefore;
+        ERC20L2ToL1Target target;
+        uint256 index;
+        bytes32 itemHash;
+    }
+
+    function _happyExecTx(
+        uint256 withdrawalAmount
+    ) public {
+        HappyExecTxStackVars memory vars;
+
+        // fund bridge with some tokens
+        vm.startPrank(user);
+        nativeToken.approve(address(bridge), 100);
+        nativeToken.transfer(address(bridge), 100);
+        vm.stopPrank();
+
+        // create msg receiver on L1
+        vars.target = new ERC20L2ToL1Target();
+        vars.target.setOutbox(address(outbox));
+
+        //// execute transaction
+        vars.bridgeTokenBalanceBefore = nativeToken.balanceOf(address(bridge));
+        vars.targetTokenBalanceBefore = nativeToken.balanceOf(address(vars.target));
+
+        bytes32[] memory proof = new bytes32[](1);
+        proof[0] = bytes32(0);
+
+        bytes memory data = abi.encodeWithSignature("receiveHook()");
+
+        vars.index = 1;
+        vars.itemHash = outbox.calculateItemHash({
+            l2Sender: user,
+            to: address(vars.target),
+            l2Block: 300,
+            l1Block: 20,
+            l2Timestamp: 1234,
+            value: withdrawalAmount,
+            data: data
+        });
+        bytes32 root = outbox.calculateMerkleRoot(proof, vars.index, vars.itemHash);
+        // store root
+        vm.prank(rollup);
+        outbox.updateSendRoot(root, bytes32(uint256(1)));
+
+        outbox.executeTransaction({
+            proof: proof,
+            index: vars.index,
+            l2Sender: user,
+            to: address(vars.target),
+            l2Block: 300,
+            l1Block: 20,
+            l2Timestamp: 1234,
+            value: withdrawalAmount,
+            data: data
+        });
+
+        uint256 bridgeTokenBalanceAfter = nativeToken.balanceOf(address(bridge));
+        assertEq(
+            vars.bridgeTokenBalanceBefore - bridgeTokenBalanceAfter,
+            withdrawalAmount,
+            "Invalid bridge token balance"
+        );
+
+        uint256 targetTokenBalanceAfter = nativeToken.balanceOf(address(vars.target));
+        assertEq(
+            targetTokenBalanceAfter - vars.targetTokenBalanceBefore,
+            withdrawalAmount,
+            "Invalid target token balance"
+        );
+
+        /// check context was properly set during execution
+        assertEq(uint256(vars.target.l2Block()), 300, "Invalid l2Block");
+        assertEq(uint256(vars.target.timestamp()), 1234, "Invalid timestamp");
+        assertEq(uint256(vars.target.outputId()), vars.index, "Invalid outputId");
+        assertEq(vars.target.sender(), user, "Invalid sender");
+        assertEq(uint256(vars.target.l1Block()), 20, "Invalid l1Block");
+        assertEq(
+            uint256(vars.target.withdrawalAmount()), withdrawalAmount, "Invalid withdrawalAmount"
+        );
+
+        vm.expectRevert(abi.encodeWithSignature("AlreadySpent(uint256)", vars.index));
+        outbox.executeTransaction({
+            proof: proof,
+            index: vars.index,
+            l2Sender: user,
+            to: address(vars.target),
+            l2Block: 300,
+            l1Block: 20,
+            l2Timestamp: 1234,
+            value: withdrawalAmount,
+            data: data
+        });
+    }
 }
 
 /**
@@ -482,7 +500,9 @@ contract ERC20L2ToL1Target {
         withdrawalAmount = ERC20Outbox(outbox).l2ToL1WithdrawalAmount();
     }
 
-    function setOutbox(address _outbox) external {
+    function setOutbox(
+        address _outbox
+    ) external {
         outbox = _outbox;
     }
 }

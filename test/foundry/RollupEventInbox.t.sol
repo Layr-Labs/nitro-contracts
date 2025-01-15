@@ -5,6 +5,7 @@ import "./AbsRollupEventInbox.t.sol";
 import {TestUtil} from "./util/TestUtil.sol";
 import {RollupEventInbox, IRollupEventInbox} from "../../src/rollup/RollupEventInbox.sol";
 import {Bridge, IOwnable, IEthBridge} from "../../src/bridge/Bridge.sol";
+import {INITIALIZATION_MSG_TYPE} from "../../src/libraries/MessageTypes.sol";
 import "../../src/libraries/MessageTypes.sol";
 
 contract RollupEventInboxTest is AbsRollupEventInboxTest {
@@ -22,9 +23,8 @@ contract RollupEventInboxTest is AbsRollupEventInboxTest {
 
     /* solhint-disable func-name-mixedcase */
     function test_initialize_revert_ZeroInit() public {
-        RollupEventInbox rollupEventInbox = RollupEventInbox(
-            TestUtil.deployProxy(address(new RollupEventInbox()))
-        );
+        RollupEventInbox rollupEventInbox =
+            RollupEventInbox(TestUtil.deployProxy(address(new RollupEventInbox())));
 
         vm.expectRevert(HadZeroInit.selector);
         rollupEventInbox.initialize(IBridge(address(0)));
@@ -40,12 +40,8 @@ contract RollupEventInboxTest is AbsRollupEventInboxTest {
 
         uint8 expectedInitMsgVersion = 1;
         uint256 expectedCurrentDataCost = basefee;
-        bytes memory expectedInitMsg = abi.encodePacked(
-            chainId,
-            expectedInitMsgVersion,
-            expectedCurrentDataCost,
-            chainConfig
-        );
+        bytes memory expectedInitMsg =
+            abi.encodePacked(chainId, expectedInitMsgVersion, expectedCurrentDataCost, chainConfig);
 
         // expect event
         vm.expectEmit(true, true, true, true);
@@ -78,19 +74,13 @@ contract RollupEventInboxTest is AbsRollupEventInboxTest {
         // 50 gwei L1 basefee
         uint256 l1Fee = 50_000_000_000;
         vm.mockCall(
-            address(0x6c),
-            abi.encodeWithSignature("getL1BaseFeeEstimate()"),
-            abi.encode(l1Fee)
+            address(0x6c), abi.encodeWithSignature("getL1BaseFeeEstimate()"), abi.encode(l1Fee)
         );
 
         uint8 expectedInitMsgVersion = 1;
         uint256 expectedCurrentDataCost = l2Fee + l1Fee;
-        bytes memory expectedInitMsg = abi.encodePacked(
-            chainId,
-            expectedInitMsgVersion,
-            expectedCurrentDataCost,
-            chainConfig
-        );
+        bytes memory expectedInitMsg =
+            abi.encodePacked(chainId, expectedInitMsgVersion, expectedCurrentDataCost, chainConfig);
 
         /// this will result in 'hostChainIsArbitrum = true'
         vm.mockCall(
