@@ -7,7 +7,7 @@ import { BigNumber, Signer } from 'ethers'
 import { ERC20, ERC20__factory, IERC20__factory } from '../build/types'
 import { sleep } from './testSetup'
 import { promises as fs } from 'fs'
-import { _isRunningOnArbitrum } from './deploymentUtils'
+import { _isRunningOnArbitrum, verifyContract } from './deploymentUtils'
 
 // 1 gwei
 const MAX_FER_PER_GAS = BigNumber.from('1000000000')
@@ -26,7 +26,6 @@ interface RollupCreatedEvent {
     sequencerInbox: string
     bridge: string
     upgradeExecutor: string
-    validatorUtils: string
     validatorWalletCreator: string
   }
 }
@@ -39,7 +38,6 @@ interface RollupCreationResult {
   rollup: string
   'native-token': string
   'upgrade-executor': string
-  'validator-utils': string
   'validator-wallet-creator': string
 }
 
@@ -62,7 +60,8 @@ export async function createRollup(
   isDevDeployment: boolean,
   rollupCreatorAddress: string,
   feeToken: string,
-  eigenDARollupManager: string
+  eigenDARollupManager: string,
+  stakeToken: string
 ): Promise<{
   rollupCreationResult: RollupCreationResult
   chainInfo: ChainInfo
@@ -105,7 +104,8 @@ export async function createRollup(
       ? await _getDevRollupConfig(
           eigenDARollupManager,
           feeToken,
-          validatorWalletCreator
+          validatorWalletCreator,
+          stakeToken
         )
       : {
           config: config.rollupConfig,
@@ -142,7 +142,6 @@ export async function createRollup(
       const sequencerInbox = rollupCreatedEvent.args?.sequencerInbox
       const bridge = rollupCreatedEvent.args?.bridge
       const upgradeExecutor = rollupCreatedEvent.args?.upgradeExecutor
-      const validatorUtils = rollupCreatedEvent.args?.validatorUtils
       const validatorWalletCreator =
         rollupCreatedEvent.args?.validatorWalletCreator
 
@@ -155,21 +154,13 @@ export async function createRollup(
         console.log(
           `Attempting to verify Rollup contract at address ${rollupAddress}...`
         )
-        try {
-          await run('verify:verify', {
-            contract: 'src/rollup/RollupProxy.sol:RollupProxy',
-            address: rollupAddress,
-            constructorArguments: [],
-          })
-        } catch (error: any) {
-          if (error.message.includes('Already Verified')) {
-            console.log(`Contract RollupProxy is already verified.`)
-          } else {
-            console.error(
-              `Verification for RollupProxy failed with the following error: ${error.message}`
-            )
-          }
-        }
+
+        await verifyContract(
+          'RollupProxy',
+          rollupAddress,
+          [],
+          'src/rollup/RollupProxy.sol:RollupProxy'
+        )
       }
 
       console.log('Inbox (proxy) Contract created at address:', inboxAddress)
@@ -185,7 +176,6 @@ export async function createRollup(
       console.log('AdminProxy Contract created at address:', adminProxy)
       console.log('SequencerInbox (proxy) created at address:', sequencerInbox)
       console.log('Bridge (proxy) Contract created at address:', bridge)
-      console.log('ValidatorUtils Contract created at address:', validatorUtils)
       console.log(
         'ValidatorWalletCreator Contract created at address:',
         validatorWalletCreator
@@ -202,7 +192,6 @@ export async function createRollup(
         rollup: rollupAddress,
         'native-token': nativeToken,
         'upgrade-executor': upgradeExecutor,
-        'validator-utils': validatorUtils,
         'validator-wallet-creator': validatorWalletCreator,
       }
 
@@ -237,7 +226,8 @@ export async function createRollup(
 async function _getDevRollupConfig(
   rollupManager: string,
   feeToken: string,
-  validatorWalletCreator: string
+  validatorWalletCreator: string,
+  stakeToken: string
 ) {
   // set up owner address
   const ownerAddress =
@@ -314,14 +304,28 @@ async function _getDevRollupConfig(
     config: {
       confirmPeriodBlocks: ethers.BigNumber.from('20'),
       extraChallengeTimeBlocks: ethers.BigNumber.from('200'),
-      stakeToken: ethers.constants.AddressZero,
+      stakeToken: stakeToken,
       baseStake: ethers.utils.parseEther('1'),
       wasmModuleRoot: wasmModuleRoot,
       owner: ownerAddress,
       loserStakeEscrow: ethers.constants.AddressZero,
       chainId: JSON.parse(chainConfig)['chainId'],
       chainConfig: chainConfig,
-      genesisBlockNum: 0,
+      minimumAssertionPeriod: 75,
+      validatorAfkBlocks: 201600,
+      genesisAssertionState: {}, // AssertionState
+      genesisInboxCount: 0,
+      miniStakeValues: [
+        ethers.utils.parseEther('1'),
+        ethers.utils.parseEther('1'),
+        ethers.utils.parseEther('1'),
+      ],
+      layerZeroBlockEdgeHeight: 2 ** 5,
+      layerZeroBigStepEdgeHeight: 2 ** 5,
+      layerZeroSmallStepEdgeHeight: 2 ** 5,
+      numBigStepLevel: 1,
+      challengeGracePeriodBlocks: 10,
+      bufferConfig: { threshold: 600, max: 14400, replenishRateInBasis: 500 },
       sequencerInboxMaxTimeVariation: {
         delayBlocks: ethers.BigNumber.from('5760'),
         futureBlocks: ethers.BigNumber.from('12'),

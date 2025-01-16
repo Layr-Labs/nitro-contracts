@@ -8,7 +8,9 @@ contract EigenDABlobVerifierL1 is IRollupManager {
     IEigenDAServiceManager public immutable EIGEN_DA_SERVICE_MANAGER;
     uint256 internal constant MAX_CERTIFICATE_DRIFT = 100;
 
-    constructor(address _eigenDAServiceManager) {
+    constructor(
+        address _eigenDAServiceManager
+    ) {
         EIGEN_DA_SERVICE_MANAGER = IEigenDAServiceManager(_eigenDAServiceManager);
     }
 
@@ -22,8 +24,8 @@ contract EigenDABlobVerifierL1 is IRollupManager {
             certificate which could impact liveness of full nodes as well as the safety of the bridge
         */
         if (
-            (blobVerificationProof.batchMetadata.confirmationBlockNumber + MAX_CERTIFICATE_DRIFT) <
-            block.number
+            (blobVerificationProof.batchMetadata.confirmationBlockNumber + MAX_CERTIFICATE_DRIFT)
+                < block.number
         ) {
             revert ExpiredEigenDACert(
                 block.number,

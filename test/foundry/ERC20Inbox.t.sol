@@ -11,6 +11,7 @@ import "../../src/libraries/AddressAliasHelper.sol";
 import "../../src/libraries/Error.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol";
+import {NoZeroTransferToken} from "./util/NoZeroTransferToken.sol";
 
 contract ERC20InboxTest is AbsInboxTest {
     IERC20 public nativeToken;
@@ -87,9 +88,8 @@ contract ERC20InboxTest is AbsInboxTest {
         ERC20 _nativeToken = new ERC20_6Decimals();
 
         IERC20Bridge _bridge = IERC20Bridge(TestUtil.deployProxy(address(new ERC20Bridge())));
-        IERC20Inbox _inbox = IERC20Inbox(
-            TestUtil.deployProxy(address(new ERC20Inbox(MAX_DATA_SIZE)))
-        );
+        IERC20Inbox _inbox =
+            IERC20Inbox(TestUtil.deployProxy(address(new ERC20Inbox(MAX_DATA_SIZE))));
 
         // init bridge and inbox
         address _rollup = makeAddr("_rollup");
@@ -99,9 +99,9 @@ contract ERC20InboxTest is AbsInboxTest {
         _bridge.setDelayedInbox(address(_inbox), true);
 
         // fund user account
-        ERC20_6Decimals(address(_nativeToken)).mint(user, 1000 * 10**decimals);
+        ERC20_6Decimals(address(_nativeToken)).mint(user, 1000 * 10 ** decimals);
 
-        uint256 depositAmount = 300 * 10**decimals;
+        uint256 depositAmount = 300 * 10 ** decimals;
 
         uint256 bridgeTokenBalanceBefore = _nativeToken.balanceOf(address(_bridge));
         uint256 userTokenBalanceBefore = _nativeToken.balanceOf(address(user));
@@ -112,7 +112,7 @@ contract ERC20InboxTest is AbsInboxTest {
         _nativeToken.approve(address(_inbox), depositAmount);
 
         // expect event
-        uint256 expectedAmountToMintOnL2 = depositAmount * 10**(18 - decimals);
+        uint256 expectedAmountToMintOnL2 = depositAmount * 10 ** (18 - decimals);
         vm.expectEmit(true, true, true, true);
         emit InboxMessageDelivered(0, abi.encodePacked(user, expectedAmountToMintOnL2));
 
@@ -145,9 +145,8 @@ contract ERC20InboxTest is AbsInboxTest {
         ERC20 _nativeToken = new ERC20_20Decimals();
 
         IERC20Bridge _bridge = IERC20Bridge(TestUtil.deployProxy(address(new ERC20Bridge())));
-        IERC20Inbox _inbox = IERC20Inbox(
-            TestUtil.deployProxy(address(new ERC20Inbox(MAX_DATA_SIZE)))
-        );
+        IERC20Inbox _inbox =
+            IERC20Inbox(TestUtil.deployProxy(address(new ERC20Inbox(MAX_DATA_SIZE))));
 
         // init bridge and inbox
         address _rollup = makeAddr("_rollup");
@@ -157,9 +156,9 @@ contract ERC20InboxTest is AbsInboxTest {
         _bridge.setDelayedInbox(address(_inbox), true);
 
         // fund user account
-        ERC20_20Decimals(address(_nativeToken)).mint(user, 1000 * 10**decimals);
+        ERC20_20Decimals(address(_nativeToken)).mint(user, 1000 * 10 ** decimals);
 
-        uint256 depositAmount = 300 * 10**decimals;
+        uint256 depositAmount = 300 * 10 ** decimals;
 
         uint256 bridgeTokenBalanceBefore = _nativeToken.balanceOf(address(_bridge));
         uint256 userTokenBalanceBefore = _nativeToken.balanceOf(address(user));
@@ -170,7 +169,7 @@ contract ERC20InboxTest is AbsInboxTest {
         _nativeToken.approve(address(_inbox), depositAmount);
 
         // expect event
-        uint256 expectedAmountToMintOnL2 = depositAmount / (10**(decimals - 18));
+        uint256 expectedAmountToMintOnL2 = depositAmount / (10 ** (decimals - 18));
         vm.expectEmit(true, true, true, true);
         emit InboxMessageDelivered(0, abi.encodePacked(user, expectedAmountToMintOnL2));
 
@@ -202,9 +201,8 @@ contract ERC20InboxTest is AbsInboxTest {
         ERC20 _nativeToken = new ERC20NoDecimals();
 
         IERC20Bridge _bridge = IERC20Bridge(TestUtil.deployProxy(address(new ERC20Bridge())));
-        IERC20Inbox _inbox = IERC20Inbox(
-            TestUtil.deployProxy(address(new ERC20Inbox(MAX_DATA_SIZE)))
-        );
+        IERC20Inbox _inbox =
+            IERC20Inbox(TestUtil.deployProxy(address(new ERC20Inbox(MAX_DATA_SIZE))));
 
         // init bridge and inbox
         address _rollup = makeAddr("_rollup");
@@ -227,7 +225,7 @@ contract ERC20InboxTest is AbsInboxTest {
         _nativeToken.approve(address(_inbox), depositAmount);
 
         // expect event
-        uint256 expectedAmountToMintOnL2 = depositAmount * 10**18;
+        uint256 expectedAmountToMintOnL2 = depositAmount * 10 ** 18;
         vm.expectEmit(true, true, true, true);
         emit InboxMessageDelivered(0, abi.encodePacked(user, expectedAmountToMintOnL2));
 
@@ -303,8 +301,7 @@ contract ERC20InboxTest is AbsInboxTest {
         // expect event
         vm.expectEmit(true, true, true, true);
         emit InboxMessageDelivered(
-            0,
-            abi.encodePacked(AddressAliasHelper.applyL1ToL2Alias(user), depositAmount)
+            0, abi.encodePacked(AddressAliasHelper.applyL1ToL2Alias(user), depositAmount)
         );
 
         // deposit tokens -> tx.origin != msg.sender
@@ -335,9 +332,8 @@ contract ERC20InboxTest is AbsInboxTest {
         ERC20 _nativeToken = new ERC20_6Decimals();
 
         IERC20Bridge _bridge = IERC20Bridge(TestUtil.deployProxy(address(new ERC20Bridge())));
-        IERC20Inbox _inbox = IERC20Inbox(
-            TestUtil.deployProxy(address(new ERC20Inbox(MAX_DATA_SIZE)))
-        );
+        IERC20Inbox _inbox =
+            IERC20Inbox(TestUtil.deployProxy(address(new ERC20Inbox(MAX_DATA_SIZE))));
 
         // init bridge and inbox
         address _rollup = makeAddr("_rollup");
@@ -452,9 +448,8 @@ contract ERC20InboxTest is AbsInboxTest {
         ERC20 _nativeToken = new ERC20_6Decimals();
 
         IERC20Bridge _bridge = IERC20Bridge(TestUtil.deployProxy(address(new ERC20Bridge())));
-        IERC20Inbox _inbox = IERC20Inbox(
-            TestUtil.deployProxy(address(new ERC20Inbox(MAX_DATA_SIZE)))
-        );
+        IERC20Inbox _inbox =
+            IERC20Inbox(TestUtil.deployProxy(address(new ERC20Inbox(MAX_DATA_SIZE))));
 
         // init bridge and inbox
         address _rollup = makeAddr("_rollup");
@@ -464,20 +459,20 @@ contract ERC20InboxTest is AbsInboxTest {
         _bridge.setDelayedInbox(address(_inbox), true);
 
         // fund user account
-        ERC20_6Decimals(address(_nativeToken)).mint(user, 1000 * 10**decimals);
+        ERC20_6Decimals(address(_nativeToken)).mint(user, 1000 * 10 ** decimals);
 
         //  snapshot
         uint256 bridgeTokenBalanceBefore = _nativeToken.balanceOf(address(_bridge));
         uint256 userTokenBalanceBefore = _nativeToken.balanceOf(address(user));
 
-        uint256 tokenTotalFeeAmount = 300 * 10**decimals;
+        uint256 tokenTotalFeeAmount = 300 * 10 ** decimals;
 
         // approve inbox to fetch tokens
         vm.prank(user);
         _nativeToken.approve(address(_inbox), tokenTotalFeeAmount);
 
         // retyrable params
-        uint256 l2CallValue = 20 * 10**decimals;
+        uint256 l2CallValue = 20 * 10 ** decimals;
         uint256 maxSubmissionCost = 0;
         uint256 gasLimit = 100;
         uint256 maxFeePerGas = 2;
@@ -485,7 +480,7 @@ contract ERC20InboxTest is AbsInboxTest {
 
         {
             // expect event
-            uint256 expectedTokenTotalFeeAmount18Dec = tokenTotalFeeAmount * 10**(18 - decimals);
+            uint256 expectedTokenTotalFeeAmount18Dec = tokenTotalFeeAmount * 10 ** (18 - decimals);
             vm.expectEmit(true, true, true, true);
             emit InboxMessageDelivered(
                 0,
@@ -542,9 +537,8 @@ contract ERC20InboxTest is AbsInboxTest {
         ERC20 _nativeToken = new ERC20_20Decimals();
 
         IERC20Bridge _bridge = IERC20Bridge(TestUtil.deployProxy(address(new ERC20Bridge())));
-        IERC20Inbox _inbox = IERC20Inbox(
-            TestUtil.deployProxy(address(new ERC20Inbox(MAX_DATA_SIZE)))
-        );
+        IERC20Inbox _inbox =
+            IERC20Inbox(TestUtil.deployProxy(address(new ERC20Inbox(MAX_DATA_SIZE))));
 
         // init bridge and inbox
         address _rollup = makeAddr("_rollup");
@@ -554,20 +548,20 @@ contract ERC20InboxTest is AbsInboxTest {
         _bridge.setDelayedInbox(address(_inbox), true);
 
         // fund user account
-        ERC20_20Decimals(address(_nativeToken)).mint(user, 1000 * 10**decimals);
+        ERC20_20Decimals(address(_nativeToken)).mint(user, 1000 * 10 ** decimals);
 
         // snapshot
         uint256 bridgeTokenBalanceBefore = _nativeToken.balanceOf(address(_bridge));
         uint256 userTokenBalanceBefore = _nativeToken.balanceOf(address(user));
 
-        uint256 tokenTotalFeeAmount = 235 * 10**decimals;
+        uint256 tokenTotalFeeAmount = 235 * 10 ** decimals;
 
         // approve inbox to fetch tokens
         vm.prank(user);
         _nativeToken.approve(address(_inbox), tokenTotalFeeAmount);
 
         // retyrable params
-        uint256 l2CallValue = 20 * 10**18;
+        uint256 l2CallValue = 20 * 10 ** 18;
         uint256 maxSubmissionCost = 0;
         uint256 gasLimit = 100;
         uint256 maxFeePerGas = 2;
@@ -575,7 +569,7 @@ contract ERC20InboxTest is AbsInboxTest {
 
         {
             // expect event
-            uint256 expectedTokenTotalFeeAmount18Dec = tokenTotalFeeAmount / 10**(decimals - 18);
+            uint256 expectedTokenTotalFeeAmount18Dec = tokenTotalFeeAmount / 10 ** (decimals - 18);
             vm.expectEmit(true, true, true, true);
             emit InboxMessageDelivered(
                 0,
@@ -623,6 +617,64 @@ contract ERC20InboxTest is AbsInboxTest {
             tokenTotalFeeAmount,
             "Invalid user token balance"
         );
+
+        assertEq(_bridge.delayedMessageCount(), 1, "Invalid delayed message count");
+    }
+
+    function test_createRetryableTicket_FromEOA_NoZeroTransferToken() public {
+        ERC20 _nativeToken = new NoZeroTransferToken("Appchain Token", "App", 1_000_000 ether, user);
+
+        IERC20Bridge _bridge = IERC20Bridge(TestUtil.deployProxy(address(new ERC20Bridge())));
+        IERC20Inbox _inbox =
+            IERC20Inbox(TestUtil.deployProxy(address(new ERC20Inbox(MAX_DATA_SIZE))));
+
+        // init bridge and inbox
+        address _rollup = makeAddr("_rollup");
+        _bridge.initialize(IOwnable(_rollup), address(_nativeToken));
+        _inbox.initialize(_bridge, ISequencerInbox(makeAddr("_seqInbox")));
+        vm.prank(_rollup);
+        _bridge.setDelayedInbox(address(_inbox), true);
+
+        // retyrable params
+        uint256 l2CallValue = 0;
+        uint256 maxSubmissionCost = 0;
+        uint256 gasLimit = 0;
+        uint256 maxFeePerGas = 0;
+        bytes memory data = abi.encodePacked("some msg");
+
+        {
+            // expect event
+            vm.expectEmit(true, true, true, true);
+            emit InboxMessageDelivered(
+                0,
+                abi.encodePacked(
+                    uint256(uint160(user)),
+                    l2CallValue,
+                    uint256(0),
+                    maxSubmissionCost,
+                    uint256(uint160(user)),
+                    uint256(uint160(user)),
+                    gasLimit,
+                    maxFeePerGas,
+                    data.length,
+                    data
+                )
+            );
+        }
+
+        // create retryable -> tx.origin == msg.sender
+        vm.prank(user, user);
+        _inbox.createRetryableTicket({
+            to: address(user),
+            l2CallValue: l2CallValue,
+            maxSubmissionCost: maxSubmissionCost,
+            excessFeeRefundAddress: user,
+            callValueRefundAddress: user,
+            gasLimit: gasLimit,
+            maxFeePerGas: maxFeePerGas,
+            tokenTotalFeeAmount: 0,
+            data: data
+        });
 
         assertEq(_bridge.delayedMessageCount(), 1, "Invalid delayed message count");
     }
@@ -769,9 +821,8 @@ contract ERC20InboxTest is AbsInboxTest {
         ERC20 _nativeToken = new ERC20_6Decimals();
 
         IERC20Bridge _bridge = IERC20Bridge(TestUtil.deployProxy(address(new ERC20Bridge())));
-        IERC20Inbox _inbox = IERC20Inbox(
-            TestUtil.deployProxy(address(new ERC20Inbox(MAX_DATA_SIZE)))
-        );
+        IERC20Inbox _inbox =
+            IERC20Inbox(TestUtil.deployProxy(address(new ERC20Inbox(MAX_DATA_SIZE))));
 
         // init bridge and inbox
         address _rollup = makeAddr("_rollup");
@@ -781,16 +832,16 @@ contract ERC20InboxTest is AbsInboxTest {
         _bridge.setDelayedInbox(address(_inbox), true);
 
         // fund user account
-        ERC20_6Decimals(address(_nativeToken)).mint(user, 1_000_000 * 10**decimals);
+        ERC20_6Decimals(address(_nativeToken)).mint(user, 1_000_000 * 10 ** decimals);
 
         //// create ticket
 
-        uint256 tooSmallTokenTotalFeeAmount = 2 * 10**6; // 2 USDC becomes 2*10^18 on child chain
+        uint256 tooSmallTokenTotalFeeAmount = 2 * 10 ** 6; // 2 USDC becomes 2*10^18 on child chain
 
-        uint256 l2CallValue = 2 * 10**18;
+        uint256 l2CallValue = 2 * 10 ** 18;
         uint256 maxSubmissionCost = 0;
         uint256 gasLimit = 80_000;
-        uint256 maxFeePerGas = 10**9; //1 gwei
+        uint256 maxFeePerGas = 10 ** 9; //1 gwei
         /// provided: 2USDC on parent chain = 2*10^18 on child chain
         /// needed: 2.00008*10^18 on child chain
 
@@ -799,7 +850,7 @@ contract ERC20InboxTest is AbsInboxTest {
             abi.encodeWithSelector(
                 InsufficientValue.selector,
                 maxSubmissionCost + l2CallValue + gasLimit * maxFeePerGas,
-                tooSmallTokenTotalFeeAmount * 10**(18 - decimals)
+                tooSmallTokenTotalFeeAmount * 10 ** (18 - decimals)
             )
         );
         _inbox.createRetryableTicket({
@@ -820,9 +871,8 @@ contract ERC20InboxTest is AbsInboxTest {
         ERC20 _nativeToken = new ERC20_20Decimals();
 
         IERC20Bridge _bridge = IERC20Bridge(TestUtil.deployProxy(address(new ERC20Bridge())));
-        IERC20Inbox _inbox = IERC20Inbox(
-            TestUtil.deployProxy(address(new ERC20Inbox(MAX_DATA_SIZE)))
-        );
+        IERC20Inbox _inbox =
+            IERC20Inbox(TestUtil.deployProxy(address(new ERC20Inbox(MAX_DATA_SIZE))));
 
         // init bridge and inbox
         address _rollup = makeAddr("_rollup");
@@ -832,16 +882,16 @@ contract ERC20InboxTest is AbsInboxTest {
         _bridge.setDelayedInbox(address(_inbox), true);
 
         // fund user account
-        ERC20_20Decimals(address(_nativeToken)).mint(user, 1_000_000 * 10**decimals);
+        ERC20_20Decimals(address(_nativeToken)).mint(user, 1_000_000 * 10 ** decimals);
 
         //// create ticket
 
-        uint256 tooSmallTokenTotalFeeAmount = 2 * 10**20;
+        uint256 tooSmallTokenTotalFeeAmount = 2 * 10 ** 20;
 
-        uint256 l2CallValue = 2 * 10**18;
+        uint256 l2CallValue = 2 * 10 ** 18;
         uint256 maxSubmissionCost = 0;
         uint256 gasLimit = 80_000;
-        uint256 maxFeePerGas = 10**9; //1 gwei
+        uint256 maxFeePerGas = 10 ** 9; //1 gwei
         /// provided: 2 * 10 ** 20 on parent chain = 2*10^18 on child chain
         /// needed: 2.00008*10^18 on child chain
 
@@ -850,7 +900,7 @@ contract ERC20InboxTest is AbsInboxTest {
             abi.encodeWithSelector(
                 InsufficientValue.selector,
                 maxSubmissionCost + l2CallValue + gasLimit * maxFeePerGas,
-                tooSmallTokenTotalFeeAmount / 10**(decimals - 18)
+                tooSmallTokenTotalFeeAmount / 10 ** (decimals - 18)
             )
         );
         _inbox.createRetryableTicket({
@@ -1149,9 +1199,8 @@ contract ERC20InboxTest is AbsInboxTest {
         ERC20 _nativeToken = new ERC20_6Decimals();
 
         IERC20Bridge _bridge = IERC20Bridge(TestUtil.deployProxy(address(new ERC20Bridge())));
-        IERC20Inbox _inbox = IERC20Inbox(
-            TestUtil.deployProxy(address(new ERC20Inbox(MAX_DATA_SIZE)))
-        );
+        IERC20Inbox _inbox =
+            IERC20Inbox(TestUtil.deployProxy(address(new ERC20Inbox(MAX_DATA_SIZE))));
 
         // init bridge and inbox
         address _rollup = makeAddr("_rollup");
@@ -1161,13 +1210,13 @@ contract ERC20InboxTest is AbsInboxTest {
         _bridge.setDelayedInbox(address(_inbox), true);
 
         // fund user account
-        ERC20_6Decimals(address(_nativeToken)).mint(user, 1000 * 10**decimals);
+        ERC20_6Decimals(address(_nativeToken)).mint(user, 1000 * 10 ** decimals);
 
         // L2 msg params
         uint256 maxFeePerGas = 0;
         uint256 gasLimit = 10;
         uint256 nonce = 3;
-        uint256 l2CallValue = 15 * 10**decimals;
+        uint256 l2CallValue = 15 * 10 ** decimals;
         bytes memory data = abi.encodePacked("7");
 
         // expect event
@@ -1187,14 +1236,8 @@ contract ERC20InboxTest is AbsInboxTest {
 
         // send TX
         vm.prank(user, user);
-        uint256 msgNum = _inbox.sendUnsignedTransaction(
-            gasLimit,
-            maxFeePerGas,
-            nonce,
-            user,
-            l2CallValue,
-            data
-        );
+        uint256 msgNum =
+            _inbox.sendUnsignedTransaction(gasLimit, maxFeePerGas, nonce, user, l2CallValue, data);
 
         //// checks
         assertEq(msgNum, 0, "Invalid msgNum");
@@ -1207,9 +1250,8 @@ contract ERC20InboxTest is AbsInboxTest {
         ERC20 _nativeToken = new ERC20_20Decimals();
 
         IERC20Bridge _bridge = IERC20Bridge(TestUtil.deployProxy(address(new ERC20Bridge())));
-        IERC20Inbox _inbox = IERC20Inbox(
-            TestUtil.deployProxy(address(new ERC20Inbox(MAX_DATA_SIZE)))
-        );
+        IERC20Inbox _inbox =
+            IERC20Inbox(TestUtil.deployProxy(address(new ERC20Inbox(MAX_DATA_SIZE))));
 
         // init bridge and inbox
         address _rollup = makeAddr("_rollup");
@@ -1219,13 +1261,13 @@ contract ERC20InboxTest is AbsInboxTest {
         _bridge.setDelayedInbox(address(_inbox), true);
 
         // fund user account
-        ERC20_20Decimals(address(_nativeToken)).mint(user, 1000 * 10**decimals);
+        ERC20_20Decimals(address(_nativeToken)).mint(user, 1000 * 10 ** decimals);
 
         // L2 msg params
         uint256 maxFeePerGas = 0;
         uint256 gasLimit = 10;
         uint256 nonce = 3;
-        uint256 l2CallValue = 15 * 10**decimals;
+        uint256 l2CallValue = 15 * 10 ** decimals;
         bytes memory data = abi.encodePacked("7");
 
         // expect event
@@ -1245,14 +1287,8 @@ contract ERC20InboxTest is AbsInboxTest {
 
         // send TX
         vm.prank(user, user);
-        uint256 msgNum = _inbox.sendUnsignedTransaction(
-            gasLimit,
-            maxFeePerGas,
-            nonce,
-            user,
-            l2CallValue,
-            data
-        );
+        uint256 msgNum =
+            _inbox.sendUnsignedTransaction(gasLimit, maxFeePerGas, nonce, user, l2CallValue, data);
 
         //// checks
         assertEq(msgNum, 0, "Invalid msgNum");
@@ -1265,9 +1301,8 @@ contract ERC20InboxTest is AbsInboxTest {
         ERC20 _nativeToken = new ERC20_6Decimals();
 
         IERC20Bridge _bridge = IERC20Bridge(TestUtil.deployProxy(address(new ERC20Bridge())));
-        IERC20Inbox _inbox = IERC20Inbox(
-            TestUtil.deployProxy(address(new ERC20Inbox(MAX_DATA_SIZE)))
-        );
+        IERC20Inbox _inbox =
+            IERC20Inbox(TestUtil.deployProxy(address(new ERC20Inbox(MAX_DATA_SIZE))));
 
         // init bridge and inbox
         address _rollup = makeAddr("_rollup");
@@ -1277,12 +1312,12 @@ contract ERC20InboxTest is AbsInboxTest {
         _bridge.setDelayedInbox(address(_inbox), true);
 
         // fund user account
-        ERC20_6Decimals(address(_nativeToken)).mint(user, 1000 * 10**decimals);
+        ERC20_6Decimals(address(_nativeToken)).mint(user, 1000 * 10 ** decimals);
 
         // L2 msg params
         uint256 maxFeePerGas = 0;
         uint256 gasLimit = 10;
-        uint256 l2CallValue = 72 * 10**decimals;
+        uint256 l2CallValue = 72 * 10 ** decimals;
         bytes memory data = abi.encodePacked("test data");
 
         // expect event
@@ -1301,13 +1336,8 @@ contract ERC20InboxTest is AbsInboxTest {
 
         // send TX
         vm.prank(user);
-        uint256 msgNum = _inbox.sendContractTransaction(
-            gasLimit,
-            maxFeePerGas,
-            user,
-            l2CallValue,
-            data
-        );
+        uint256 msgNum =
+            _inbox.sendContractTransaction(gasLimit, maxFeePerGas, user, l2CallValue, data);
 
         //// checks
         assertEq(msgNum, 0, "Invalid msgNum");
@@ -1320,9 +1350,8 @@ contract ERC20InboxTest is AbsInboxTest {
         ERC20 _nativeToken = new ERC20_20Decimals();
 
         IERC20Bridge _bridge = IERC20Bridge(TestUtil.deployProxy(address(new ERC20Bridge())));
-        IERC20Inbox _inbox = IERC20Inbox(
-            TestUtil.deployProxy(address(new ERC20Inbox(MAX_DATA_SIZE)))
-        );
+        IERC20Inbox _inbox =
+            IERC20Inbox(TestUtil.deployProxy(address(new ERC20Inbox(MAX_DATA_SIZE))));
 
         // init bridge and inbox
         address _rollup = makeAddr("_rollup");
@@ -1332,12 +1361,12 @@ contract ERC20InboxTest is AbsInboxTest {
         _bridge.setDelayedInbox(address(_inbox), true);
 
         // fund user account
-        ERC20_20Decimals(address(_nativeToken)).mint(user, 1000 * 10**decimals);
+        ERC20_20Decimals(address(_nativeToken)).mint(user, 1000 * 10 ** decimals);
 
         // L2 msg params
         uint256 maxFeePerGas = 0;
         uint256 gasLimit = 10;
-        uint256 l2CallValue = 72 * 10**decimals;
+        uint256 l2CallValue = 72 * 10 ** decimals;
         bytes memory data = abi.encodePacked("test data");
 
         // expect event
@@ -1356,13 +1385,8 @@ contract ERC20InboxTest is AbsInboxTest {
 
         // send TX
         vm.prank(user);
-        uint256 msgNum = _inbox.sendContractTransaction(
-            gasLimit,
-            maxFeePerGas,
-            user,
-            l2CallValue,
-            data
-        );
+        uint256 msgNum =
+            _inbox.sendContractTransaction(gasLimit, maxFeePerGas, user, l2CallValue, data);
 
         //// checks
         assertEq(msgNum, 0, "Invalid msgNum");
