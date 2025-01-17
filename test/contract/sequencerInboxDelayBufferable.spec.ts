@@ -11,6 +11,7 @@ import {
   forceIncludeMessages,
 } from './testHelpers'
 
+// TODO: Add delay proof tests for EigenDA entrypoint
 describe('SequencerInboxDelayBufferable', async () => {
   it('can deplete buffer', async () => {
     const { bridge, sequencerInbox, batchPoster, delayConfig, maxDelay } =

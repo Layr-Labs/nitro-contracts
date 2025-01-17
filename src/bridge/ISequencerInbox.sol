@@ -269,6 +269,18 @@ interface ISequencerInbox is IDelayedMessageProvider {
         uint256 newMessageCount
     ) external;
 
+    /// @dev    Proves message delays, updates delay buffers, verifies EigenDA certs, and posts them to the accumulator.
+    ///         DelayProof proves the delay of the message and syncs the delay buffer.
+    function addSequencerL2BatchFromEigenDADelayProof(
+        uint256 sequenceNumber,
+        EigenDACert calldata cert,
+        IGasRefunder gasRefunder,
+        uint256 afterDelayedMessagesRead,
+        uint256 prevMessageCount,
+        uint256 newMessageCount,
+        DelayProof calldata delayProof
+    ) external;
+
     /// @dev    Proves message delays, updates delay buffers, and posts an L2 batch with blob data.
     ///         DelayProof proves the delay of the message and syncs the delay buffer.
     function addSequencerL2BatchFromBlobsDelayProof(

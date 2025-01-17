@@ -446,9 +446,10 @@ contract SequencerInboxTest is Test {
             subMessageCount,
             subMessageCount + 1
         );
+    }
 
-        // TODO: put these in jsons later
-        // create illegal commitment
+    function testAddSequencerL2BatchFromEigenDAFailsWithInvalidCert() public {
+        // TODO: put these in json files
         BN254.G1Point memory illegalCommitment = BN254.G1Point({
             X: 11151623676041303181597631684634074376466382703418354161831688442589830350329,
             Y: 4222041728992406478862708226745479381252734858741080790666424175645694456140
@@ -479,6 +480,40 @@ contract SequencerInboxTest is Test {
             inclusionProof: bytes(""),
             quorumIndices: bytes("")
         });
+
+        // finish filling out the illegalBlobHeader
+        illegalBlobHeader.commitment = illegalCommitment;
+        illegalBlobHeader.dataLength = 20;
+
+        ISequencerInbox.EigenDACert memory illegalCert = ISequencerInbox.EigenDACert({
+            blobHeader: illegalBlobHeader,
+            blobVerificationProof: illegalBlobVerificationProof
+        });
+
+        // change the eigenDAServiceManager to use the holesky testnet contract
+        (SequencerInbox seqInbox, Bridge bridge,) = deployRollup(false, false, bufferConfigDefault);
+        address delayedInboxSender = address(140);
+        uint8 delayedInboxKind = 3;
+        bytes32 messageDataHash = RAND.Bytes32();
+
+        vm.prank(dummyInbox);
+        bridge.enqueueDelayedMessage(delayedInboxKind, delayedInboxSender, messageDataHash);
+
+        uint256 subMessageCount = bridge.sequencerReportedSubMessageCount();
+        uint256 sequenceNumber = bridge.sequencerMessageCount();
+        uint256 delayedMessagesRead = bridge.delayedMessageCount();
+
+        vm.prank(tx.origin);
+
+        vm.expectRevert();
+        seqInbox.addSequencerL2BatchFromEigenDA(
+            sequenceNumber,
+            illegalCert,
+            IGasRefunder(address(0)),
+            delayedMessagesRead,
+            subMessageCount,
+            subMessageCount + 1
+        );
     }
 
     function testAddSequencerL2BatchFromOrigin_ArbitrumHosted(
@@ -862,9 +897,6 @@ contract SequencerInboxTest is Test {
         blobHeader.dataLength =
             uint32(uint256(vm.parseJsonInt(json, ".blob_info.blob_header.data_length")));
 
-        //bytes memory quorumParamsBytes = vm.parseJson(json, ".blob_info.blob_header.blob_quorum_params");
-
-        // TODO: Parse these from the array, for some reason parsing them reads in the wrong order
         IEigenDAServiceManager.QuorumBlobParam[] memory quorumParams =
             new IEigenDAServiceManager.QuorumBlobParam[](2);
 
