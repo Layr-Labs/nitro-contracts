@@ -8,7 +8,6 @@ import {
     AlreadyInit,
     HadZeroInit,
     BadPostUpgradeInit,
-    NotEOA,
     NotOrigin,
     DataTooLarge,
     DelayedBackwards,
