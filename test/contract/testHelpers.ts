@@ -12,6 +12,7 @@ import {
   SequencerInbox,
   SequencerInbox__factory,
   TransparentUpgradeableProxy__factory,
+  EigenDABlobVerifierL2__factory,
 } from '../../build/types'
 import { applyAlias, initializeAccounts } from './utils'
 import { Event } from '@ethersproject/contracts'
@@ -25,11 +26,19 @@ import {
   SequencerInboxInterface,
 } from '../../build/types/src/bridge/SequencerInbox'
 import { ContractReceipt, Signer } from 'ethers'
+
 import {
   DelayedMsg,
   DelayedMsgDelivered,
   MaxTimeVariation,
   DelayConfig,
+  EigenDACertStruct,
+  BlobHeaderStruct,
+  BatchHeaderStruct,
+  BatchMetadataStruct,
+  BlobVerificationProofStruct,
+  G1PointStruct,
+  QuorumBlobParamStruct,
 } from './types'
 import { solidityPack } from 'ethers/lib/utils'
 import {
@@ -292,6 +301,7 @@ export const setupSequencerInbox = async (
   isBlobMock = false,
   maxDelay: MaxTimeVariation = maxDelayDefault,
   delayConfig: DelayConfig = delayConfigDefault
+  // useEigenDA = false
 ) => {
   const accounts = await initializeAccounts()
   const admin = accounts[0]
@@ -372,6 +382,16 @@ export const setupSequencerInbox = async (
   await bridgeAdmin.setDelayedInbox(inbox.address, true)
   await bridgeAdmin.setSequencerInbox(sequencerInbox.address)
 
+  const l2blobVerifierFac = (await ethers.getContractFactory(
+    'EigenDABlobVerifierL2'
+  )) as EigenDABlobVerifierL2__factory
+  const l2ImmutableBlobVerifier = await l2blobVerifierFac.deploy()
+
+  await (
+    await sequencerInbox
+      .connect(rollupOwner)
+      .setEigenDARollupManager(l2ImmutableBlobVerifier.address)
+  ).wait()
   await (
     await sequencerInbox
       .connect(rollupOwner)
@@ -397,4 +417,68 @@ export const setupSequencerInbox = async (
     maxDelay,
     delayConfig,
   }
+}
+
+// Helper function to create a mock G1PointStruct
+function createG1Point(x: number, y: number): G1PointStruct {
+  return {
+    X: BigNumber.from(x),
+    Y: BigNumber.from(y),
+  }
+}
+
+// Helper function to create a mock QuorumBlobParamStruct
+function createQuorumBlobParam(
+  quorumNumber: number,
+  adversaryThreshold: number,
+  confirmationThreshold: number,
+  chunkLength: number
+): QuorumBlobParamStruct {
+  return {
+    quorumNumber: BigNumber.from(quorumNumber),
+    adversaryThresholdPercentage: BigNumber.from(adversaryThreshold),
+    confirmationThresholdPercentage: BigNumber.from(confirmationThreshold),
+    chunkLength: BigNumber.from(chunkLength),
+  }
+}
+
+// Helper function to generate a V1 EigenDA certificate with
+// pseudo-random data fields
+export const generateEigenDACertificate = async () => {
+  const blobHeader: BlobHeaderStruct = {
+    commitment: createG1Point(12345, 67890),
+    dataLength: BigNumber.from(1024),
+    quorumBlobParams: [
+      createQuorumBlobParam(1, 25, 75, 256),
+      createQuorumBlobParam(2, 30, 70, 512),
+    ],
+  }
+
+  const batchHeader: BatchHeaderStruct = {
+    blobHeadersRoot: ethers.utils.randomBytes(32),
+    quorumNumbers: ethers.utils.randomBytes(32),
+    signedStakeForQuorums: ethers.utils.randomBytes(32),
+    referenceBlockNumber: BigNumber.from(98765),
+  }
+
+  const batchMetadata: BatchMetadataStruct = {
+    batchHeader,
+    signatoryRecordHash: ethers.utils.randomBytes(32),
+    confirmationBlockNumber: BigNumber.from(54321),
+  }
+
+  const blobVerificationProof: BlobVerificationProofStruct = {
+    batchId: BigNumber.from(1),
+    blobIndex: BigNumber.from(0),
+    batchMetadata,
+    inclusionProof: ethers.utils.randomBytes(32),
+    quorumIndices: ethers.utils.randomBytes(32),
+  }
+
+  const cert: EigenDACertStruct = {
+    blobHeader: blobHeader,
+    blobVerificationProof: blobVerificationProof,
+  }
+
+  return cert
 }
