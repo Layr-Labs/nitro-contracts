@@ -12,6 +12,7 @@
   "addSequencerL2BatchFromBlobs(uint256,uint256,address,uint256,uint256)": "3e5aa082",
   "addSequencerL2BatchFromBlobsDelayProof(uint256,uint256,address,uint256,uint256,(bytes32,(uint8,address,uint64,uint64,uint256,uint256,bytes32)))": "917cf8ac",
   "addSequencerL2BatchFromEigenDA(uint256,((uint32,uint32,((bytes32,bytes,bytes,uint32),bytes32,uint32),bytes,bytes),((uint256,uint256),uint32,(uint8,uint8,uint8,uint32)[])),address,uint256,uint256,uint256)": "283d8225",
+  "addSequencerL2BatchFromEigenDADelayProof(uint256,((uint32,uint32,((bytes32,bytes,bytes,uint32),bytes32,uint32),bytes,bytes),((uint256,uint256),uint32,(uint8,uint8,uint8,uint32)[])),address,uint256,uint256,uint256,(bytes32,(uint8,address,uint64,uint64,uint256,uint256,bytes32)))": "883e4928",
   "addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address)": "6f12b0c9",
   "addSequencerL2BatchFromOrigin(uint256,bytes,uint256,address,uint256,uint256)": "8f111f3c",
   "addSequencerL2BatchFromOriginDelayProof(uint256,bytes,uint256,address,uint256,uint256,(bytes32,(uint8,address,uint64,uint64,uint256,uint256,bytes32)))": "69cacded",

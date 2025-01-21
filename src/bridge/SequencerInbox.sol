@@ -8,7 +8,6 @@ import {
     AlreadyInit,
     HadZeroInit,
     BadPostUpgradeInit,
-    NotEOA,
     NotOrigin,
     DataTooLarge,
     DelayedBackwards,
@@ -146,7 +145,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     // gap used to ensure forward compatiblity with newly introduced storage variables
     // from upstream offchainlabs/nitro-contracts. Any newly introduced storage vars
     // made in subsequent releases should result in decrementing the gap counter
-    uint256[38] internal __gap;
+    uint256[36] internal __gap;
     IRollupManager public eigenDARollupManager;
 
     constructor(
@@ -455,6 +454,39 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         }
     }
 
+    /// @inheritdoc ISequencerInbox
+    function addSequencerL2BatchFromEigenDADelayProof(
+        uint256 sequenceNumber,
+        EigenDACert calldata cert,
+        IGasRefunder gasRefunder,
+        uint256 afterDelayedMessagesRead,
+        uint256 prevMessageCount,
+        uint256 newMessageCount,
+        DelayProof calldata delayProof
+    ) external refundsGas(gasRefunder, IReader4844(address(0))) {
+        if (!CallerChecker.isCallerCodelessOrigin()) revert NotCodelessOrigin();
+        if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
+        if (!isDelayBufferable) revert NotDelayBufferable();
+
+        delayProofImpl(afterDelayedMessagesRead, delayProof);
+
+        // Verify that the blob was actually included before continuing
+        eigenDARollupManager.verifyBlob(cert.blobHeader, cert.blobVerificationProof);
+        // Form the EigenDA data hash and get the time bounds
+        (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) =
+            formEigenDADataHash(cert, afterDelayedMessagesRead);
+
+        ISequencerInbox.SequenceMetadata memory metadata = ISequencerInbox.SequenceMetadata({
+            sequenceNumber: sequenceNumber,
+            afterDelayedMessagesRead: afterDelayedMessagesRead,
+            prevMessageCount: prevMessageCount,
+            newMessageCount: newMessageCount
+        });
+
+        // Call a helper function to add the sequencer L2 batch
+        _addSequencerL2Batch(metadata, dataHash, timeBounds);
+    }
+
     function addSequencerL2BatchFromEigenDA(
         uint256 sequenceNumber,
         EigenDACert calldata cert,
@@ -463,9 +495,10 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         uint256 prevMessageCount,
         uint256 newMessageCount
     ) external refundsGas(gasRefunder, IReader4844(address(0))) {
-        if (msg.sender != tx.origin) revert NotOrigin();
+        if (!CallerChecker.isCallerCodelessOrigin()) revert NotCodelessOrigin();
         if (!isBatchPoster[msg.sender]) revert NotBatchPoster();
-        if (address(msg.sender).code.length > 0) revert NotEOA();
+        if (isDelayProofRequired(afterDelayedMessagesRead)) revert DelayProofRequired();
+
         // Verify that the blob was actually included before continuing
         eigenDARollupManager.verifyBlob(cert.blobHeader, cert.blobVerificationProof);
         // Form the EigenDA data hash and get the time bounds
