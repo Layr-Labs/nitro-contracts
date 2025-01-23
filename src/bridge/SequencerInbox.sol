@@ -536,6 +536,11 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
             revert BadSequencerNumber(seqMessageIndex, sequenceNumber);
         }
 
+        if (!isUsingFeeToken) {
+            // only report batch poster spendings if chain is using ETH as native currency
+            submitBatchSpendingReport(dataHash, seqMessageIndex, block.basefee, 0);
+        }
+
         emit SequencerBatchDelivered(
             seqMessageIndex,
             beforeAcc,
