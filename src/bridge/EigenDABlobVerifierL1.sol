@@ -3,20 +3,21 @@ pragma solidity ^0.8.9;
 
 import "./IRollupManager.sol";
 import {ExpiredEigenDACert} from "../libraries/Error.sol";
+import {IEigenDABlobVerifier} from "@eigenda/contracts/src/interfaces/IEigenDABlobVerifier.sol";
 
 contract EigenDABlobVerifierL1 is IRollupManager {
-    IEigenDAServiceManager public immutable EIGEN_DA_SERVICE_MANAGER;
+    IEigenDABlobVerifier public immutable VERIFIER;
     uint256 internal constant MAX_CERTIFICATE_DRIFT = 100;
 
     constructor(
-        address _eigenDAServiceManager
+        address _eigenDABlobVerifier
     ) {
-        EIGEN_DA_SERVICE_MANAGER = IEigenDAServiceManager(_eigenDAServiceManager);
+        VERIFIER = IEigenDABlobVerifier(_eigenDABlobVerifier);
     }
 
     function verifyBlob(
-        IEigenDAServiceManager.BlobHeader calldata blobHeader,
-        EigenDARollupUtils.BlobVerificationProof calldata blobVerificationProof
+        BlobHeader calldata blobHeader,
+        BlobVerificationProof calldata blobVerificationProof
     ) external view {
         /*
             Verify that the certificate is less than 2 epochs old from the L1 confirmation block number
@@ -33,6 +34,6 @@ contract EigenDABlobVerifierL1 is IRollupManager {
             );
         }
 
-        EigenDARollupUtils.verifyBlob(blobHeader, EIGEN_DA_SERVICE_MANAGER, blobVerificationProof);
+        VERIFIER.verifyBlobV1(blobHeader, blobVerificationProof);
     }
 }

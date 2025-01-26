@@ -11,8 +11,11 @@ import "./IDelayedMessageProvider.sol";
 import "./IBridge.sol";
 import "./IRollupManager.sol";
 
-import {EigenDARollupUtils} from "@eigenda/eigenda-utils/libraries/EigenDARollupUtils.sol";
-import {IEigenDAServiceManager} from "@eigenda/eigenda-utils/interfaces/IEigenDAServiceManager.sol";
+import {
+    BlobHeader,
+    BlobVerificationProof
+} from "@eigenda/contracts/src/interfaces/IEigenDAStructs.sol";
+
 import "./Messages.sol";
 import "./DelayBufferTypes.sol";
 
@@ -40,8 +43,8 @@ interface ISequencerInbox is IDelayedMessageProvider {
     );
 
     struct EigenDACert {
-        EigenDARollupUtils.BlobVerificationProof blobVerificationProof;
-        IEigenDAServiceManager.BlobHeader blobHeader;
+        BlobVerificationProof blobVerificationProof;
+        BlobHeader blobHeader;
     }
 
     struct SequenceMetadata {

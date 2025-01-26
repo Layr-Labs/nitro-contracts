@@ -14,7 +14,7 @@ import "./IOneStepProver.sol";
 import "../bridge/Messages.sol";
 import "../bridge/IBridge.sol";
 
-import {BN254} from "@eigenda/eigenda-utils/libraries/BN254.sol";
+import {BN254} from "@eigenda/contracts/lib/eigenlayer-middleware/src/libraries/BN254.sol";
 
 contract OneStepProverHostIo is IOneStepProver {
     using GlobalStateLib for GlobalState;

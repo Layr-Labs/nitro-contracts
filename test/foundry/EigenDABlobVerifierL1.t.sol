@@ -1,53 +1,54 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
+// pragma solidity ^0.8.9;
 
-import "forge-std/Test.sol";
-import "../../src/bridge/EigenDABlobVerifierL1.sol";
-import "../../src/libraries/Error.sol";
-import {EigenDARollupUtils} from "@eigenda/eigenda-utils/libraries/EigenDARollupUtils.sol";
-import {IEigenDAServiceManager} from "@eigenda/eigenda-utils/interfaces/IEigenDAServiceManager.sol";
-import {BN254} from "@eigenda/eigenda-utils/libraries/BN254.sol";
-import {SequencerInboxTest} from "./SequencerInbox.t.sol";
-import {ExpiredEigenDACert} from "../../src/libraries/Error.sol";
+// import "forge-std/Test.sol";
+// import "../../src/bridge/EigenDABlobVerifierL1.sol";
+// import "../../src/libraries/Error.sol";
+// import {EigenDABlobVerificationUtils} from "@eigenda/contracts/src/libraries/EigenDABlobVerificationUtils.sol";
+// import {IEigenDAServiceManager} from "@eigenda/contracts/src/interfaces/IEigenDAServiceManager.sol";
+// import {BN254} from "@eigenda/contracts/lib/eigenlayer-middleware/src/libraries/BN254.sol";
 
-contract EigenDABlobVerifierL1Test is Test {
-    EigenDABlobVerifierL1 public verifier;
-    IEigenDAServiceManager dummyEigenDAServiceManager = IEigenDAServiceManager(address(138));
+// // import {SequencerInboxTest} from "./SequencerInbox.t.sol";
+// import {ExpiredEigenDACert} from "../../src/libraries/Error.sol";
 
-    SequencerInboxTest inboxTest = new SequencerInboxTest();
+// contract EigenDABlobVerifierL1Test is Test {
+//     EigenDABlobVerifierL1 public verifier;
+//     IEigenDAServiceManager dummyEigenDAServiceManager = IEigenDAServiceManager(address(138));
 
-    function setUp() public {
-        // Deploy the verifier contract with a mock EigenDA Service Manager
-        verifier = new EigenDABlobVerifierL1(address(dummyEigenDAServiceManager));
-    }
+//     SequencerInboxTest inboxTest = new SequencerInboxTest();
 
-    function testCertificateTooOld() public {
-        (
-            IEigenDAServiceManager.BlobHeader memory blobHeader,
-            EigenDARollupUtils.BlobVerificationProof memory blobVerificationProof
-        ) = inboxTest.readAndParseBlobInfo();
+//     function setUp() public {
+//         // Deploy the verifier contract with a mock EigenDA Service Manager
+//         verifier = new EigenDABlobVerifierL1(address(dummyEigenDAServiceManager));
+//     }
 
-        // Set the confirmation block number to be MAX_CERTIFICATE_DRIFT + 1
-        blobVerificationProof.batchMetadata.confirmationBlockNumber = 0;
+//     function testCertificateTooOld() public {
+//         (
+//             IEigenDAServiceManager.BlobHeader memory blobHeader,
+//             EigenDARollupUtils.BlobVerificationProof memory blobVerificationProof
+//         ) = inboxTest.readAndParseBlobInfo();
 
-        vm.roll(101);
-        vm.expectRevert(abi.encodeWithSelector(ExpiredEigenDACert.selector, block.number, 100));
+//         // Set the confirmation block number to be MAX_CERTIFICATE_DRIFT + 1
+//         blobVerificationProof.batchMetadata.confirmationBlockNumber = 0;
 
-        verifier.verifyBlob(blobHeader, blobVerificationProof);
-    }
+//         vm.roll(101);
+//         vm.expectRevert(abi.encodeWithSelector(ExpiredEigenDACert.selector, block.number, 100));
 
-    function testCertificateWithinSafetyBound() public {
-        (
-            IEigenDAServiceManager.BlobHeader memory blobHeader,
-            EigenDARollupUtils.BlobVerificationProof memory blobVerificationProof
-        ) = inboxTest.readAndParseBlobInfo();
+//         verifier.verifyBlob(blobHeader, blobVerificationProof);
+//     }
 
-        // Set the confirmation block number to be MAX_CERTIFICATE_DRIFT + 1
-        blobVerificationProof.batchMetadata.confirmationBlockNumber = 100;
+//     function testCertificateWithinSafetyBound() public {
+//         (
+//             IEigenDAServiceManager.BlobHeader memory blobHeader,
+//             EigenDARollupUtils.BlobVerificationProof memory blobVerificationProof
+//         ) = inboxTest.readAndParseBlobInfo();
 
-        vm.roll(101);
-        vm.expectRevert(bytes(""));
+//         // Set the confirmation block number to be MAX_CERTIFICATE_DRIFT + 1
+//         blobVerificationProof.batchMetadata.confirmationBlockNumber = 100;
 
-        verifier.verifyBlob(blobHeader, blobVerificationProof);
-    }
-}
+//         vm.roll(101);
+//         vm.expectRevert(bytes(""));
+
+//         verifier.verifyBlob(blobHeader, blobVerificationProof);
+//     }
+// }

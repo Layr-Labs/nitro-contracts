@@ -85,7 +85,7 @@ def:
 
       - title: Package management
         description: |
-          Updated to latest to solidity (`v8.12.0`) to ensure compatibility with `[@eigenda-utils](https://www.npmjs.com/package/@eigenda/eigenda-utils)` library.
+          Updated to latest to solidity (`v8.12.0`) to ensure compatibility with `[@eigenda-utils](https://www.npmjs.com/package/@eigenda/contracts)` library.
           Also changed repo NPM package namespace to that of EigenDA.
 
         globs: 
