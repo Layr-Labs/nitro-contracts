@@ -146,7 +146,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     // from upstream offchainlabs/nitro-contracts. Any newly introduced storage vars
     // made in subsequent releases should result in decrementing the gap counter
     uint256[36] internal __gap;
-    IRollupManager public eigenDARollupManager;
+    IRollupManager public eigenDACertVerifier;
 
     constructor(
         uint256 _maxDataSize,
@@ -471,7 +471,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         delayProofImpl(afterDelayedMessagesRead, delayProof);
 
         // Verify that the blob was actually included before continuing
-        eigenDARollupManager.verifyBlob(cert.blobHeader, cert.blobVerificationProof);
+        eigenDACertVerifier.verifyBlob(cert.blobHeader, cert.blobVerificationProof);
         // Form the EigenDA data hash and get the time bounds
         (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) =
             formEigenDADataHash(cert, afterDelayedMessagesRead);
@@ -500,7 +500,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         if (isDelayProofRequired(afterDelayedMessagesRead)) revert DelayProofRequired();
 
         // Verify that the blob was actually included before continuing
-        eigenDARollupManager.verifyBlob(cert.blobHeader, cert.blobVerificationProof);
+        eigenDACertVerifier.verifyBlob(cert.blobHeader, cert.blobVerificationProof);
         // Form the EigenDA data hash and get the time bounds
         (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) =
             formEigenDADataHash(cert, afterDelayedMessagesRead);
@@ -966,10 +966,10 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         emit OwnerFunctionCalled(5);
     }
 
-    function setEigenDARollupManager(
-        address newRollupManager
+    function setEigenDACertVerifier(
+        address newCertVerifier
     ) external onlyRollupOwner {
-        eigenDARollupManager = IRollupManager(newRollupManager);
+        eigenDARollupManager = IRollupManager(newCertVerifier);
         emit OwnerFunctionCalled(6);
     }
 

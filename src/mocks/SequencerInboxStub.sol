@@ -5,7 +5,7 @@
 pragma solidity ^0.8.0;
 
 import "../bridge/SequencerInbox.sol";
-import "../bridge/EigenDABlobVerifierL2.sol";
+import "@eigenda/contracts/EigenDABlobVerifier.sol";
 
 import "../bridge/IEthBridge.sol";
 import {INITIALIZATION_MSG_TYPE} from "../libraries/MessageTypes.sol";

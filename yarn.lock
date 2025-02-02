@@ -39,10 +39,13 @@
   dependencies:
     "@jridgewell/trace-mapping" "0.3.9"
 
-"@eigenda/contracts@^0.0.3":
-  version "0.0.3"
-  resolved "https://registry.yarnpkg.com/@eigenda/contracts/-/contracts-0.0.3.tgz#2ebb5fcf73660f5b86da4747558146f674711b6e"
-  integrity sha512-lP+FxwKsvshCH++ZbI4sG9whAkAS9PbPskw25kcWhdJRukyMlTkW/g7hXItHHGHTNMQOZ6AX6MRdHC3hHFCNfA==
+"@eigenda/contracts@^0.1.0":
+  version "0.1.0-rc-1"
+  resolved "https://registry.yarnpkg.com/@eigenda/contracts/-/contracts-0.1.0-rc-1.tgz#700e2d860913dde67cc2cdd0d9adbd3bff47aee2"
+  integrity sha512-4Y/zldWpmelWw7oKOvn84o3JhUmsFjH3MYWyJlGPLO5cEcFvJoQwCNZnUOO6sHaGhNmuThcjrGe63YxzwldQiw==
+  dependencies:
+    "@openzeppelin/contracts" "4.7.0"
+    "@openzeppelin/contracts-upgradeable" "4.7.0"
 
 "@eslint-community/eslint-utils@^4.2.0":
   version "4.4.1"
@@ -895,10 +898,20 @@
     "@openzeppelin/contracts" "4.7.3"
     "@openzeppelin/contracts-upgradeable" "4.7.3"
 
+"@openzeppelin/contracts-upgradeable@4.7.0":
+  version "4.7.0"
+  resolved "https://registry.yarnpkg.com/@openzeppelin/contracts-upgradeable/-/contracts-upgradeable-4.7.0.tgz#6437261286879d353f6de7bf3ac8216bef8a486d"
+  integrity sha512-wO3PyoAaAV/rA77cK8H4c3SbO98QylTjfiFxyvURUZKTFLV180rnAvna1x7/Nxvt0Gqv+jt1sXKC7ygxsq8iCw==
+
 "@openzeppelin/contracts-upgradeable@4.7.3":
   version "4.7.3"
   resolved "https://registry.npmjs.org/@openzeppelin/contracts-upgradeable/-/contracts-upgradeable-4.7.3.tgz"
   integrity sha512-+wuegAMaLcZnLCJIvrVUDzA9z/Wp93f0Dla/4jJvIhijRrPabjQbZe6fWiECLaJyfn5ci9fqf9vTw3xpQOad2A==
+
+"@openzeppelin/contracts@4.7.0":
+  version "4.7.0"
+  resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-4.7.0.tgz#3092d70ea60e3d1835466266b1d68ad47035a2d5"
+  integrity sha512-52Qb+A1DdOss8QvJrijYYPSf32GUg2pGaG/yCxtaA3cu4jduouTdg4XZSMLW9op54m1jH7J8hoajhHKOPsoJFw==
 
 "@openzeppelin/contracts@4.7.3":
   version "4.7.3"
