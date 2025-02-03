@@ -118,7 +118,8 @@ export async function createRollup(
           batchPosterManager: config.batchPosterManager,
           eigenDARollupManager: eigenDARollupManager,
         }
-
+    
+    console.log(deployParams);
     const createRollupTx = await rollupCreator.createRollup(deployParams, {
       value: feeCost,
     })
