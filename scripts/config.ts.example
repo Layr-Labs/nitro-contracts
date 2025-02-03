@@ -9,7 +9,6 @@ export const isUsingFeeToken = false;
 export const config = {
   rollupConfig: {
     confirmPeriodBlocks: ethers.BigNumber.from('45818'),
-    extraChallengeTimeBlocks: ethers.BigNumber.from('200'),
     stakeToken: ethers.constants.AddressZero,
     baseStake: ethers.utils.parseEther('1'),
     wasmModuleRoot:
