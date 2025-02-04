@@ -8,6 +8,8 @@ import { ERC20, ERC20__factory, IERC20__factory } from '../build/types'
 import { sleep } from './testSetup'
 import { promises as fs } from 'fs'
 import { _isRunningOnArbitrum, verifyContract } from './deploymentUtils'
+import { AssertionStateStruct } from '../build/types/src/challengeV2/IAssertionChain'
+
 
 // 1 gwei
 const MAX_FER_PER_GAS = BigNumber.from('1000000000')
@@ -232,7 +234,7 @@ async function _getDevRollupConfig(
 ) {
   // set up owner address
   const ownerAddress =
-    process.env.OWNER_ADDRESS !== undefined ? process.env.OWNER_ADDRESS : ''
+  process.env.OWNER_ADDRESS !== undefined ? process.env.OWNER_ADDRESS : ''
 
   // set up max data size
   const _maxDataSize =
@@ -260,9 +262,9 @@ async function _getDevRollupConfig(
 
   // get wasmModuleRoot
   const wasmModuleRoot =
-    process.env.WASM_MODULE_ROOT !== undefined
-      ? process.env.WASM_MODULE_ROOT
-      : ''
+  process.env.WASM_MODULE_ROOT !== undefined
+    ? process.env.WASM_MODULE_ROOT
+    : ''
 
   // set up batch posters
   const sequencerAddress =
@@ -283,6 +285,15 @@ async function _getDevRollupConfig(
         throw new Error('Invalid address in batch posters array')
       }
     }
+  }
+
+  const genesisAssertionState: AssertionStateStruct = {
+    globalState: {
+      bytes32Vals: [ethers.constants.HashZero, ethers.constants.HashZero],
+      u64Vals: [ethers.BigNumber.from('0'), ethers.BigNumber.from('0')],
+    },
+    machineStatus: 0,
+    endHistoryRoot: ethers.constants.HashZero,
   }
 
   // set up batch poster manager
@@ -314,7 +325,7 @@ async function _getDevRollupConfig(
       chainConfig: chainConfig,
       minimumAssertionPeriod: 75,
       validatorAfkBlocks: 201600,
-      genesisAssertionState: {}, // AssertionState
+      genesisAssertionState: genesisAssertionState, // AssertionState
       genesisInboxCount: 0,
       miniStakeValues: [
         ethers.utils.parseEther('1'),
