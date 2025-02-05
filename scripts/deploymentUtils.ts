@@ -157,8 +157,6 @@ export async function deployUpgradeExecutor(signer: any): Promise<Contract> {
   )
   const connectedFactory: ContractFactory = upgradeExecutorFac.connect(signer)
   const upgradeExecutor = await connectedFactory.deploy()
-  await upgradeExecutor.deployTransaction.wait()
-  console.log('Upgrade executor deployed at', upgradeExecutor.address)
   return upgradeExecutor
 }
 
