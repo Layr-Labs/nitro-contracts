@@ -4,21 +4,21 @@ import { hoursToBlocks } from './utils'
 
 export const local: Config = {
   contracts: {
-    bridge: '0x5eCF728ffC5C5E802091875f96281B5aeECf6C49',
+    bridge: '0x7DD3F2a3fAeF3B9F2364c335163244D3388Feb83',
     inbox: '0x9f8c1c641336A371031499e3c362e40d58d0f254',
     outbox: '0x50143333b44Ea46255BEb67255C9Afd35551072F',
     rollup: '0x3A052fF29EAFdd226Df1C4824d51A56a8Ad5D7A4',
-    sequencerInbox: '0x18d19C5d3E685f5be5b9C86E097f0E439285D216',
-    rollupEventInbox: '0x0e73faf857e1ca53e700856fcf19f31f920a1e3c',
-    upgradeExecutor: '0x513d9f96d4d0563debae8a0dc307ea0e46b10ed7',
+    sequencerInbox: '0x60571c8F4B52954A24A5E7306d435E951528d963',
+    rollupEventInbox: '0x4e5b65FB12d4165E22f5861D97A33BA45c006114',
+    upgradeExecutor: '0xa80482dDdB7F8B9DcC24A1cd13488E3379a14568',
     excessStakeReceiver: '0xC3124dD1FA0e5D6135c25279760DBF9d9286467B',
   },
   proxyAdmins: {
-    outbox: '0x2a1f38c9097e7883570e0b02bfbe6869cc25d8a3',
-    inbox: '0x2a1f38c9097e7883570e0b02bfbe6869cc25d8a3',
-    bridge: '0x2a1f38c9097e7883570e0b02bfbe6869cc25d8a3',
-    rei: '0x2a1f38c9097e7883570e0b02bfbe6869cc25d8a3',
-    seqInbox: '0x2a1f38c9097e7883570e0b02bfbe6869cc25d8a3',
+    outbox: '0x45f46662EE4e19B7e714F829b07b6abdbD291Ca8',
+    inbox: '0x58feD87D5DD9B1c2FA78f8443F8D521b6720f967',
+    bridge: '0xBe22437ebc73b587ae55989C1cc3D0A92aED51E9',
+    rei: '0xafe0cBd8DC4D70A22D57C365DCA009c6e001E39c',
+    seqInbox: '0xFAEFd51010919ed44982D1C3a2133E2761DC8c67',
   },
   settings: {
     challengeGracePeriodBlocks: 10,
