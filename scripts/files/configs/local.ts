@@ -10,7 +10,7 @@ export const local: Config = {
     rollup: '0xBd4Cc2f69fFd94b5F62DCc5a27c2eb805093FC0d',
     sequencerInbox: '0x60571c8F4B52954A24A5E7306d435E951528d963',
     rollupEventInbox: '0x4e5b65FB12d4165E22f5861D97A33BA45c006114',
-    upgradeExecutor: '0xa80482dDdB7F8B9DcC24A1cd13488E3379a14568',
+    upgradeExecutor: '0xd0155e735c9dffb5bf0e6d3452650338827c4192',
     excessStakeReceiver: '0xC3124dD1FA0e5D6135c25279760DBF9d9286467B',
   },
   proxyAdmins: {
