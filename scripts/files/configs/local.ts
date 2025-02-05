@@ -5,7 +5,7 @@ import { hoursToBlocks } from './utils'
 export const local: Config = {
   contracts: {
     bridge: '0x7DD3F2a3fAeF3B9F2364c335163244D3388Feb83',
-    inbox: '0x9f8c1c641336A371031499e3c362e40d58d0f254',
+    inbox: '0xb075b82c7a23e0994dF4793422A1f03Dbcf9136F',
     outbox: '0x9dF23e34ac13A7145ebA1164660E701839197B1b',
     rollup: '0xBd4Cc2f69fFd94b5F62DCc5a27c2eb805093FC0d',
     sequencerInbox: '0x60571c8F4B52954A24A5E7306d435E951528d963',
