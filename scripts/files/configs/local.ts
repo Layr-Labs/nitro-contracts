@@ -24,7 +24,7 @@ export const local: Config = {
     challengeGracePeriodBlocks: 10,
     confirmPeriodBlocks: 100,
     challengePeriodBlocks: 110,
-    stakeToken: '0x408Da76E87511429485C32E4Ad647DD14823Fdc4',
+    stakeToken: '0x8D771f053023F3b10f6d5364168BcB4449C14AA1',
     stakeAmt: parseEther('1'),
     miniStakeAmounts: [
       parseEther('6'),
