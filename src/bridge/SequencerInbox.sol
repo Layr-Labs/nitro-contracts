@@ -137,7 +137,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     // made in subsequent releases should result in decrementing the gap counter
     uint256[38] internal __gap;
     IEigenDACertVerifier public eigenDACertVerifier;
-    uint256 internal constant MAX_EIGENDA_CERTIFICATE_DRIFT = 100;
+    uint256 internal constant MAX_EIGENDA_CERTIFICATE_DRIFT = 10_000;
 
     constructor(
         uint256 _maxDataSize,
