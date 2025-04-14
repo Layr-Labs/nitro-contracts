@@ -96,7 +96,7 @@ interface ISequencerInbox is IDelayedMessageProvider {
     ///      then the batch data is an eigenDA message
     ///      See: https://github.com/Layr-Labs/nitro/blob/2ad088cb5943ec50ed8b521c4681561817a602c5/das/eigenda/eigenda.go
     // solhint-disable-next-line func-name-mixedcase
-    function EIGENDA_MESSAGE_HEADER_FLAG() external view returns (bytes1);
+    function EIGENDA_V1_MSG_HEADER_FLAG() external view returns (bytes1);
 
     function rollup() external view returns (IOwnable);
 
