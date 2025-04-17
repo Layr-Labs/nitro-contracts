@@ -113,7 +113,7 @@ module.exports = {
       },
     },
     mainnet: {
-      url: 'https://eth-mainnet.g.alchemy.com/v2/l-hYL8GswPL7hkLhU1EZVxWXHqLo0AmO',
+      url: 'https://mainnet.infura.io/v3/' + process.env['INFURA_KEY'],
       accounts: process.env['MAINNET_PRIVKEY']
         ? [process.env['MAINNET_PRIVKEY']]
         : [],
@@ -173,7 +173,7 @@ module.exports = {
         : [],
     },
     base: {
-      url: 'https://base-mainnet.g.alchemy.com/v2/l-hYL8GswPL7hkLhU1EZVxWXHqLo0AmO',
+      url: 'https://mainnet.base.org',
       accounts: process.env['MAINNET_PRIVKEY']
         ? [process.env['MAINNET_PRIVKEY']]
         : [],
