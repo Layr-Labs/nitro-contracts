@@ -84,6 +84,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     /// @inheritdoc ISequencerInbox
     bytes1 public constant ZERO_HEAVY_MESSAGE_HEADER_FLAG = 0x20;
 
+    /// @inheritdoc ISequencerInbox
     bytes1 public constant EIGENDA_V2_MSG_HEADER_FLAG = 0x69;
 
     // GAS_PER_BLOB from EIP-4844
