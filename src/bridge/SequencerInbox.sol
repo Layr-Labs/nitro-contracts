@@ -84,6 +84,9 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     /// @inheritdoc ISequencerInbox
     bytes1 public constant ZERO_HEAVY_MESSAGE_HEADER_FLAG = 0x20;
 
+    /// @inheritdoc ISequencerInbox
+    bytes1 public constant EIGENDA_V2_MSG_HEADER_FLAG = 0x69;
+
     // GAS_PER_BLOB from EIP-4844
     uint256 internal constant GAS_PER_BLOB = 1 << 17;
 
@@ -130,7 +133,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     bool public immutable isUsingFeeToken;
 
     /// @inheritdoc ISequencerInbox
-    bytes1 public constant EIGENDA_MESSAGE_HEADER_FLAG = 0xed;
+    bytes1 public constant EIGENDA_V1_MSG_HEADER_FLAG = 0xed;
 
     // gap used to ensure forward compatiblity with newly introduced storage variables
     // from upstream offchainlabs/nitro-contracts. Any newly introduced storage vars
@@ -667,6 +670,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     /// @param  headerByte The first byte in the calldata
     function isValidCallDataFlag(bytes1 headerByte) internal pure returns (bool) {
         return
+            headerByte == EIGENDA_V2_MSG_HEADER_FLAG ||
             headerByte == BROTLI_MESSAGE_HEADER_FLAG ||
             headerByte == DAS_MESSAGE_HEADER_FLAG ||
             (headerByte == (DAS_MESSAGE_HEADER_FLAG | TREE_DAS_MESSAGE_HEADER_FLAG)) ||
@@ -752,7 +756,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         );
 
         return (
-            keccak256(bytes.concat(header, EIGENDA_MESSAGE_HEADER_FLAG, abi.encode(cert))),
+            keccak256(bytes.concat(header, EIGENDA_V1_MSG_HEADER_FLAG, abi.encode(cert))),
             timeBounds
         );
     }
