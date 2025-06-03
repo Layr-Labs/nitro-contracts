@@ -664,10 +664,8 @@ contract SequencerInboxTest is Test {
         vm.prank(dummyInbox);
         bridge.enqueueDelayedMessage(delayedInboxKind, delayedInboxSender, messageDataHash);
 
-        (
-            BlobHeader memory blobHeader,
-            BlobVerificationProof memory blobVerificationProof
-        ) = readAndParseBlobInfo();
+        (BlobHeader memory blobHeader, BlobVerificationProof memory blobVerificationProof) =
+            readAndParseBlobInfo();
         ISequencerInbox.EigenDACert memory cert = ISequencerInbox.EigenDACert({
             blobHeader: blobHeader,
             blobVerificationProof: blobVerificationProof
@@ -708,10 +706,8 @@ contract SequencerInboxTest is Test {
         vm.prank(dummyInbox);
         bridge.enqueueDelayedMessage(delayedInboxKind, delayedInboxSender, messageDataHash);
 
-        (
-            BlobHeader memory blobHeader,
-            BlobVerificationProof memory blobVerificationProof
-        ) = readAndParseBlobInfo();
+        (BlobHeader memory blobHeader, BlobVerificationProof memory blobVerificationProof) =
+            readAndParseBlobInfo();
         ISequencerInbox.EigenDACert memory cert = ISequencerInbox.EigenDACert({
             blobHeader: blobHeader,
             blobVerificationProof: blobVerificationProof
@@ -756,10 +752,8 @@ contract SequencerInboxTest is Test {
         vm.prank(dummyInbox);
         bridge.enqueueDelayedMessage(delayedInboxKind, delayedInboxSender, messageDataHash);
 
-        (
-            BlobHeader memory blobHeader,
-            BlobVerificationProof memory blobVerificationProof
-        ) = readAndParseBlobInfo();
+        (BlobHeader memory blobHeader, BlobVerificationProof memory blobVerificationProof) =
+            readAndParseBlobInfo();
         ISequencerInbox.EigenDACert memory cert = ISequencerInbox.EigenDACert({
             blobHeader: blobHeader,
             blobVerificationProof: blobVerificationProof
@@ -1100,12 +1094,10 @@ contract SequencerInboxTest is Test {
 
         BatchHeader memory batchHeader = BatchHeader({
             blobHeadersRoot: vm.parseJsonBytes32(
-                json,
-                ".blob_info.blob_verification_proof.batch_metadata.batch_header.batch_root"
+                json, ".blob_info.blob_verification_proof.batch_metadata.batch_header.batch_root"
             ),
             quorumNumbers: vm.parseJsonBytes(
-                json,
-                ".blob_info.blob_verification_proof.batch_metadata.batch_header.quorum_numbers"
+                json, ".blob_info.blob_verification_proof.batch_metadata.batch_header.quorum_numbers"
             ),
             signedStakeForQuorums: vm.parseJsonBytes(
                 json,
@@ -1124,8 +1116,7 @@ contract SequencerInboxTest is Test {
         BatchMetadata memory batchMetadata = BatchMetadata({
             batchHeader: batchHeader,
             signatoryRecordHash: vm.parseJsonBytes32(
-                json,
-                ".blob_info.blob_verification_proof.batch_metadata.signatory_record_hash"
+                json, ".blob_info.blob_verification_proof.batch_metadata.signatory_record_hash"
             ),
             confirmationBlockNumber: uint32(
                 uint256(
@@ -1146,13 +1137,9 @@ contract SequencerInboxTest is Test {
             ),
             batchMetadata: batchMetadata,
             inclusionProof: vm.parseJsonBytes(
-                json,
-                ".blob_info.blob_verification_proof.inclusion_proof"
+                json, ".blob_info.blob_verification_proof.inclusion_proof"
             ),
-            quorumIndices: vm.parseJsonBytes(
-                json,
-                ".blob_info.blob_verification_proof.quorum_indexes"
-            )
+            quorumIndices: vm.parseJsonBytes(json, ".blob_info.blob_verification_proof.quorum_indexes")
         });
         console.logBytes32(keccak256(abi.encode(blobHeader)));
         return (blobHeader, blobVerificationProof);

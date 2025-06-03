@@ -145,12 +145,9 @@ contract RollupCreator is Ownable {
      *          - eigenDACertVerifier The address of the EigenDABlobVerifier    contract
      * @return The address of the newly created rollup
      */
-    function createRollup(RollupDeploymentParams memory deployParams)
-        public
-        payable
-        onlyUnfrozen
-        returns (address)
-    {
+    function createRollup(
+        RollupDeploymentParams memory deployParams
+    ) public payable onlyUnfrozen returns (address) {
         {
             // Make sure the immutable maxDataSize is as expected
             (
