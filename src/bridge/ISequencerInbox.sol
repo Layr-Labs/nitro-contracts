@@ -320,7 +320,9 @@ interface ISequencerInbox is IDelayedMessageProvider {
      * @notice Set the rollup manager contract address
      * @param newCertVerifier the new rollup manager contract address
      */
-    function setEigenDACertVerifier(address newCertVerifier) external;
+    function setEigenDACertVerifier(
+        address newCertVerifier
+    ) external;
 
     /**
      * @notice Set max delay for sequencer inbox

@@ -472,19 +472,23 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     //
     //  (B) integrity: A cert must be correct regarding its (quorums, thresholds) & successfully
     //                 correlate to an EigenDA batch merkle root persisted on the service manager
-    function verifyEigenDACert(EigenDACert calldata cert) internal view {
+    function verifyEigenDACert(
+        EigenDACert calldata cert
+    ) internal view {
         // If cert verifier is set then verify that the blob was actually included before continuing
         // This allows for verification to be disabled in chain environments where it cannot be supported
         // Ie L3s || L2s that don't settle to Ethereum
         if (eigenDACertVerifier != IEigenDACertVerifier(address(0))) {
             if (
-                (cert.blobVerificationProof.batchMetadata.confirmationBlockNumber +
-                    MAX_EIGENDA_CERTIFICATE_DRIFT) < block.number
+                (
+                    cert.blobVerificationProof.batchMetadata.confirmationBlockNumber
+                        + MAX_EIGENDA_CERTIFICATE_DRIFT
+                ) < block.number
             ) {
                 revert ExpiredEigenDACert(
                     block.number,
-                    cert.blobVerificationProof.batchMetadata.confirmationBlockNumber +
-                    MAX_EIGENDA_CERTIFICATE_DRIFT
+                    cert.blobVerificationProof.batchMetadata.confirmationBlockNumber
+                        + MAX_EIGENDA_CERTIFICATE_DRIFT
                 );
             }
             eigenDACertVerifier.verifyDACertV1(cert.blobHeader, cert.blobVerificationProof);
@@ -505,10 +509,8 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         verifyEigenDACert(cert);
 
         // Form the EigenDA data hash and get the time bounds
-        (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) = formEigenDADataHash(
-            cert,
-            afterDelayedMessagesRead
-        );
+        (bytes32 dataHash, IBridge.TimeBounds memory timeBounds) =
+            formEigenDADataHash(cert, afterDelayedMessagesRead);
 
         ISequencerInbox.SequenceMetadata memory metadata = ISequencerInbox.SequenceMetadata({
             sequenceNumber: sequenceNumber,
@@ -526,12 +528,8 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         bytes32 dataHash,
         IBridge.TimeBounds memory timeBounds
     ) internal {
-        (
-            uint256 seqMessageIndex,
-            bytes32 beforeAcc,
-            bytes32 delayedAcc,
-            bytes32 afterAcc
-        ) = addSequencerL2BatchImpl(
+        (uint256 seqMessageIndex, bytes32 beforeAcc, bytes32 delayedAcc, bytes32 afterAcc) =
+        addSequencerL2BatchImpl(
             dataHash,
             sequenceMetadata.afterDelayedMessagesRead,
             0,
@@ -777,9 +775,8 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         ISequencerInbox.EigenDACert calldata cert,
         uint256 afterDelayedMessagesRead
     ) internal view returns (bytes32, IBridge.TimeBounds memory) {
-        (bytes memory header, IBridge.TimeBounds memory timeBounds) = packHeader(
-            afterDelayedMessagesRead
-        );
+        (bytes memory header, IBridge.TimeBounds memory timeBounds) =
+            packHeader(afterDelayedMessagesRead);
 
         return (
             keccak256(bytes.concat(header, EIGENDA_MESSAGE_HEADER_FLAG, abi.encode(cert))),
@@ -1019,7 +1016,9 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         emit BufferConfigSet(bufferConfig_);
     }
 
-    function setEigenDACertVerifier(address newCertVerifier) external onlyRollupOwner {
+    function setEigenDACertVerifier(
+        address newCertVerifier
+    ) external onlyRollupOwner {
         eigenDACertVerifier = IEigenDACertVerifier(newCertVerifier);
         emit OwnerFunctionCalled(6);
     }
