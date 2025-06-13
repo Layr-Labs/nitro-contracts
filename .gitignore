@@ -14,3 +14,4 @@ lcov.info
 output_directory
 ## Fork diff index
 index.html
+.yarn/install-state.gz
