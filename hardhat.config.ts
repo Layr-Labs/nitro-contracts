@@ -184,6 +184,9 @@ module.exports = {
         ? [process.env['DEVNET_PRIVKEY']]
         : [],
     },
+    custom: {
+      url: process.env['CUSTOM_RPC_URL'] || 'N/A',
+    },
     geth: {
       url: 'http://localhost:8545',
     },
