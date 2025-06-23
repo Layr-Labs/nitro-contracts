@@ -11,6 +11,7 @@ dotenv.config()
 
 async function main() {
   const l1Rpc = ethers.provider
+  console.log('Using L1 RPC:', l1Rpc.connection.url);
 
   const l1PrivKey = process.env.L1_PRIV_KEY
   if (!l1PrivKey) {
