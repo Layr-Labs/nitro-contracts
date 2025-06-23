@@ -103,6 +103,7 @@ export const validateConfig = async (
   l1Rpc: providers.Provider
 ) => {
   // check all config.contracts
+  console.log("config.contracts:", config.contracts);
   if ((await l1Rpc.getCode(config.contracts.rollup)).length <= 2) {
     throw new Error('rollup address is not a contract')
   }
