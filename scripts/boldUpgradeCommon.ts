@@ -103,6 +103,8 @@ export const validateConfig = async (
   l1Rpc: providers.Provider
 ) => {
   // check all config.contracts
+  const code = await l1Rpc.getCode(config.contracts.rollup);
+  console.log('Bridge bytecode:', code)
   console.log("config.contracts:", config.contracts);
   console.log(l1Rpc);
   console.log("rollup address length",  await l1Rpc.getCode(config.contracts.rollup).length);
