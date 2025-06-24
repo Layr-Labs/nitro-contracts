@@ -10,7 +10,7 @@ import path from 'path'
 dotenv.config()
 
 async function main() {
-  const l1Rpc = ethers.provider
+  const l1Rpc = new ethers.providers.JsonRpcProvider("http://geth:8545");
   console.log('Using L1 RPC:', l1Rpc.connection.url);
 
   const l1PrivKey = process.env.L1_PRIV_KEY
