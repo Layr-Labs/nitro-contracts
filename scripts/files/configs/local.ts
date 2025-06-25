@@ -4,14 +4,14 @@ import { hoursToBlocks } from './utils'
 
 export const local: Config = {
   contracts: {
-    bridge: '0x5eCF728ffC5C5E802091875f96281B5aeECf6C49',
-    inbox: '0x9f8c1c641336A371031499e3c362e40d58d0f254',
-    outbox: '0x50143333b44Ea46255BEb67255C9Afd35551072F',
-    rollup: '0xe5Ab92C74CD297F0a1F2914cE37204FC5Bc4e82D',
-    sequencerInbox: '0x18d19C5d3E685f5be5b9C86E097f0E439285D216',
-    rollupEventInbox: '0x0e73faf857e1ca53e700856fcf19f31f920a1e3c',
-    upgradeExecutor: '0x513d9f96d4d0563debae8a0dc307ea0e46b10ed7',
-    excessStakeReceiver: '0xC3124dD1FA0e5D6135c25279760DBF9d9286467B',
+    bridge: '0x7DD3F2a3fAeF3B9F2364c335163244D3388Feb83',
+    inbox: '0x4e5b65FB12d4165E22f5861D97A33BA45c006114',
+    outbox: '0x9f1ece352cE8D540738Ccb38aA3fA3d44D00a259',
+    rollup: '0x6C960Ff944a6283cc50F03041bbA724b17FAa640',
+    sequencerInbox: '0x60571c8F4B52954A24A5E7306d435E951528d963',
+    rollupEventInbox: '0x9dF23e34ac13A7145ebA1164660E701839197B1b',
+    upgradeExecutor: '0x82A3c114b40ecF1FC34745400A1B9B9115c33d31',
+    excessStakeReceiver: '0xC3124dD1FA0e5D6135c25279760DBF9d9286467B', // left unchanged
   },
   proxyAdmins: {
     outbox: '0x2a1f38c9097e7883570e0b02bfbe6869cc25d8a3',
@@ -34,7 +34,7 @@ export const local: Config = {
       parseEther('2'),
       parseEther('1'),
     ],
-    chainId: 412346,
+    chainId: 412346, // unchanged
     minimumAssertionPeriod: 15,
     validatorAfkBlocks: 201600,
     disableValidatorWhitelist: true,
@@ -42,13 +42,13 @@ export const local: Config = {
     bigStepLeafSize: 512,
     smallStepLeafSize: 128,
     numBigStepLevel: 4,
-    maxDataSize: 117964,
+    maxDataSize: 117964, // confirmed in logs
     isDelayBufferable: true,
     bufferConfig: {
-      max: 2 ** 32, // effectively disableing and will be enabled later
-      threshold: 2 ** 32, // effectively disableing and will be enabled later
+      max: 2 ** 32, // effectively disabling and will be enabled later
+      threshold: 2 ** 32, // effectively disabling and will be enabled later
       replenishRateInBasis: 500,
     },
   },
-  validators: ['0x139A0b6B1Dd1e7F912361B32A09cAD89e82F29db'],
+  validators: ['0x139A0b6B1Dd1e7F912361B32A09cAD89e82F29db'], // unchanged
 }
