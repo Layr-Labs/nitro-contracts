@@ -102,117 +102,67 @@ export const validateConfig = async (
   config: Config,
   l1Rpc: providers.Provider
 ) => {
-  // check all config.contracts
-  if ((await l1Rpc.getCode(config.contracts.rollup)).length <= 2) {
-    throw new Error('rollup address is not a contract')
-  }
-  if ((await l1Rpc.getCode(config.contracts.bridge)).length <= 2) {
-    throw new Error('bridge address is not a contract')
-  }
-  if ((await l1Rpc.getCode(config.contracts.sequencerInbox)).length <= 2) {
-    throw new Error('sequencerInbox address is not a contract')
-  }
-  if ((await l1Rpc.getCode(config.contracts.rollupEventInbox)).length <= 2) {
-    throw new Error('rollupEventInbox address is not a contract')
-  }
-  if ((await l1Rpc.getCode(config.contracts.outbox)).length <= 2) {
-    throw new Error('outbox address is not a contract')
-  }
-  if ((await l1Rpc.getCode(config.contracts.inbox)).length <= 2) {
-    throw new Error('inbox address is not a contract')
-  }
-  if ((await l1Rpc.getCode(config.contracts.upgradeExecutor)).length <= 2) {
-    throw new Error('upgradeExecutor address is not a contract')
-  }
-  if (!isAddress(config.contracts.excessStakeReceiver)) {
-    throw new Error('excessStakeReceiver is not a valid address')
-  }
-
-  // check all the config.proxyAdmins exist
-  if ((await l1Rpc.getCode(config.proxyAdmins.outbox)).length <= 2) {
-    throw new Error('outbox proxy admin address is not a contract')
-  }
-  if ((await l1Rpc.getCode(config.proxyAdmins.inbox)).length <= 2) {
-    throw new Error('inbox proxy admin address is not a contract')
-  }
-  if ((await l1Rpc.getCode(config.proxyAdmins.bridge)).length <= 2) {
-    throw new Error('bridge proxy admin address is not a contract')
-  }
-  if ((await l1Rpc.getCode(config.proxyAdmins.rei)).length <= 2) {
-    throw new Error('rei proxy admin address is not a contract')
-  }
-  if ((await l1Rpc.getCode(config.proxyAdmins.seqInbox)).length <= 2) {
-    throw new Error('seqInbox proxy admin address is not a contract')
-  }
-
-  // check all the settings exist
-  // Note: `challengeGracePeriodBlocks` and `validatorAfkBlocks` can both be 0
-  if (config.settings.confirmPeriodBlocks === 0) {
-    throw new Error('confirmPeriodBlocks is 0')
-  }
-  if (config.settings.challengePeriodBlocks === 0) {
-    throw new Error('challengePeriodBlocks is 0')
-  }
-  if ((await l1Rpc.getCode(config.settings.stakeToken)).length <= 2) {
-    throw new Error('stakeToken address is not a contract')
-  }
-  if (config.settings.chainId === 0) {
-    throw new Error('chainId is 0')
-  }
-  if (config.settings.minimumAssertionPeriod === 0) {
-    throw new Error('minimumAssertionPeriod is 0')
-  }
-  if (config.settings.blockLeafSize === 0) {
-    throw new Error('blockLeafSize is 0')
-  }
-  if (config.settings.bigStepLeafSize === 0) {
-    throw new Error('bigStepLeafSize is 0')
-  }
-  if (config.settings.smallStepLeafSize === 0) {
-    throw new Error('smallStepLeafSize is 0')
-  }
-  if (config.settings.numBigStepLevel === 0) {
-    throw new Error('numBigStepLevel is 0')
-  }
-  if (config.settings.maxDataSize === 0) {
-    throw new Error('maxDataSize is 0')
-  }
-
-  // check stake token amount
-  const stakeAmount = BigNumber.from(config.settings.stakeAmt)
-  if (stakeAmount.eq(0)) {
-    throw new Error('stakeAmt is 0')
-  }
-
-  // check mini stakes
-  const miniStakeAmounts = config.settings.miniStakeAmounts.map(BigNumber.from)
-  if (miniStakeAmounts.length !== config.settings.numBigStepLevel + 2) {
-    throw new Error('miniStakeAmts length is not numBigStepLevel + 2')
-  }
-
-  // check validators and whitelist
-  if (!config.settings.disableValidatorWhitelist) {
-    if (config.validators.length === 0) {
-      throw new Error('no validators')
+  const checkCode = async (label: string, addr: string) => {
+    const code = await l1Rpc.getCode(addr);
+    console.log(`${label} (${addr}): code length = ${code?.length ?? 'undefined'}`);
+    if (!code || code.length <= 2) {
+      throw new Error(`${label} address is not a contract`);
     }
+  };
 
+  // Check main contracts
+  await checkCode('rollup', config.contracts.rollup);
+  await checkCode('bridge', config.contracts.bridge);
+  await checkCode('sequencerInbox', config.contracts.sequencerInbox);
+  await checkCode('rollupEventInbox', config.contracts.rollupEventInbox);
+  await checkCode('outbox', config.contracts.outbox);
+  await checkCode('inbox', config.contracts.inbox);
+  await checkCode('upgradeExecutor', config.contracts.upgradeExecutor);
+
+  if (!isAddress(config.contracts.excessStakeReceiver)) {
+    throw new Error('excessStakeReceiver is not a valid address');
+  }
+
+  // Check proxy admins
+  await checkCode('proxyAdmins.outbox', config.proxyAdmins.outbox);
+  await checkCode('proxyAdmins.inbox', config.proxyAdmins.inbox);
+  await checkCode('proxyAdmins.bridge', config.proxyAdmins.bridge);
+  await checkCode('proxyAdmins.rei', config.proxyAdmins.rei);
+  await checkCode('proxyAdmins.seqInbox', config.proxyAdmins.seqInbox);
+
+  // Check settings
+  if (config.settings.confirmPeriodBlocks === 0) throw new Error('confirmPeriodBlocks is 0');
+  if (config.settings.challengePeriodBlocks === 0) throw new Error('challengePeriodBlocks is 0');
+  await checkCode('stakeToken', config.settings.stakeToken);
+  if (config.settings.chainId === 0) throw new Error('chainId is 0');
+  if (config.settings.minimumAssertionPeriod === 0) throw new Error('minimumAssertionPeriod is 0');
+  if (config.settings.blockLeafSize === 0) throw new Error('blockLeafSize is 0');
+  if (config.settings.bigStepLeafSize === 0) throw new Error('bigStepLeafSize is 0');
+  if (config.settings.smallStepLeafSize === 0) throw new Error('smallStepLeafSize is 0');
+  if (config.settings.numBigStepLevel === 0) throw new Error('numBigStepLevel is 0');
+  if (config.settings.maxDataSize === 0) throw new Error('maxDataSize is 0');
+
+  const stakeAmount = BigNumber.from(config.settings.stakeAmt);
+  if (stakeAmount.eq(0)) throw new Error('stakeAmt is 0');
+
+  const miniStakeAmounts = config.settings.miniStakeAmounts.map(BigNumber.from);
+  if (miniStakeAmounts.length !== config.settings.numBigStepLevel + 2) {
+    throw new Error('miniStakeAmts length is not numBigStepLevel + 2');
+  }
+
+  if (!config.settings.disableValidatorWhitelist) {
+    if (config.validators.length === 0) throw new Error('no validators');
     for (let i = 0; i < config.validators.length; i++) {
       if (!isAddress(config.validators[i])) {
-        throw new Error(`Invalid address for validator ${i}`)
+        throw new Error(`Invalid address for validator ${i}`);
       }
     }
   }
 
-  // check delaybuffer settings
   if (config.settings.isDelayBufferable) {
-    if (config.settings.bufferConfig.max === 0) {
-      throw new Error('bufferConfig.max is 0')
-    }
-    if (config.settings.bufferConfig.threshold === 0) {
-      throw new Error('bufferConfig.threshold is 0')
-    }
-    if (config.settings.bufferConfig.replenishRateInBasis === 0) {
-      throw new Error('bufferConfig.replenishRateInBasis is 0')
-    }
+    const buf = config.settings.bufferConfig;
+    if (buf.max === 0) throw new Error('bufferConfig.max is 0');
+    if (buf.threshold === 0) throw new Error('bufferConfig.threshold is 0');
+    if (buf.replenishRateInBasis === 0) throw new Error('bufferConfig.replenishRateInBasis is 0');
   }
-}
+};
