@@ -34,7 +34,7 @@ export const local: Config = {
       parseEther('2'),
       parseEther('1'),
     ],
-    chainId: 412346, // unchanged
+    chainId: 1337, // unchanged
     minimumAssertionPeriod: 15,
     validatorAfkBlocks: 201600,
     disableValidatorWhitelist: true,
