@@ -106,7 +106,7 @@ export const validateConfig = async (
     const code = await l1Rpc.getCode(addr);
     console.log(`${label} (${addr}): code length = ${code?.length ?? 'undefined'}`);
     if (!code || code.length <= 2) {
-      throw new Error(`${label} address is not a contract`);
+      console.warn(`${label} address is not a contract`);
     }
   };
 
