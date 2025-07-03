@@ -144,7 +144,10 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     bool public immutable isDelayBufferable;
 
     /// @inheritdoc ISequencerInbox
-    bytes1 public constant EIGENDA_MESSAGE_HEADER_FLAG = 0xed;
+    bytes1 public constant EIGENDA_MESSAGE_HEADER_FLAG_V1 = 0xed;
+
+    /// @inheritdoc ISequencerInbox
+    bytes1 public constant EIGENDA_MESSAGE_HEADER_FLAG_V2 = 0x69;
 
     // TODO (litt3): fix the gap
     // gap used to ensure forward compatiblity with newly introduced storage variables
@@ -705,7 +708,8 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
     function isValidCallDataFlag(
         bytes1 headerByte
     ) internal pure returns (bool) {
-        return headerByte == BROTLI_MESSAGE_HEADER_FLAG || headerByte == DAS_MESSAGE_HEADER_FLAG
+        return headerByte == EIGENDA_MESSAGE_HEADER_FLAG_V2 
+            || headerByte == BROTLI_MESSAGE_HEADER_FLAG || headerByte == DAS_MESSAGE_HEADER_FLAG
             || (headerByte == (DAS_MESSAGE_HEADER_FLAG | TREE_DAS_MESSAGE_HEADER_FLAG))
             || headerByte == ZERO_HEAVY_MESSAGE_HEADER_FLAG;
     }
@@ -779,7 +783,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
             packHeader(afterDelayedMessagesRead);
 
         return (
-            keccak256(bytes.concat(header, EIGENDA_MESSAGE_HEADER_FLAG, abi.encode(cert))),
+            keccak256(bytes.concat(header, EIGENDA_MESSAGE_HEADER_FLAG_V1, abi.encode(cert))),
             timeBounds
         );
     }
@@ -1016,6 +1020,7 @@ contract SequencerInbox is DelegateCallAware, GasRefundEnabled, ISequencerInbox 
         emit BufferConfigSet(bufferConfig_);
     }
 
+    // TODO: Rename to setEigenDAV1CertVerifier
     function setEigenDACertVerifier(
         address newCertVerifier
     ) external onlyRollupOwner {
