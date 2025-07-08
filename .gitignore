@@ -15,7 +15,3 @@ lcov.info
 output_directory
 ## Fork diff index
 index.html
-
-# Yarn v2+ cache files
-.yarn/install-state.gz
-.yarn/cache/
