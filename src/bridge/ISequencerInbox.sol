@@ -125,12 +125,6 @@ interface ISequencerInbox is IDelayedMessageProvider {
     // solhint-disable-next-line func-name-mixedcase
     function ZERO_HEAVY_MESSAGE_HEADER_FLAG() external view returns (bytes1);
 
-    /// @dev If the first data byte after the header has this bit set,
-    ///      then the batch data is an eigenDA message
-    ///      See: https://github.com/Layr-Labs/nitro/blob/2ad088cb5943ec50ed8b521c4681561817a602c5/das/eigenda/eigenda.go
-    // solhint-disable-next-line func-name-mixedcase
-    function EIGENDA_MESSAGE_HEADER_FLAG() external view returns (bytes1);
-
     function rollup() external view returns (IOwnable);
 
     function isBatchPoster(
@@ -159,8 +153,13 @@ interface ISequencerInbox is IDelayedMessageProvider {
     ///         and the batch poster won't get reimbursed.
     function feeTokenPricer() external view returns (IFeeTokenPricer);
 
-    function eigenDACertVerifier() external view returns (IEigenDACertVerifier);
+    function EIGENDA_V1_MSG_HEADER_FLAG() external view returns (bytes1);
 
+    /// @dev If the first data byte after the header has this bit set,
+    ///      then the batch data is an EigenDA v2 protocol message type
+    // solhint-disable-next-line func-name-mixedcase
+    function EIGENDA_V2_MSG_HEADER_FLAG() external view returns (bytes1);
+    
     struct EigenDACert {
         BlobVerificationProof blobVerificationProof;
         BlobHeader blobHeader;
