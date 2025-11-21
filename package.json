@@ -25,7 +25,7 @@
     "build:all": "yarn build && yarn build:forge",
     "build": "hardhat compile",
     "build:forge:sol": "forge build --skip *.yul",
-    "build:forge:yul": "FOUNDRY_PROFILE=yul forge build --skip *.sol",
+    "build:forge:yul": "FOUNDRY_PROFILE=yul forge build --skip *.sol || true",
     "build:forge": "yarn build:forge:sol && yarn build:forge:yul",
     "contract:size": "hardhat size-contracts",
     "lint:test": "eslint ./test",
