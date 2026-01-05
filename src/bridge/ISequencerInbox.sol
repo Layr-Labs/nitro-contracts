@@ -125,6 +125,12 @@ interface ISequencerInbox is IDelayedMessageProvider {
     // solhint-disable-next-line func-name-mixedcase
     function ZERO_HEAVY_MESSAGE_HEADER_FLAG() external view returns (bytes1);
 
+    /// @dev If the first data byte after the header is 0x01,
+    ///      then the batch data contains an ALT DA (Alternative Data Availability) certificate
+    ///      This is used for CustomDA providers implementing the ALT DA spec (e.g., ReferenceDA)
+    // solhint-disable-next-line func-name-mixedcase
+    function DAC_CERTIFICATE_MESSAGE_HEADER_FLAG() external view returns (bytes1);
+
     /// @dev If the first data byte after the header has this bit set,
     ///      then the batch data is an eigenDA message
     ///      See: https://github.com/Layr-Labs/nitro/blob/2ad088cb5943ec50ed8b521c4681561817a602c5/das/eigenda/eigenda.go
