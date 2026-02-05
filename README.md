@@ -1,3 +1,8 @@
+> [!CAUTION]
+> **DEPRECATED - This repository is no longer supported or maintained.**
+>
+> This repository has been sunset in accordance with the sunsetting of EigenDA v1. Please do not use this code for production purposes.
+
 # Arbitrum Nitro Rollup Contracts
 
 This is the package with the smart contract code that powers Arbitrum Nitro.
